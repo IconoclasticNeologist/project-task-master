@@ -1,66 +1,45 @@
-# The Advocate — Scaffold Plan
+# The Advocate — Make the Shell Visible
 
-Skeleton only. Empty placeholder screens, calm trauma-informed visual baseline, no logic, no backend, no auth, no content beyond screen titles.
+A visual + structural pass. No new features, no real screen content, no auth, no backend, no voice UI, no onboarding flow. Each route stays a calm placeholder inside a now-visible shell.
 
-## Stack note
+## 1. Visual baseline — already global, light touch-ups only
 
-The project is already on **TanStack Start (React 19 + TS + Vite + Tailwind v4 + shadcn/ui)**, not plain React 18 + React Router. Functionally equivalent and what the template ships with — I'll use TanStack Router for the routes. If you'd rather I tear this down and rebuild on plain React 18 + Vite + React Router, say so and I'll redo it; otherwise I'll proceed on the existing stack.
+The calm tokens in `src/styles.css` (warm cream `--background`, soft near-black `--foreground`, muted sage `--primary`, sand `--muted` / `--border`, system humane sans, `font-size: 17px`, `line-height: 1.7`, `p { max-width: 34ch }`, no-motion base layer, light-mode only) are already applied globally via `@theme inline`. They render on every route through `<Shell>`'s `bg-background text-foreground`. No re-theming needed.
 
-## Routes (file-based, under `src/routes/`)
+Small additions only:
+- Add a subtle warm divider tone for the shell's header/footer hairlines (reuse `--border`, no new token).
+- Confirm no component in `src/components/` or `src/routes/` uses `dark:` utilities (spot check; remove any I find — shadcn `ui/*` files are unused and stay untouched).
 
-Each renders only a placeholder `<h1>` with the screen name. No content, no inputs, no icons.
+## 2. Shell becomes real
 
+Edit `src/components/Shell.tsx`. Same centered `max-w-md` column, mobile-first at ~380px. The two reserved regions become visible:
 
-| File                          | URL           | Placeholder title |
-| ----------------------------- | ------------- | ----------------- |
-| `index.tsx` (exists, rewrite) | `/`           | Welcome           |
-| `onboarding.tsx`              | `/onboarding` | Onboarding        |
-| `home.tsx`                    | `/home`       | Home              |
-| `session.tsx`                 | `/session`    | Session           |
-| `account.tsx`                 | `/account`    | Account           |
-| `resources.tsx`               | `/resources`  | Resources         |
-| `settings.tsx`                | `/settings`   | Settings          |
+- **Top region (`<header>`)** — a quiet bar containing only the persistent "I need a break" affordance on the right. Plain text link/button styling using `--muted-foreground`, no icon, no color alarm, no animation. Always reachable from every route. In this pass it navigates to `/` (Welcome acts as the safe landing). Soft `--border` hairline beneath.
+- **Bottom region (`<footer>`)** — the primary nav. Five calm text links, evenly spaced, single row, wrapping gracefully on narrow widths: Home · Session · Resources · Account · Settings. Active route gets `--foreground`; the rest sit at `--muted-foreground`. No icons, no pill backgrounds, no motion. Soft `--border` hairline above.
+- Middle `<main>` keeps `py-8` and renders `children` unchanged.
 
+Welcome (`/`) and Onboarding (`/onboarding`) render inside the same shell — the break link and nav are visible there too, since the affordance must live everywhere.
 
-`__root.tsx` stays as the router shell. No nav menu, no links between screens (you can hit URLs directly to confirm routing). Light mode only; remove the `.dark` block usage from defaults.
+## 3. Navigation works
 
-## Shared layout shell
+Use TanStack Router `<Link>` (`@tanstack/react-router`) for both the break affordance and the five nav items. `useRouterState` (or `useMatchRoute`) drives the active-route styling. No new routes, no nav menu component beyond what lives inside `Shell`.
 
-A single `src/components/Shell.tsx` each route wraps with:
+## 4. Routes stay calm placeholders
 
-- Centered column, max-width 28rem, generous padding, mobile-first (380px baseline).
-- Empty top region (room for future "I need a break" affordance — not built).
-- Empty bottom region (room for future persistent controls — not built).
-- Children render in the calm middle.
+Each of the seven route files keeps its single `<h1>` inside `<Shell>`. No content, no inputs, no controls added. Specifically:
+- `/onboarding` — single placeholder, no paced sequence.
+- `/session` — single placeholder, no voice UI, no controls.
+- `/` — single Welcome placeholder.
 
-No animations, no transitions, no hover motion.
+Placeholder copy stays plain and experience-based. None of the forbidden label words appear anywhere (code, comments, or UI).
 
-## Visual baseline (`src/styles.css`)
+## Files
 
-Replace the default token values with warm, low-stimulation light-mode tokens (oklch):
+- Modify: `src/components/Shell.tsx` (real header with break link, real footer nav, hairlines).
+- No new files. No route files change. No `styles.css` token changes (only possibly removing stray `dark:` if found in app code).
 
-- `--background`: warm cream
-- `--foreground`: soft near-black, not pure black
-- `--muted` / `--muted-foreground`: sand tones
-- `--primary`: muted sage, used sparingly
-- `--border`: very soft sand
-- Larger base font size, generous line-height (~1.7), comfortable letter-spacing, short max line-length on text.
-- System humane sans-serif stack (no custom web font in this pass).
-- Remove `.dark` overrides usage (file can keep the block but app never toggles it).
-- Disable transition/animation defaults on interactive elements via base layer (no motion).
+## Out of scope (will not build)
 
-## Files to add/modify
+Auth, dark mode, dashboard, backend / Supabase calls, real screen content, forms, chat UI, timelines, uploads, voice UI, multi-step onboarding, mock data, icon decoration, motion, PWA changes.
 
-- Add: `src/routes/onboarding.tsx`, `home.tsx`, `session.tsx`, `account.tsx`, `resources.tsx`, `settings.tsx`
-- Add: `src/components/Shell.tsx`
-- Modify: `src/routes/index.tsx` (replace placeholder image with "Welcome" inside Shell)
-- Modify: `src/styles.css` (calm tokens, typography, no-motion base)
-- Modify: `src/routes/__root.tsx` only to update `<title>` and meta to "The Advocate"
-
-## Out of scope (confirmed, will not build)
-
-Auth, dark mode/toggle, dashboard, backend/Supabase, real screen content, forms, chat UI, mock data, icons, multi-step onboarding, the break/stop button itself.
-
-Confirm and I'll build exactly this.  
-  
-Approved — proceed on the existing TanStack Start / React 19 / Tailwind v4 stack, don't rebuild. Two things: make sure no components reference `dark:` variants (not just that the toggle is gone), and leave all PWA/manifest/service-worker setup out of scope — that's handled separately. Build exactly the plan.
+Confirm and I'll build exactly this.

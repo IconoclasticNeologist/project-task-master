@@ -58,7 +58,12 @@ function makePNG(size) {
     }
   }
   const idat = deflateSync(raw);
-  return Buffer.concat([sig, chunk("IHDR", ihdr), chunk("IDAT", idat), chunk("IEND", Buffer.alloc(0))]);
+  return Buffer.concat([
+    sig,
+    chunk("IHDR", ihdr),
+    chunk("IDAT", idat),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
 }
 
 mkdirSync("public/icons", { recursive: true });

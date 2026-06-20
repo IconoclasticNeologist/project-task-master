@@ -12,9 +12,7 @@ export function getSupabase(): SupabaseClient<Database> {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
-    throw new Error(
-      "Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. Set them in .env.local.",
-    );
+    throw new Error("Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. Set them in .env.local.");
   }
   client = createClient<Database>(url, anonKey);
   return client;

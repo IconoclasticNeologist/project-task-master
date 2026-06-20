@@ -3,10 +3,7 @@ import { Shell } from "@/components/Shell";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [
-      { title: "Welcome — The Advocate" },
-      { name: "description", content: "The Advocate" },
-    ],
+    meta: [{ title: "Welcome — The Advocate" }, { name: "description", content: "The Advocate" }],
   }),
   component: WelcomeScreen,
 });

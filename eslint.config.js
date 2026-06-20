@@ -37,4 +37,11 @@ export default tseslint.config(
     },
   },
   eslintPluginPrettier,
+  {
+    rules: {
+      // Accept the platform's line endings (Windows checks out CRLF via core.autocrlf=true);
+      // keeps thousands of CRLF false positives from burying real lint errors.
+      "prettier/prettier": ["error", { endOfLine: "auto" }],
+    },
+  },
 );

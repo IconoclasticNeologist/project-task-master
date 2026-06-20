@@ -1,45 +1,44 @@
-# The Advocate — Make the Shell Visible
+# Quick-Exit ("Leave now") — Plan
 
-A visual + structural pass. No new features, no real screen content, no auth, no backend, no voice UI, no onboarding flow. Each route stays a calm placeholder inside a now-visible shell.
+A single new control in the shell header. Nothing else changes.
 
-## 1. Visual baseline — already global, light touch-ups only
+## Placement
 
-The calm tokens in `src/styles.css` (warm cream `--background`, soft near-black `--foreground`, muted sage `--primary`, sand `--muted` / `--border`, system humane sans, `font-size: 17px`, `line-height: 1.7`, `p { max-width: 34ch }`, no-motion base layer, light-mode only) are already applied globally via `@theme inline`. They render on every route through `<Shell>`'s `bg-background text-foreground`. No re-theming needed.
+In `src/components/Shell.tsx`, the `<header>` row becomes two items on one line:
 
-Small additions only:
-- Add a subtle warm divider tone for the shell's header/footer hairlines (reuse `--border`, no new token).
-- Confirm no component in `src/components/` or `src/routes/` uses `dark:` utilities (spot check; remove any I find — shadcn `ui/*` files are unused and stay untouched).
+- **Left:** new "Leave now" control (this pass).
+- **Right:** existing "I need a break" link (untouched — same text, same muted styling, same `to="/"`).
 
-## 2. Shell becomes real
+Both are plain muted-foreground text, same font size, no icon, no alarm color, no motion. The header keeps its h-16 height and bottom hairline. No other file is touched.
 
-Edit `src/components/Shell.tsx`. Same centered `max-w-md` column, mobile-first at ~380px. The two reserved regions become visible:
+## The control
 
-- **Top region (`<header>`)** — a quiet bar containing only the persistent "I need a break" affordance on the right. Plain text link/button styling using `--muted-foreground`, no icon, no color alarm, no animation. Always reachable from every route. In this pass it navigates to `/` (Welcome acts as the safe landing). Soft `--border` hairline beneath.
-- **Bottom region (`<footer>`)** — the primary nav. Five calm text links, evenly spaced, single row, wrapping gracefully on narrow widths: Home · Session · Resources · Account · Settings. Active route gets `--foreground`; the rest sit at `--muted-foreground`. No icons, no pill backgrounds, no motion. Soft `--border` hairline above.
-- Middle `<main>` keeps `py-8` and renders `children` unchanged.
+A `<button type="button">` (not an `<a>`), styled identically to the break link so it reads as a quiet text item. Label: **"Leave now"**.
 
-Welcome (`/`) and Onboarding (`/onboarding`) render inside the same shell — the break link and nav are visible there too, since the affordance must live everywhere.
+On click, one synchronous call:
 
-## 3. Navigation works
+```ts
+window.location.replace("https://www.weather.gov/")
+```
 
-Use TanStack Router `<Link>` (`@tanstack/react-router`) for both the break affordance and the five nav items. `useRouterState` (or `useMatchRoute`) drives the active-route styling. No new routes, no nav menu component beyond what lives inside `Shell`.
+- One tap, no confirmation, no delay.
+- `replace` (not `assign`, not `href=`) so the current entry is overwritten — Back does not return to the app screen.
+- Destination is a real external page (US National Weather Service), not a fake in-app decoy. Hard-coded for this pass; configurable destination is out of scope.
 
-## 4. Routes stay calm placeholders
+No new dependencies, no new routes, no history shim, no `beforeunload`, no analytics hook.
 
-Each of the seven route files keeps its single `<h1>` inside `<Shell>`. No content, no inputs, no controls added. Specifically:
-- `/onboarding` — single placeholder, no paced sequence.
-- `/session` — single placeholder, no voice UI, no controls.
-- `/` — single Welcome placeholder.
+## Standalone-PWA flag (surfacing, not solving)
 
-Placeholder copy stays plain and experience-based. None of the forbidden label words appear anywhere (code, comments, or UI).
+This app currently has no manifest and no service worker, so today it always runs as a normal browser tab and `location.replace` cleanly leaves the app. If the app is later installed as a standalone PWA, behavior diverges from the browser-tab case and I cannot fully solve it from inside the web app:
+
+- **Android (Chrome installed PWA):** `location.replace` to a cross-origin URL typically opens the weather page in a Custom Tab / external browser overlay. The PWA window stays alive in the background and remains reachable via the OS app switcher. Visually off-screen, not process-killed.
+- **iOS (Safari installed PWA, standalone):** cross-origin navigation from a standalone PWA is restricted and inconsistent across iOS versions — it may open Safari as a separate app while leaving the PWA running in the background, or stay inside the standalone shell. No reliable way to force-close the PWA from script.
+- **Net:** in installed-PWA mode the control will get the watcher's eyes off the app, but it cannot guarantee the app process is gone or unreachable via the app switcher. The browser-tab case is clean. Verify on a real device when/if PWA install is added.
+
+## Out of scope (confirming)
+
+Configurable destination, PIN-lock on exit, restyling the break affordance, any change to existing screens / routes / styles, dialogs, motion, icons, manifest/SW work.
 
 ## Files
 
-- Modify: `src/components/Shell.tsx` (real header with break link, real footer nav, hairlines).
-- No new files. No route files change. No `styles.css` token changes (only possibly removing stray `dark:` if found in app code).
-
-## Out of scope (will not build)
-
-Auth, dark mode, dashboard, backend / Supabase calls, real screen content, forms, chat UI, timelines, uploads, voice UI, multi-step onboarding, mock data, icon decoration, motion, PWA changes.
-
-Confirm and I'll build exactly this.
+- Modify: `src/components/Shell.tsx` only.

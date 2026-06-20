@@ -23,7 +23,16 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6">
-        <header className="flex h-16 shrink-0 items-center justify-end border-b border-border">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border">
+          <button
+            type="button"
+            onClick={() => {
+              window.location.replace("https://www.weather.gov/");
+            }}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Leave now
+          </button>
           <Link
             to="/"
             className="text-sm text-muted-foreground hover:text-foreground"

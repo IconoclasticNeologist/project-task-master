@@ -1,0 +1,2 @@
+-- No seed data for the foundation. Domain rows (survivors, statements, …) are created
+-- by the later gatekeeper provisioning flow. Intentionally empty.

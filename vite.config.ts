@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Vercel-only deploy preset. The Lovable wrapper otherwise skips Nitro on non-sandbox builds,
+  // so a Vercel build produces no servable output (platform 404). Gating on Vercel's own VERCEL
+  // env var keeps Cloudflare prod (Lovable sandbox → forced cloudflare-module) and local builds
+  // byte-identical to today; only Vercel builds get the `vercel` preset (writes .vercel/output).
+  nitro: process.env.VERCEL ? { preset: "vercel" } : undefined,
 });

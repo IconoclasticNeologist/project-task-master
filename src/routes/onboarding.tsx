@@ -100,7 +100,7 @@ function OnboardingScreen() {
   }
 
   const onCta = () => {
-    if (step.kind === "aftercare") saveAftercare({ supportPerson, calmingThing });
+    if (step === "aftercare") saveAftercare({ supportPerson, calmingThing });
     next();
   };
 

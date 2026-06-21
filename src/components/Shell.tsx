@@ -1,23 +1,24 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { copy } from "@/lib/copy";
 
 /**
  * Calm, mobile-first layout shell.
  * - Centered narrow column, generous whitespace.
- * - Top: persistent "I need a break" affordance, always reachable.
- * - Bottom: primary text nav across the five main routes.
- * - No motion, no decoration, no icons.
+ * - Top: persistent "Leave now" + "I need a break" affordances on every screen.
+ * - Bottom: text nav.
+ * - No motion, paper-craft baseline.
  */
 
 const navItems = [
-  { to: "/home", label: "Home" },
-  { to: "/session", label: "Session" },
-  { to: "/resources", label: "Resources" },
-  { to: "/account", label: "Account" },
-  { to: "/settings", label: "Settings" },
+  { to: "/home", label: copy.nav.home },
+  { to: "/session", label: copy.nav.session },
+  { to: "/resources", label: copy.nav.resources },
+  { to: "/account", label: copy.nav.account },
+  { to: "/settings", label: copy.nav.settings },
 ] as const;
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({ children, hideNav = false }: { children: ReactNode; hideNav?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -31,36 +32,35 @@ export function Shell({ children }: { children: ReactNode }) {
             }}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            Leave now
+            {copy.shell.leaveNow}
           </button>
-          <Link
-            to="/"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            I need a break
+          <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">
+            {copy.shell.iNeedABreak}
           </Link>
         </header>
 
         <main className="flex flex-1 flex-col py-8">{children}</main>
 
-        <footer className="flex h-16 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border">
-          {navItems.map((item) => {
-            const isActive = pathname === item.to;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={
-                  isActive
-                    ? "text-sm text-foreground"
-                    : "text-sm text-muted-foreground hover:text-foreground"
-                }
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </footer>
+        {!hideNav && (
+          <footer className="flex h-16 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border">
+            {navItems.map((item) => {
+              const isActive = pathname === item.to;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={
+                    isActive
+                      ? "text-sm text-foreground"
+                      : "text-sm text-muted-foreground hover:text-foreground"
+                  }
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </footer>
+        )}
       </div>
     </div>
   );

@@ -146,22 +146,27 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const connect = useCallback(async () => {
     setStatus("connecting");
     try {
-      const { apiKey, model, voice } = await fetchVoiceToken();
-      const wsUrl = `${GEMINI_WS_BASE}?key=${encodeURIComponent(apiKey)}`;
+      const { token, model } = await fetchVoiceToken(mode);
+      // v1alpha + ?access_token=<ephemeral>. The token has model, voice,
+      // AUDIO modality, and system instruction locked into its constraints,
+      // so we MUST NOT resend those in the setup frame.
+      const wsUrl = `${GEMINI_WS_BASE}?access_token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       playerRef.current = new PcmPlayer(24000);
 
       ws.addEventListener("open", () => {
         setStatus("open");
+        // Minimal setup frame. If on first real session audio is missing,
+        // add back: generationConfig: { responseModalities: ["AUDIO"] }
+        // (non-sensitive, redundant with the token constraint).
+        // If the upstream rejects the model id, drop the "models/" prefix
+        // here AND in the edge function constraint so they still match.
         ws.send(
           JSON.stringify({
-            setup: {
-              model: `models/${model}`,
-              generationConfig: {
-                responseModalities: ["AUDIO"],
-                speechConfig: {
-                  voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+            setup: { model: `models/${model}` },
+          }),
+        );
                 },
               },
               systemInstruction: {

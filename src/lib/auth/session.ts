@@ -8,20 +8,22 @@ export interface Survivor {
 
 export type RedeemResult = { ok: true; survivorId: string } | { ok: false };
 
-/** Ensure an anonymous Supabase session exists (idempotent). */
-export async function ensureAnonymous(): Promise<void> {
+/** Ensure an anonymous Supabase session exists. Returns true ONLY if THIS call created one. */
+export async function ensureAnonymous(): Promise<boolean> {
   const supabase = getSupabase();
   const { data } = await supabase.auth.getSession();
-  if (data.session) return;
+  if (data.session) return false;
   const { error } = await supabase.auth.signInAnonymously();
   if (error) throw new Error(error.message);
+  return true;
 }
 
 /**
  * Gated entry: verify the code pre-auth (so a bad code never creates an orphan anon
  * user), establish an anonymous identity, then redeem (creates the survivor row +
- * marks the code used, atomically). If redeem fails after sign-in, sign back out so
- * no stuck half-state identity remains. Failure is single-reason by design.
+ * marks the code used, atomically). If redeem fails after sign-in, sign back out ONLY
+ * if THIS flow created the session, so a pre-existing session is never evicted.
+ * Failure is single-reason by design.
  */
 export async function redeemCode(code: string): Promise<RedeemResult> {
   const supabase = getSupabase();
@@ -29,15 +31,16 @@ export async function redeemCode(code: string): Promise<RedeemResult> {
   const verify = await supabase.rpc("verify_access_code", { p_code: code });
   if (verify.error || !verify.data) return { ok: false };
 
+  let createdSession = false;
   try {
-    await ensureAnonymous();
+    createdSession = await ensureAnonymous();
   } catch {
     return { ok: false };
   }
 
   const redeem = await supabase.rpc("redeem_access_code", { p_code: code });
   if (redeem.error || !redeem.data) {
-    await supabase.auth.signOut(); // half-state guard
+    if (createdSession) await supabase.auth.signOut(); // only undo a session WE created
     return { ok: false };
   }
   return { ok: true, survivorId: redeem.data as string };

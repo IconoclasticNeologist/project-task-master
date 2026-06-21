@@ -58,6 +58,17 @@ describe("redeemCode — sign-in failure", () => {
     expect(result).toEqual({ ok: false });
     expect(mockClient.rpc).toHaveBeenCalledTimes(1); // verify only; redeem never reached
   });
+
+  it("does NOT sign out a PRE-EXISTING session when redeem fails (scoped half-state guard)", async () => {
+    mockClient.auth.getSession.mockResolvedValue({ data: { session: {} } }); // already authed
+    mockClient.rpc
+      .mockResolvedValueOnce({ data: "gk-1", error: null }) // verify ok
+      .mockResolvedValueOnce({ data: null, error: { message: "invalid or expired code" } }); // redeem fails
+    const result = await redeemCode("GOOD");
+    expect(result).toEqual({ ok: false });
+    expect(mockClient.auth.signInAnonymously).not.toHaveBeenCalled();
+    expect(mockClient.auth.signOut).not.toHaveBeenCalled(); // pre-existing session preserved
+  });
 });
 
 describe("getSurvivor", () => {

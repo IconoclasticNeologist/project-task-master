@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "db:push": "bunx supabase db push",
     "db:reset": "bunx supabase db reset",
-    "gen:types": "bunx supabase gen types typescript --linked > src/lib/supabase/types.ts"
+    "gen:types": "bunx supabase gen types typescript --project-id suanbsyewsudlhrrzfks > src/lib/supabase/types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

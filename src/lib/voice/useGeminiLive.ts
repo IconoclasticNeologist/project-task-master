@@ -117,7 +117,13 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const connect = useCallback(async () => {
     setStatus("connecting");
     try {
-      const { token, proxyPath, model, voice } = await startAdvocateVoiceSession();
+      const session = await startAdvocateVoiceSession();
+      if (!session.ok) {
+        tearDown();
+        setStatus("error");
+        return;
+      }
+      const { token, proxyPath, model, voice } = session;
       const wsUrl = new URL(proxyPath, window.location.origin);
       wsUrl.protocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
       wsUrl.searchParams.set("t", token);

@@ -14,15 +14,8 @@ export const Route = createFileRoute("/onboarding")({
   component: OnboardingScreen,
 });
 
-type Step =
-  | { kind: "welcome" }
-  | { kind: "feelings" }
-  | { kind: "care" }
-  | { kind: "aftercare" }
-  | { kind: "how" }
-  | { kind: "rules" };
-
-const STEPS: Step["kind"][] = ["welcome", "feelings", "care", "aftercare", "how", "rules"];
+const STEPS = ["welcome", "feelings", "care", "aftercare", "how", "rules"] as const;
+type StepKind = (typeof STEPS)[number];
 
 function OnboardingScreen() {
   const navigate = useNavigate();

@@ -16,6 +16,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiVoiceProxyRouteImport } from './routes/api/voice/proxy'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -52,6 +53,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVoiceProxyRoute = ApiVoiceProxyRouteImport.update({
+  id: '/api/voice/proxy',
+  path: '/api/voice/proxy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/api/voice/proxy': typeof ApiVoiceProxyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/api/voice/proxy': typeof ApiVoiceProxyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/api/voice/proxy': typeof ApiVoiceProxyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/session'
     | '/settings'
+    | '/api/voice/proxy'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/session'
     | '/settings'
+    | '/api/voice/proxy'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/session'
     | '/settings'
+    | '/api/voice/proxy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   ResourcesRoute: typeof ResourcesRoute
   SessionRoute: typeof SessionRoute
   SettingsRoute: typeof SettingsRoute
+  ApiVoiceProxyRoute: typeof ApiVoiceProxyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/voice/proxy': {
+      id: '/api/voice/proxy'
+      path: '/api/voice/proxy'
+      fullPath: '/api/voice/proxy'
+      preLoaderRoute: typeof ApiVoiceProxyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,17 +203,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesRoute: ResourcesRoute,
   SessionRoute: SessionRoute,
   SettingsRoute: SettingsRoute,
+  ApiVoiceProxyRoute: ApiVoiceProxyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

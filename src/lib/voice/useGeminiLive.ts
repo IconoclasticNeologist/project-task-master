@@ -17,7 +17,7 @@ import { ADVOCATE_VOICE_CONFIG } from "./config";
 import { startMicCapture, type CaptureHandle } from "./audio/capture";
 import { PcmPlayer } from "./audio/playback";
 import { tripwire, type DistressSignal } from "@/lib/agents/safety/distress";
-import { coachPromptFor, type CoachMode } from "@/lib/agents/coach";
+import type { CoachMode } from "@/lib/agents/coach";
 import { getSupabase } from "@/lib/supabase/client";
 
 export type VoiceStatus = "idle" | "connecting" | "open" | "closed" | "error";
@@ -32,16 +32,16 @@ interface UseGeminiLiveOptions {
 }
 
 const GEMINI_WS_BASE =
-  "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
+  "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
 
 interface VoiceTokenPayload {
-  apiKey: string;
+  token: string;
   voice: string;
   model: string;
-  expiresIn?: number;
+  expiresIn: number;
 }
 
-async function fetchVoiceToken(): Promise<VoiceTokenPayload> {
+async function fetchVoiceToken(mode: CoachMode): Promise<VoiceTokenPayload> {
   const supabase = getSupabase();
   const { data, error } = await supabase.functions.invoke<VoiceTokenPayload>(
     "advocate-voice-token",
@@ -49,11 +49,12 @@ async function fetchVoiceToken(): Promise<VoiceTokenPayload> {
       body: {
         model: ADVOCATE_VOICE_CONFIG.connection.model,
         voice: ADVOCATE_VOICE_CONFIG.connection.voice,
+        mode,
       },
     },
   );
   if (error) throw new Error(error.message);
-  if (!data?.apiKey) throw new Error("Voice token missing apiKey");
+  if (!data?.token) throw new Error("Voice token missing");
   return data;
 }
 
@@ -145,29 +146,25 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const connect = useCallback(async () => {
     setStatus("connecting");
     try {
-      const { apiKey, model, voice } = await fetchVoiceToken();
-      const wsUrl = `${GEMINI_WS_BASE}?key=${encodeURIComponent(apiKey)}`;
+      const { token, model } = await fetchVoiceToken(mode);
+      // v1alpha + ?access_token=<ephemeral>. The token has model, voice,
+      // AUDIO modality, and system instruction locked into its constraints,
+      // so we MUST NOT resend those in the setup frame.
+      const wsUrl = `${GEMINI_WS_BASE}?access_token=${encodeURIComponent(token)}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       playerRef.current = new PcmPlayer(24000);
 
       ws.addEventListener("open", () => {
         setStatus("open");
+        // Minimal setup frame. If on first real session audio is missing,
+        // add back: generationConfig: { responseModalities: ["AUDIO"] }
+        // (non-sensitive, redundant with the token constraint).
+        // If the upstream rejects the model id, drop the "models/" prefix
+        // here AND in the edge function constraint so they still match.
         ws.send(
           JSON.stringify({
-            setup: {
-              model: `models/${model}`,
-              generationConfig: {
-                responseModalities: ["AUDIO"],
-                speechConfig: {
-                  voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
-                },
-              },
-              systemInstruction: {
-                role: "system",
-                parts: [{ text: coachPromptFor(mode) }],
-              },
-            },
+            setup: { model: `models/${model}` },
           }),
         );
 

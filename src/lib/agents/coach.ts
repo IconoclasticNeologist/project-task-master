@@ -1,5 +1,11 @@
 // Coach — the single relational voice the survivor hears.
 // Orchestrator, regulator-in-distress, owner of the containment close.
+//
+// NOTE: The LIVE voice system prompt is server-locked into the ephemeral
+// token minted by supabase/functions/advocate-voice-token/index.ts.
+// That edge function is the canonical home for runtime voice instructions.
+// Vetted Coach / Defense / Interview / Regulator copy must land THERE.
+// The exports below are kept for non-voice code paths (text agents, tests).
 
 import { ADVOCATE_VOICE_CONFIG } from "@/lib/voice/config";
 

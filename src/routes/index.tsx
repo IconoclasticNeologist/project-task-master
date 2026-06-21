@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
+import { accessMode } from "@/lib/auth/config";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,7 +35,7 @@ function WelcomeScreen() {
         </div>
         <div className="space-y-3 pb-4">
           <Link
-            to="/onboarding"
+            to={accessMode === "gated" ? "/enter" : "/onboarding"}
             className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             Begin

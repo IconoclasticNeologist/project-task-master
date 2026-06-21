@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { requireSurvivor } from "@/lib/auth/guard";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { copy } from "@/lib/copy";
 import { loadAftercare, saveAftercare } from "@/lib/data/local-store";
 
 export const Route = createFileRoute("/onboarding")({
+  beforeLoad: requireSurvivor,
   head: () => ({ meta: [{ title: "Begin — The Advocate" }] }),
   component: OnboardingScreen,
 });

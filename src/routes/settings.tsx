@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { requireSurvivor } from "@/lib/auth/guard";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import {
 } from "@/lib/data/local-store";
 
 export const Route = createFileRoute("/settings")({
+  beforeLoad: requireSurvivor,
   head: () => ({ meta: [{ title: "Settings — The Advocate" }] }),
   component: SettingsScreen,
 });

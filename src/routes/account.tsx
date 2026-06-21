@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { requireSurvivor } from "@/lib/auth/guard";
 import { Shell } from "@/components/Shell";
 import { CloudOffBanner } from "@/components/CloudOffBanner";
 import { StatementList } from "@/components/account/StatementList";
@@ -9,6 +10,7 @@ import { copy } from "@/lib/copy";
 import { loadSettings, type UserSettings } from "@/lib/data/local-store";
 
 export const Route = createFileRoute("/account")({
+  beforeLoad: requireSurvivor,
   head: () => ({ meta: [{ title: "Your space — The Advocate" }] }),
   component: AccountScreen,
 });

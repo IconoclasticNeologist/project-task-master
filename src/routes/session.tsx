@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { requireSurvivor } from "@/lib/auth/guard";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +20,7 @@ import type { CoachMode } from "@/lib/agents/coach";
 import { ADVOCATE_VOICE_CONFIG } from "@/lib/voice/config";
 
 export const Route = createFileRoute("/session")({
+  beforeLoad: requireSurvivor,
   head: () => ({ meta: [{ title: "Session — The Advocate" }] }),
   component: SessionScreen,
 });

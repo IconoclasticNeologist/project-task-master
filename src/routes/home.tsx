@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
 import { loadAftercare } from "@/lib/data/local-store";
 import { AftercareCard } from "@/components/AftercareCard";
+import { requireSurvivor } from "@/lib/auth/guard";
 
 export const Route = createFileRoute("/home")({
+  beforeLoad: requireSurvivor,
   head: () => ({ meta: [{ title: "Home — The Advocate" }] }),
   component: HomeScreen,
 });

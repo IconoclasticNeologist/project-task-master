@@ -1,22 +1,24 @@
-// Full Gemini Live client hook for The Advocate.
+// Gemini Live client hook for The Advocate.
+//
+// PATTERN: mirrors MindCrafter's Liv voice path.
+//   - Supabase Edge Function `advocate-voice-token` reads GEMINI_API_KEY
+//     from Supabase secrets and returns { apiKey, voice, model }.
+//   - The browser connects WebSocket DIRECTLY to Gemini Live with that key.
+//   - No Cloudflare Worker proxy. No app-side Worker secret.
 //
 // SAFETY INVARIANTS:
-//   - The Gemini API key is never visible to the browser. The WS terminates
-//     at the in-app proxy at /api/voice/proxy, authenticated by a short,
-//     stateless bearer.
-//   - No transcript array is kept on the client. Frames flow through and are
-//     dropped. The cost-breaker is the only state the proxy retains.
+//   - No transcript array is kept on the client. Frames flow through.
 //   - Mic audio frames are forwarded and discarded after send. No recording.
-//   - Distress tripwire is run on user text as it goes out, so the Coach can
-//     shift to regulator mode without server roundtrip.
+//   - Distress tripwire runs on user text as it goes out so the Coach can
+//     shift to regulator mode without a server roundtrip.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { startAdvocateVoiceSession } from "./advocate-voice-session.functions";
 import { ADVOCATE_VOICE_CONFIG } from "./config";
 import { startMicCapture, type CaptureHandle } from "./audio/capture";
 import { PcmPlayer } from "./audio/playback";
 import { tripwire, type DistressSignal } from "@/lib/agents/safety/distress";
 import { coachPromptFor, type CoachMode } from "@/lib/agents/coach";
+import { getSupabase } from "@/lib/supabase/client";
 
 export type VoiceStatus = "idle" | "connecting" | "open" | "closed" | "error";
 export type MicState = "off" | "requesting" | "on" | "denied";
@@ -27,6 +29,32 @@ interface UseGeminiLiveOptions {
   maxDurationSec?: number;
   onCoachText?: (text: string) => void;
   onDistress?: (sig: DistressSignal) => void;
+}
+
+const GEMINI_WS_BASE =
+  "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
+
+interface VoiceTokenPayload {
+  apiKey: string;
+  voice: string;
+  model: string;
+  expiresIn?: number;
+}
+
+async function fetchVoiceToken(): Promise<VoiceTokenPayload> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.functions.invoke<VoiceTokenPayload>(
+    "advocate-voice-token",
+    {
+      body: {
+        model: ADVOCATE_VOICE_CONFIG.connection.model,
+        voice: ADVOCATE_VOICE_CONFIG.connection.voice,
+      },
+    },
+  );
+  if (error) throw new Error(error.message);
+  if (!data?.apiKey) throw new Error("Voice token missing apiKey");
+  return data;
 }
 
 export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
@@ -117,23 +145,14 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const connect = useCallback(async () => {
     setStatus("connecting");
     try {
-      const session = await startAdvocateVoiceSession();
-      if (!session.ok) {
-        tearDown();
-        setStatus("error");
-        return;
-      }
-      const { token, proxyPath, model, voice } = session;
-      const wsUrl = new URL(proxyPath, window.location.origin);
-      wsUrl.protocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
-      wsUrl.searchParams.set("t", token);
-      const ws = new WebSocket(wsUrl.toString());
+      const { apiKey, model, voice } = await fetchVoiceToken();
+      const wsUrl = `${GEMINI_WS_BASE}?key=${encodeURIComponent(apiKey)}`;
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       playerRef.current = new PcmPlayer(24000);
 
       ws.addEventListener("open", () => {
         setStatus("open");
-        // Setup frame — model, voice, system instruction.
         ws.send(
           JSON.stringify({
             setup: {
@@ -152,13 +171,11 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
           }),
         );
 
-        // Hard session cap.
         const maxSec = maxDurationSec ?? ADVOCATE_VOICE_CONFIG.caps.maxSessionDurationSec;
         if (maxSec > 0) {
           sessionTimerRef.current = setTimeout(() => disconnect(), maxSec * 1000);
         }
 
-        // Idle watchdog.
         const idleSec = ADVOCATE_VOICE_CONFIG.caps.idleTimeoutSec;
         if (idleSec > 0) {
           const tick = () => {
@@ -173,14 +190,18 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
         }
       });
 
-      ws.addEventListener("message", (evt) => {
+      ws.addEventListener("message", async (evt) => {
         lastActivityRef.current = Date.now();
+        let raw: string | null = null;
+        if (typeof evt.data === "string") {
+          raw = evt.data;
+        } else if (evt.data instanceof Blob) {
+          raw = await evt.data.text();
+        }
+        if (!raw) return;
         let parsed: unknown;
         try {
-          parsed =
-            typeof evt.data === "string"
-              ? JSON.parse(evt.data)
-              : null;
+          parsed = JSON.parse(raw);
         } catch {
           return;
         }

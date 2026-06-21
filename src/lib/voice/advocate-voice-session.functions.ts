@@ -9,17 +9,32 @@ import { ADVOCATE_VOICE_CONFIG } from "./config";
 import { isUnderCap } from "./cost-breaker";
 import { mintToken } from "./session-token";
 
+type AdvocateVoiceSessionStart =
+  | {
+      ok: true;
+      token: string;
+      proxyPath: string;
+      model: string;
+      voice: string;
+    }
+  | {
+      ok: false;
+      reason: "not_configured" | "temporarily_unavailable";
+    };
+
 export const startAdvocateVoiceSession = createServerFn({ method: "POST" }).handler(
-  async () => {
+  async (): Promise<AdvocateVoiceSessionStart> => {
     const secret = process.env.VOICE_BEARER_SECRET;
-    if (!secret) {
-      throw new Error("VOICE_BEARER_SECRET not configured");
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!secret || !apiKey) {
+      return { ok: false, reason: "not_configured" };
     }
     if (!isUnderCap(ADVOCATE_VOICE_CONFIG.caps.dailyDollarCap)) {
-      throw new Error("Voice service temporarily unavailable");
+      return { ok: false, reason: "temporarily_unavailable" };
     }
     const token = await mintToken(secret, 60);
     return {
+      ok: true,
       token,
       proxyPath: "/api/voice/proxy",
       model: ADVOCATE_VOICE_CONFIG.connection.model,

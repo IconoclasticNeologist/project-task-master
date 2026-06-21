@@ -58,10 +58,11 @@ export async function verifyToken(
   const [body, sigPart] = token.split(".");
   if (!body || !sigPart) return null;
   const key = await getKey(secret);
+  const sigBytes = b64urlDecode(sigPart);
   const ok = await crypto.subtle.verify(
     ALG,
     key,
-    b64urlDecode(sigPart),
+    sigBytes.buffer.slice(sigBytes.byteOffset, sigBytes.byteOffset + sigBytes.byteLength) as ArrayBuffer,
     new TextEncoder().encode(body),
   );
   if (!ok) return null;

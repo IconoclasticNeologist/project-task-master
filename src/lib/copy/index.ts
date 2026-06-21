@@ -15,6 +15,26 @@ export const PLACEHOLDER = "__PLACEHOLDER__";
 export const copy = {
   appName: "The Advocate",
 
+  enter: {
+    codeTitle: "Enter your code.",
+    codeBody:
+      "Whoever invited you gave you a code. You can type it here. There is no rush.",
+    codeLabel: "Your code",
+    codePlaceholder: "The code you were given",
+    codeCta: "Continue",
+    codeError:
+      "That code did not work. A code can run out, or be used one time. You can check with whoever gave it to you.",
+    profileTitle: "A couple of small things.",
+    profileBody: "These help this space fit you. You can change them later.",
+    languageLabel: "Which language feels easiest?",
+    languageEn: "English",
+    languageEs: "Español",
+    nameLabel: "What can I call you? You can skip this.",
+    namePlaceholder: "A name or a nickname",
+    profileCta: "Continue",
+    profileSaveFailed: "We could not save that just now. You can set it later in Settings.",
+  },
+
   shell: {
     leaveNow: "Leave now",
     iNeedABreak: "I need a break",

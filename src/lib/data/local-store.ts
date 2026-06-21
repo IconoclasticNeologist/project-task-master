@@ -1,34 +1,28 @@
-// Build-eval local store.
+// Build-eval IN-MEMORY store.
 //
 // Lovable Cloud is currently disabled in this project, which means the
 // Supabase server functions in src/lib/data/*.functions.ts cannot be wired
 // live yet. To let the survivor-facing flows be evaluated end-to-end now,
 // account data (statements, timeline, documents-metadata, aftercare plan,
-// settings) is persisted in localStorage on this device only.
+// settings) is held in a module-scoped Map for the lifetime of the page.
 //
-// CLEARLY MARKED in-UI by `<CloudOffBanner/>`. The shape of every record
-// here mirrors the eventual Supabase row exactly so the swap to server
-// functions is a one-line call-site change per list/mutation.
+// EVAL-ONLY and CLEARLY MARKED in-UI by `<CloudOffBanner/>`.
+// Nothing here is written to disk: no localStorage, no sessionStorage, no
+// IndexedDB, no cookies. Data survives in-session navigation between routes
+// and resets on a full refresh. The real store is Supabase once Cloud is on;
+// the *.functions.ts server functions stay inert and swap in unchanged.
+//
+// The shape of every record mirrors the eventual Supabase row exactly so the
+// call-site swap is one line per list/mutation.
 
-const NS = "advocate.v1.";
+const mem = new Map<string, unknown>();
 
 function read<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(NS + key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
+  return (mem.has(key) ? (mem.get(key) as T) : fallback);
 }
 
 function write<T>(key: string, value: T) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(NS + key, JSON.stringify(value));
-  } catch {
-    /* quota — ignore */
-  }
+  mem.set(key, value);
 }
 
 export function newId(): string {

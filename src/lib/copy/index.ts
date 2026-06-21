@@ -19,6 +19,7 @@ export const copy = {
     codeTitle: "Enter your code.",
     codeBody:
       "Whoever invited you gave you a code. You can type it here. There is no rush.",
+    codeHint: "Type it exactly as it was given to you.",
     codeLabel: "Your code",
     codePlaceholder: "The code you were given",
     codeCta: "Continue",

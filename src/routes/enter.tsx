@@ -13,6 +13,9 @@ export const Route = createFileRoute("/enter")({
   component: EnterScreen,
 });
 
+const primaryButtonClass =
+  "block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40";
+
 function EnterScreen() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<"code" | "profile">("code");
@@ -24,33 +27,41 @@ function EnterScreen() {
   const [name, setName] = useState("");
 
   const submitCode = async () => {
+    if (busy) return;
     setBusy(true);
     setFailed(false);
-    const result = await redeemCode(code.trim());
-    setBusy(false);
-    if (!result.ok) {
-      setFailed(true);
-      return;
+    try {
+      const result = await redeemCode(code.trim());
+      if (!result.ok) {
+        setFailed(true);
+        return;
+      }
+      setSurvivorId(result.survivorId);
+      setPhase("profile");
+    } finally {
+      setBusy(false);
     }
-    setSurvivorId(result.survivorId);
-    setPhase("profile");
   };
 
   const submitProfile = async () => {
+    if (busy) return;
     setBusy(true);
-    if (survivorId) {
-      try {
-        await updateProfile(survivorId, {
-          preferred_language: language,
-          first_name: name.trim() || null,
-        });
-      } catch {
-        // Profile is a non-critical nicety (editable later in Settings). A save failure
-        // must not crash the calm flow or block entry — continue regardless.
-        toast(copy.enter.profileSaveFailed);
+    try {
+      if (survivorId) {
+        try {
+          await updateProfile(survivorId, {
+            preferred_language: language,
+            first_name: name.trim() || null,
+          });
+        } catch {
+          // Profile is a non-critical nicety (editable later in Settings). A save failure
+          // must not crash the calm flow or block entry — continue regardless.
+          toast(copy.enter.profileSaveFailed);
+        }
       }
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
     void navigate({ to: "/onboarding" });
   };
 
@@ -77,6 +88,7 @@ function EnterScreen() {
                     onChange={(e) => setCode(e.target.value)}
                     placeholder={copy.enter.codePlaceholder}
                   />
+                  <p className="text-xs leading-relaxed text-muted-foreground">{copy.enter.codeHint}</p>
                   {failed && (
                     <p className="pt-1 text-sm leading-relaxed text-foreground">{copy.enter.codeError}</p>
                   )}
@@ -87,9 +99,10 @@ function EnterScreen() {
               type="button"
               onClick={submitCode}
               disabled={busy || code.trim().length === 0}
-              className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+              aria-busy={busy}
+              className={primaryButtonClass}
             >
-              {copy.enter.codeCta}
+              {busy ? "…" : copy.enter.codeCta}
             </button>
           </>
         ) : (
@@ -101,13 +114,14 @@ function EnterScreen() {
               <p className="text-base leading-relaxed text-foreground">{copy.enter.profileBody}</p>
               <Card>
                 <CardContent className="space-y-5 py-5">
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <div className="space-y-2" role="group" aria-labelledby="language-label">
+                    <Label id="language-label" className="text-xs uppercase tracking-wide text-muted-foreground">
                       {copy.enter.languageLabel}
                     </Label>
                     <div className="flex gap-2">
                       <button
                         type="button"
+                        aria-pressed={language === "en"}
                         onClick={() => setLanguage("en")}
                         className={`flex-1 rounded-md border px-3 py-2 text-sm ${
                           language === "en" ? "border-primary text-foreground" : "border-border text-muted-foreground"
@@ -117,6 +131,7 @@ function EnterScreen() {
                       </button>
                       <button
                         type="button"
+                        aria-pressed={language === "es"}
                         onClick={() => setLanguage("es")}
                         className={`flex-1 rounded-md border px-3 py-2 text-sm ${
                           language === "es" ? "border-primary text-foreground" : "border-border text-muted-foreground"
@@ -144,9 +159,10 @@ function EnterScreen() {
               type="button"
               onClick={submitProfile}
               disabled={busy}
-              className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+              aria-busy={busy}
+              className={primaryButtonClass}
             >
-              {copy.enter.profileCta}
+              {busy ? "…" : copy.enter.profileCta}
             </button>
           </>
         )}

@@ -446,6 +446,7 @@ export type Database = {
         Args: { p_name: string; p_phone: string; p_survivor_id: string }
         Returns: undefined
       }
+      redeem_access_code: { Args: { p_code: string }; Returns: string }
       verify_access_code: { Args: { p_code: string }; Returns: string }
     }
     Enums: {

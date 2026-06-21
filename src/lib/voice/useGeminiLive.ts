@@ -167,15 +167,6 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
             setup: { model: `models/${model}` },
           }),
         );
-                },
-              },
-              systemInstruction: {
-                role: "system",
-                parts: [{ text: coachPromptFor(mode) }],
-              },
-            },
-          }),
-        );
 
         const maxSec = maxDurationSec ?? ADVOCATE_VOICE_CONFIG.caps.maxSessionDurationSec;
         if (maxSec > 0) {

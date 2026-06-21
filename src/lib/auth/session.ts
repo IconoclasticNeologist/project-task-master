@@ -43,7 +43,13 @@ export async function redeemCode(code: string): Promise<RedeemResult> {
   return { ok: true, survivorId: redeem.data as string };
 }
 
-/** The current survivor row, or null if there is no session / no row. */
+/**
+ * The current survivor row. Returns null ONLY when there is genuinely no usable
+ * identity (no session, or a valid session with no survivor row). THROWS on a real
+ * query error so the route guard can tell "no identity → redirect to welcome" apart
+ * from "couldn't reach the server → keep the survivor where they are." Conflating the
+ * two would evict an authenticated survivor to the welcome screen on a transient blip.
+ */
 export async function getSurvivor(): Promise<Survivor | null> {
   const supabase = getSupabase();
   const { data: sessionData } = await supabase.auth.getSession();
@@ -52,7 +58,7 @@ export async function getSurvivor(): Promise<Survivor | null> {
     .from("survivors")
     .select("id, first_name, preferred_language")
     .maybeSingle();
-  if (error) return null;
+  if (error) throw new Error(error.message);
   return data;
 }
 

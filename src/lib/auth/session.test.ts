@@ -7,10 +7,11 @@ const mockClient = {
     signOut: vi.fn(),
   },
   rpc: vi.fn(),
+  from: vi.fn(),
 };
 vi.mock("@/lib/supabase/client", () => ({ getSupabase: () => mockClient }));
 
-import { redeemCode } from "./session";
+import { redeemCode, getSurvivor } from "./session";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -43,5 +44,54 @@ describe("redeemCode", () => {
     const result = await redeemCode("GOOD");
     expect(result).toEqual({ ok: false });
     expect(mockClient.auth.signOut).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("redeemCode — sign-in failure", () => {
+  it("returns {ok:false} (and does not redeem) if anonymous sign-in fails after a valid code", async () => {
+    mockClient.rpc.mockResolvedValueOnce({ data: "gk-1", error: null }); // verify ok
+    mockClient.auth.signInAnonymously.mockResolvedValue({
+      data: { session: null },
+      error: { message: "anonymous sign-ins are disabled" },
+    });
+    const result = await redeemCode("GOOD");
+    expect(result).toEqual({ ok: false });
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1); // verify only; redeem never reached
+  });
+});
+
+describe("getSurvivor", () => {
+  function mockSurvivorQuery(result: { data: unknown; error: unknown }) {
+    mockClient.from.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        maybeSingle: vi.fn().mockResolvedValue(result),
+      }),
+    });
+  }
+
+  it("returns null when there is no session (genuinely unauthenticated)", async () => {
+    mockClient.auth.getSession.mockResolvedValue({ data: { session: null } });
+    expect(await getSurvivor()).toBeNull();
+  });
+
+  it("returns null when the session exists but there is no survivor row", async () => {
+    mockClient.auth.getSession.mockResolvedValue({ data: { session: {} } });
+    mockSurvivorQuery({ data: null, error: null });
+    expect(await getSurvivor()).toBeNull();
+  });
+
+  it("THROWS on a query error so the guard does not evict a real survivor", async () => {
+    mockClient.auth.getSession.mockResolvedValue({ data: { session: {} } });
+    mockSurvivorQuery({ data: null, error: { message: "network" } });
+    await expect(getSurvivor()).rejects.toThrow();
+  });
+
+  it("returns the survivor row on success", async () => {
+    mockClient.auth.getSession.mockResolvedValue({ data: { session: {} } });
+    mockSurvivorQuery({
+      data: { id: "s-1", first_name: null, preferred_language: "en" },
+      error: null,
+    });
+    expect(await getSurvivor()).toEqual({ id: "s-1", first_name: null, preferred_language: "en" });
   });
 });

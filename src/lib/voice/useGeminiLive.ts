@@ -32,16 +32,16 @@ interface UseGeminiLiveOptions {
 }
 
 const GEMINI_WS_BASE =
-  "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
+  "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
 
 interface VoiceTokenPayload {
-  apiKey: string;
+  token: string;
   voice: string;
   model: string;
-  expiresIn?: number;
+  expiresIn: number;
 }
 
-async function fetchVoiceToken(): Promise<VoiceTokenPayload> {
+async function fetchVoiceToken(mode: CoachMode): Promise<VoiceTokenPayload> {
   const supabase = getSupabase();
   const { data, error } = await supabase.functions.invoke<VoiceTokenPayload>(
     "advocate-voice-token",
@@ -49,11 +49,12 @@ async function fetchVoiceToken(): Promise<VoiceTokenPayload> {
       body: {
         model: ADVOCATE_VOICE_CONFIG.connection.model,
         voice: ADVOCATE_VOICE_CONFIG.connection.voice,
+        mode,
       },
     },
   );
   if (error) throw new Error(error.message);
-  if (!data?.apiKey) throw new Error("Voice token missing apiKey");
+  if (!data?.token) throw new Error("Voice token missing");
   return data;
 }
 

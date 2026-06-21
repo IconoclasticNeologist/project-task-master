@@ -1,68 +1,47 @@
-// Advocate voice config — STRUCTURE only.
-//
-// Mirrors the field families of MindCrafter's LivConfig so future tuning has
-// a shape to fill in, but values are empty/neutral. Lives in TypeScript (not
-// a DB row) — see guardrails.ts for the same reasoning. No admin surface,
-// no runtime tuning, all changes via git.
-//
-// Field families intentionally OMITTED from Liv (incompatible with Advocate
-// safety model): enrollment-quiz framing, email templates, Loops integration,
-// outbound webhooks, parent-visibility, transcript persistence, public
-// session-fetch endpoints.
+// Advocate voice config — STRUCTURE + minimal warm placeholder content.
+// All review-gated content lives in src/lib/copy and src/lib/agents/**.
+// No admin surface, no runtime tuning, all changes via git.
 
 import type { AdvocateGuardrails } from "./guardrails";
 import { DEFAULT_ADVOCATE_GUARDRAILS } from "./guardrails";
 
 export interface AdvocateVoiceConfig {
-  // --- connection & model ---
   connection: {
     model: string;
     voice: string;
-    /** Fall back to this model after N consecutive upstream failures. */
     fallbackModel: string | null;
     fallbackAfterFailures: number;
   };
-
-  // --- caps & budgets (aggregate-only; see cost-breaker.ts) ---
   caps: {
     maxSessionDurationSec: number;
     idleTimeoutSec: number;
-    /** Aggregate-only daily $ ceiling. No per-IP, no per-session tracking. */
+    /** Tighter cap for the Witness Stand (Defense) practice flow. */
+    witnessStandMaxDurationSec: number;
+    /** Aggregate-only daily $ ceiling. */
     dailyDollarCap: number;
   };
-
-  // --- pricing ($/1M tokens). All 0 = breaker disabled. ---
-  // Populate once the preview SKU's public rates are confirmed.
   pricing: {
     audioInputPerMTokens: number;
     audioOutputPerMTokens: number;
     textInputPerMTokens: number;
     textOutputPerMTokens: number;
   };
-
-  // --- system-prompt composition ---
   prompt: {
     persona: string;
     instructions: string;
-    /** Pattern strings appended verbatim (e.g. "When asked X, respond Y"). */
     patterns: string[];
   };
-
-  // --- UI / orb visuals ---
   ui: {
     orbColor: string;
     orbColorListening: string;
     orbColorSpeaking: string;
   };
-
-  // --- mic-permission copy ---
   copy: {
     micPermissionTitle: string;
     micPermissionBody: string;
     micDeniedTitle: string;
     micDeniedBody: string;
   };
-
   guardrails: AdvocateGuardrails;
 }
 
@@ -74,9 +53,10 @@ export const ADVOCATE_VOICE_CONFIG: AdvocateVoiceConfig = {
     fallbackAfterFailures: 3,
   },
   caps: {
-    maxSessionDurationSec: 0,
-    idleTimeoutSec: 0,
-    dailyDollarCap: 0,
+    maxSessionDurationSec: 60 * 45, // 45 min soft session cap
+    idleTimeoutSec: 60 * 3, // 3 min idle
+    witnessStandMaxDurationSec: 60 * 10, // 10 min hard cap on practice cross
+    dailyDollarCap: 0, // disabled until pricing set
   },
   pricing: {
     audioInputPerMTokens: 0,
@@ -85,20 +65,29 @@ export const ADVOCATE_VOICE_CONFIG: AdvocateVoiceConfig = {
     textOutputPerMTokens: 0,
   },
   prompt: {
-    persona: "",
-    instructions: "",
-    patterns: [],
+    // PLACEHOLDER warm Coach baseline — final wording is review-gated.
+    persona:
+      "You are a calm, patient listener. You speak slowly. You do not rush. You never label what the person has lived through.",
+    instructions:
+      "Use plain words. Ask one thing at a time. It is okay to sit in silence. If the person sounds overwhelmed, slow down and offer to pause.",
+    patterns: [
+      "Never use the word 'victim'.",
+      "Never use the phrase 'your abuse' or any similar label.",
+      "If asked for legal advice, gently say you cannot give it and point to support.",
+    ],
   },
   ui: {
-    orbColor: "",
-    orbColorListening: "",
-    orbColorSpeaking: "",
+    orbColor: "oklch(0.94 0.022 90)",
+    orbColorListening: "oklch(0.85 0.04 150)",
+    orbColorSpeaking: "oklch(0.78 0.06 150)",
   },
   copy: {
-    micPermissionTitle: "",
-    micPermissionBody: "",
-    micDeniedTitle: "",
-    micDeniedBody: "",
+    micPermissionTitle: "Microphone",
+    micPermissionBody:
+      "I need permission to use your microphone so I can listen. You can talk or type — your choice.",
+    micDeniedTitle: "Microphone is off",
+    micDeniedBody:
+      "That’s okay. You can still type. You can change this in your browser settings any time.",
   },
   guardrails: DEFAULT_ADVOCATE_GUARDRAILS,
 };

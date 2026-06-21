@@ -17,7 +17,7 @@ import { ADVOCATE_VOICE_CONFIG } from "./config";
 import { startMicCapture, type CaptureHandle } from "./audio/capture";
 import { PcmPlayer } from "./audio/playback";
 import { tripwire, type DistressSignal } from "@/lib/agents/safety/distress";
-import { coachPromptFor, type CoachMode } from "@/lib/agents/coach";
+import type { CoachMode } from "@/lib/agents/coach";
 import { getSupabase } from "@/lib/supabase/client";
 
 export type VoiceStatus = "idle" | "connecting" | "open" | "closed" | "error";

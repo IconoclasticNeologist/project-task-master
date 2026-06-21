@@ -144,7 +144,7 @@ export function deleteTimeline(id: string) {
   );
 }
 
-// ---------- Documents (metadata only — no file body in localStorage) ----------
+// ---------- Documents (metadata only — no file body in memory either) ----------
 
 export interface DocumentRow {
   id: string;

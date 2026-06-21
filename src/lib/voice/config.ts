@@ -31,6 +31,15 @@ export interface AdvocateVoiceConfig {
     dailyDollarCap: number;
   };
 
+  // --- pricing ($/1M tokens). All 0 = breaker disabled. ---
+  // Populate once the preview SKU's public rates are confirmed.
+  pricing: {
+    audioInputPerMTokens: number;
+    audioOutputPerMTokens: number;
+    textInputPerMTokens: number;
+    textOutputPerMTokens: number;
+  };
+
   // --- system-prompt composition ---
   prompt: {
     persona: string;
@@ -68,6 +77,12 @@ export const ADVOCATE_VOICE_CONFIG: AdvocateVoiceConfig = {
     maxSessionDurationSec: 0,
     idleTimeoutSec: 0,
     dailyDollarCap: 0,
+  },
+  pricing: {
+    audioInputPerMTokens: 0,
+    audioOutputPerMTokens: 0,
+    textInputPerMTokens: 0,
+    textOutputPerMTokens: 0,
   },
   prompt: {
     persona: "",

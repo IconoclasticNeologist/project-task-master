@@ -47,8 +47,8 @@
 :root {
   --radius: 0.625rem;
 
-  /* Warm cream paper */
-  --background: oklch(0.975 0.012 85);
+  /* Warm recycled paper */
+  --background: oklch(0.955 0.014 82);
   /* Soft near-black, not pure */
   --foreground: oklch(0.28 0.015 60);
 

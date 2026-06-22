@@ -131,6 +131,8 @@ export const copy = {
       "Anything you mark “okay to share” is read by a real person who is helping you.",
     cloudOff:
       "Sign-in is not turned on yet, so this is saved on this device only. When sign-in is turned on, your space will move with you.",
+    loadError: "We couldn't load this just now.",
+    retry: "Try again",
     tabs: {
       statements: "Your words",
       timeline: "Your timeline",

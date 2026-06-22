@@ -27,4 +27,11 @@ describe("runAgent", () => {
     functions.invoke.mockResolvedValue({ data: { text: "" }, error: null });
     await expect(runAgent("translator", { text: "x", fromLang: "en", toLang: "en", fromRegister: "narrative", toRegister: "legal" })).rejects.toThrow();
   });
+
+  it("invokes for the reframer with entries", async () => {
+    functions.invoke.mockResolvedValue({ data: { text: "• observation" }, error: null });
+    const out = await runAgent("reframer", { entries: ["a", "b"] });
+    expect(out).toBe("• observation");
+    expect(functions.invoke).toHaveBeenCalledWith("advocate-agent", { body: { agent: "reframer", input: { entries: ["a", "b"] } } });
+  });
 });

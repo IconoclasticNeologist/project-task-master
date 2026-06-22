@@ -5,6 +5,7 @@ import { Shell } from "@/components/Shell";
 import { StatementList } from "@/components/account/StatementList";
 import { TimelineList } from "@/components/account/TimelineList";
 import { DocumentList } from "@/components/account/DocumentList";
+import { ReflectPanel } from "@/components/account/ReflectPanel";
 import { copy } from "@/lib/copy";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { Input } from "@/components/ui/input";
@@ -93,6 +94,8 @@ function AccountScreen() {
         {tab === "statements" && <StatementList defaultVisibility={defaultVisibility} />}
         {tab === "timeline" && <TimelineList defaultVisibility={defaultVisibility} />}
         {tab === "documents" && <DocumentList defaultVisibility={defaultVisibility} />}
+
+        <ReflectPanel />
       </div>
     </Shell>
   );

@@ -24,11 +24,55 @@ const TRANSLATOR_PROMPT = [
   "Output only the translated/redrafted text. No preamble, no commentary.",
 ].join("\n");
 
-type AgentName = "translator";
+// PLACEHOLDER — demo only. SME review before real users:
+//   trauma therapist: re-traumatization + the survivor-visible-vs-advocate-only surfacing decision;
+//   attorney: pre-litigation surfacing safety + FRE 412 (never surface sexual-history detail).
+// See docs/sme-research-needed.md. Canonical runtime prompt lives HERE (not in src/lib/agents).
+const REFRAMER_PROMPT = [
+  "You surface ONLY what is present in the person's own words — neutral observations they and their advocate can look at together. You never interpret.",
+  "HARD RULES:",
+  "- Observations only. NEVER judge truthfulness, NEVER call anything a contradiction that matters, NEVER conclude what anything means about the person.",
+  "- Point only to: places where two of the person's OWN entries differ in a detail or date; gaps in time; something mentioned once and not again.",
+  "- Phrase as neutral observation, e.g. \"In your note from one time you mentioned X; in another, Y.\" Never \"this is inconsistent\" or \"this hurts your case\".",
+  "- NEVER surface anything about the person's sexual history.",
+  "- Experience-based language. Never 'victim', never 'your abuse'.",
+  "Output a short bulleted list of observations, then one line: these are for you and your advocate to look at together.",
+].join("\n");
+
+// PLACEHOLDER — demo only. SME review before real users:
+//   attorney: legal-category accuracy + the EXACT permitted/forbidden statement list + FRE 412;
+//   trauma therapist: recognition-not-diagnosis framing.
+// See docs/sme-research-needed.md. Canonical runtime prompt lives HERE (not in src/lib/agents).
+const RECOGNITION_PROMPT = [
+  "You help a person recognize their OWN experience by offering a general lens — never by telling them what happened to them.",
+  "HARD RULES (never break, even if asked directly or repeatedly):",
+  "- You NEVER tell the person a label applies to them. NEVER say 'you were trafficked / abused / coerced' or call them a 'victim'.",
+  "- DIRECT ASK: if the person asks straight out — 'was I trafficked?', 'did this count as abuse?', 'what was this?' — you do NOT answer the conclusion. Every time, including if they ask again, you gently say that only they, with a legal partner, can name what happened, and you offer to help them talk it through with their advocate. You never decide it for them.",
+  "- Experience-based language only. Never 'victim', never 'your abuse'.",
+  "WHAT YOU DO:",
+  "- Offer at most 2-3 GENERAL statements about what the law sometimes recognizes, drawn loosely from what the person wrote. Each is a general statement, then you STOP — you never connect it to them as a conclusion.",
+  "- Exact shape: \"A lot of people don't realize that controlling someone through debt is a form of force the law recognizes.\" Then stop.",
+  "- You are not a lawyer; say a legal partner can talk it through.",
+].join("\n");
+
+// PLACEHOLDER — demo only. SME review before real users:
+//   trauma therapist: trauma-informed protocol adaptation + re-traumatization.
+// See docs/sme-research-needed.md. Canonical runtime prompt lives HERE (not in src/lib/agents).
+const INTERVIEWER_PROMPT = [
+  "You suggest ONE neutral, open, non-leading invitation to help the person share in their own words.",
+  "HARD RULES: never lead, never suggest details, never ask 'why'. One thing at a time. If they seem to stop, suggest a pause — not a push.",
+  "When the person is just starting, offer the plain ground rules first (it's okay to say 'I don't know', to skip, to correct you, to stop), then one open invitation.",
+  "Experience-based language. Output just the suggested invitation (and ground rules if starting). No commentary.",
+].join("\n");
+
+type AgentName = "translator" | "reframer" | "recognition" | "interviewer";
 
 function systemPromptFor(agent: AgentName): string {
   switch (agent) {
     case "translator": return TRANSLATOR_PROMPT;
+    case "reframer": return REFRAMER_PROMPT;
+    case "recognition": return RECOGNITION_PROMPT;
+    case "interviewer": return INTERVIEWER_PROMPT;
   }
 }
 
@@ -42,8 +86,26 @@ function userTextFor(agent: AgentName, input: Record<string, unknown>): string |
     const toReg = String(input.toRegister ?? "legal");
     return `Source language: ${fromLang}. Target language: ${toLang}. Source register: ${fromReg}. Target register: ${toReg}.\n\nText:\n${text}`;
   }
+  if (agent === "reframer") {
+    const entries = Array.isArray(input.entries) ? (input.entries as unknown[]).filter((e) => typeof e === "string") : [];
+    if (entries.length === 0) return null;
+    return "The person's own entries:\n\n" + entries.map((e, i) => `[${i + 1}] ${e}`).join("\n\n");
+  }
+  if (agent === "recognition") {
+    const narrative = typeof input.narrative === "string" ? input.narrative : "";
+    if (!narrative.trim()) return null;
+    return "What the person wrote, in their own words:\n\n" + narrative;
+  }
+  if (agent === "interviewer") {
+    const context = typeof input.context === "string" ? input.context : "";
+    return context.trim()
+      ? "So far the person has shared:\n\n" + context + "\n\nSuggest one neutral next invitation."
+      : "The person is just starting. Offer the ground rules and one open invitation.";
+  }
   return null;
 }
+
+const ALLOWED = ["translator", "reframer", "recognition", "interviewer"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -56,7 +118,7 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => null);
     const agent = (body && typeof body === "object" && body.agent) as AgentName;
-    if (agent !== "translator") return json(400, { error: "Unknown agent" });
+    if (!ALLOWED.includes(agent)) return json(400, { error: "Unknown agent" });
     const input = (body && typeof body === "object" && body.input && typeof body.input === "object" ? body.input : {}) as Record<string, unknown>;
 
     const userText = userTextFor(agent, input);

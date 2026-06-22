@@ -158,6 +158,9 @@ export const copy = {
       addCta: "Add a paper",
       empty: "No papers here yet.",
       noteLabel: "A short note about this paper",
+      view: "View",
+      tooLarge: "That file is over 10 MB. Try a smaller one.",
+      uploading: "Adding…",
     },
   },
 

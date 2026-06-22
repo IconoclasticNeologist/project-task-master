@@ -25,7 +25,8 @@ $$;
 
 grant execute on function public.match_embeddings(extensions.vector, int) to authenticated;
 
--- One embedding row per source (N2: no chunking). Enables the edge function's
--- upsert(onConflict: 'source_id'). A future chunking pass would drop this and key
--- on (source_id, chunk_index) instead.
-create unique index if not exists embeddings_source_id_key on public.embeddings (source_id);
+-- One embedding row per (survivor, source) (N2: no chunking). Enables the edge
+-- function's upsert(onConflict: 'survivor_id,source_id'). A future chunking pass
+-- would extend this to (survivor_id, source_id, chunk_index).
+create unique index if not exists embeddings_survivor_source_key
+  on public.embeddings (survivor_id, source_id);

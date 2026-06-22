@@ -80,7 +80,7 @@ serve(async (req) => {
           language,
           embedding: `[${vec.join(",")}]`,
         },
-        { onConflict: "source_id" },
+        { onConflict: "survivor_id,source_id" },
       );
       if (error) return json(502, { error: "Index write failed" });
       return json(200, { ok: true });

@@ -9,7 +9,6 @@ import { AftercareCard } from "@/components/AftercareCard";
 import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { copy } from "@/lib/copy";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
-import { loadAftercare } from "@/lib/data/local-store";
 import {
   generateContainmentClose,
   requiresContainment,
@@ -35,7 +34,9 @@ function SessionScreen() {
   const [distress, setDistress] = useState<DistressSignal>(null);
   const [sessionState, setSessionState] = useState<SessionState>({
     hardMaterialTouched: false,
-    aftercare: typeof window !== "undefined" ? loadAftercare() : null,
+    // TODO(C): wire aftercare read from Supabase (loadSurvivorSettings → { supportPerson, calmingThing }).
+    // B retired the in-memory store; until C wires it, the care plan falls back to the calm "set this in Settings" card.
+    aftercare: null,
     notableMoments: [],
   });
   const [witnessStand, setWitnessStand] = useState(false);

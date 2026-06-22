@@ -1,5 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AftercarePlan } from "@/lib/data/local-store";
+
+export interface AftercarePlan {
+  supportPerson: string;
+  calmingThing: string;
+}
 
 export function AftercareCard({ plan, title }: { plan: AftercarePlan | null; title: string }) {
   if (!plan) {

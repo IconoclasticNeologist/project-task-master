@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSurvivor } from "@/lib/auth/guard";
 import { Shell } from "@/components/Shell";
-import { CloudOffBanner } from "@/components/CloudOffBanner";
 import { StatementList } from "@/components/account/StatementList";
 import { TimelineList } from "@/components/account/TimelineList";
-import { DocumentList } from "@/components/account/DocumentList";
 import { copy } from "@/lib/copy";
-import { loadSettings, type UserSettings } from "@/lib/data/local-store";
+import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: requireSurvivor,
@@ -15,12 +13,12 @@ export const Route = createFileRoute("/account")({
   component: AccountScreen,
 });
 
-type Tab = "statements" | "timeline" | "documents";
+type Tab = "statements" | "timeline";
 
 function AccountScreen() {
   const [tab, setTab] = useState<Tab>("statements");
-  const [settings, setSettings] = useState<UserSettings>({ language: "en", defaultVisibility: "private" });
-  useEffect(() => setSettings(loadSettings()), []);
+  const { query } = useSurvivorSettings();
+  const defaultVisibility = query.data?.defaultVisibility ?? "private";
 
   return (
     <Shell>
@@ -30,38 +28,21 @@ function AccountScreen() {
           <p className="text-sm leading-relaxed text-muted-foreground">{copy.account.intro}</p>
         </header>
 
-        <CloudOffBanner />
-
         <p className="rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground">
           {copy.account.sharedNote}
         </p>
 
         <nav className="flex gap-2 border-b border-border">
-          {(
-            [
-              ["statements", copy.account.tabs.statements],
-              ["timeline", copy.account.tabs.timeline],
-              ["documents", copy.account.tabs.documents],
-            ] as const
-          ).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setTab(k)}
-              className={
-                tab === k
-                  ? "border-b-2 border-foreground px-3 py-2 text-sm text-foreground"
-                  : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-              }
-            >
+          {([["statements", copy.account.tabs.statements], ["timeline", copy.account.tabs.timeline]] as const).map(([k, label]) => (
+            <button key={k} type="button" onClick={() => setTab(k)}
+              className={tab === k ? "border-b-2 border-foreground px-3 py-2 text-sm text-foreground" : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"}>
               {label}
             </button>
           ))}
         </nav>
 
-        {tab === "statements" && <StatementList defaultVisibility={settings.defaultVisibility} />}
-        {tab === "timeline" && <TimelineList defaultVisibility={settings.defaultVisibility} />}
-        {tab === "documents" && <DocumentList defaultVisibility={settings.defaultVisibility} />}
+        {tab === "statements" && <StatementList defaultVisibility={defaultVisibility} />}
+        {tab === "timeline" && <TimelineList defaultVisibility={defaultVisibility} />}
       </div>
     </Shell>
   );

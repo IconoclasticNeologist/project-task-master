@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
-import { loadAftercare } from "@/lib/data/local-store";
+import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { AftercareCard } from "@/components/AftercareCard";
 import { requireSurvivor } from "@/lib/auth/guard";
 
@@ -13,7 +13,10 @@ export const Route = createFileRoute("/home")({
 });
 
 function HomeScreen() {
-  const plan = typeof window !== "undefined" ? loadAftercare() : null;
+  const { query } = useSurvivorSettings();
+  const plan = query.data
+    ? { supportPerson: query.data.supportPerson, calmingThing: query.data.calmingAnchor }
+    : null;
   return (
     <Shell>
       <div className="space-y-8">

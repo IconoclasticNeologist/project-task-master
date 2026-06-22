@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { requireSurvivor } from "@/lib/auth/guard";
+import { getSurvivor } from "@/lib/auth/session";
+import { saveAftercare, markOnboarded } from "@/lib/data/settings";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,10 +10,16 @@ import { Label } from "@/components/ui/label";
 import { ProgressDots } from "@/components/ProgressDots";
 import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { copy } from "@/lib/copy";
-import { loadAftercare, saveAftercare } from "@/lib/data/local-store";
 
 export const Route = createFileRoute("/onboarding")({
-  beforeLoad: requireSurvivor,
+  beforeLoad: async () => {
+    await requireSurvivor();            // A's guard: SSR-skip, redirect to "/" on clean no-survivor, no eviction on transient error
+    if (typeof document === "undefined") return;
+    const survivor = await getSurvivor().catch(() => null);
+    if (survivor?.onboarded_at) {
+      throw redirect({ to: "/home" });  // already onboarded → skip the emotional flow
+    }
+  },
   head: () => ({ meta: [{ title: "Begin — The Advocate" }] }),
   component: OnboardingScreen,
 });
@@ -21,13 +29,13 @@ const STEPS = ["welcome", "feelings", "care", "aftercare", "how", "rules"] as co
 function OnboardingScreen() {
   const navigate = useNavigate();
   const [stepIdx, setStepIdx] = useState(0);
-  const initial = loadAftercare();
-  const [supportPerson, setSupportPerson] = useState(initial?.supportPerson ?? "");
-  const [calmingThing, setCalmingThing] = useState(initial?.calmingThing ?? "");
+  const [supportPerson, setSupportPerson] = useState("");
+  const [calmingThing, setCalmingThing] = useState("");
 
   const step = STEPS[stepIdx];
   const next = () => {
     if (stepIdx === STEPS.length - 1) {
+      void markOnboarded();
       void navigate({ to: "/home" });
       return;
     }
@@ -94,7 +102,7 @@ function OnboardingScreen() {
   }
 
   const onCta = () => {
-    if (step === "aftercare") saveAftercare({ supportPerson, calmingThing });
+    if (step === "aftercare") void saveAftercare({ supportPerson, calmingAnchor: calmingThing }).catch(() => {});
     next();
   };
 

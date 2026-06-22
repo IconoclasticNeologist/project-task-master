@@ -37,6 +37,17 @@ export async function saveSurvivorSettings(input: SurvivorSettings): Promise<voi
   if (error) throw new Error(error.message);
 }
 
+/** Partial aftercare write (support person + calming anchor only) — used by the emotional onboarding. */
+export async function saveAftercare(input: { supportPerson: string; calmingAnchor: string }): Promise<void> {
+  const survivor = await getSurvivor();
+  if (!survivor) throw new Error("not authenticated");
+  const { error } = await getSupabase()
+    .from("survivors")
+    .update({ support_contact_name: input.supportPerson, calming_anchor: input.calmingAnchor })
+    .eq("id", survivor.id);
+  if (error) throw new Error(error.message);
+}
+
 /** Mark the emotional onboarding complete (powers the /onboarding short-circuit). */
 export async function markOnboarded(): Promise<void> {
   const survivor = await getSurvivor();

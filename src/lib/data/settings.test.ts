@@ -6,7 +6,7 @@ vi.mock("@/lib/auth/session", () => ({
   getSurvivor: vi.fn().mockResolvedValue({ id: "sv1", first_name: null, preferred_language: "en", onboarded_at: null }),
 }));
 
-import { loadSurvivorSettings, saveSurvivorSettings, markOnboarded } from "./settings";
+import { loadSurvivorSettings, saveSurvivorSettings, markOnboarded, saveAftercare } from "./settings";
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -57,6 +57,17 @@ describe("markOnboarded", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const arg = (update.mock.calls as any)[0][0] as { onboarded_at: unknown };
     expect(typeof arg.onboarded_at).toBe("string");
+    expect(eq).toHaveBeenCalledWith("id", "sv1");
+  });
+});
+
+describe("saveAftercare", () => {
+  it("updates only support_contact_name and calming_anchor by id", async () => {
+    const eq = vi.fn().mockResolvedValue({ error: null });
+    const update = vi.fn(() => ({ eq }));
+    mockClient.from.mockReturnValue({ update });
+    await saveAftercare({ supportPerson: "Sam", calmingAnchor: "music" });
+    expect(update).toHaveBeenCalledWith({ support_contact_name: "Sam", calming_anchor: "music" });
     expect(eq).toHaveBeenCalledWith("id", "sv1");
   });
 });

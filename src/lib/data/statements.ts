@@ -1,5 +1,6 @@
 import { getSupabase } from "@/lib/supabase/client";
 import { getSurvivor } from "@/lib/auth/session";
+import type { Tables } from "@/lib/supabase/types";
 
 export interface StatementRow {
   id: string;
@@ -10,14 +11,10 @@ export interface StatementRow {
   updatedAt: string;
 }
 
-interface DbRow {
-  id: string;
-  raw_text: string;
-  visibility: "private" | "shareable";
-  language: string | null;
-  created_at: string;
-  updated_at: string;
-}
+type DbRow = Pick<
+  Tables<"statements">,
+  "id" | "raw_text" | "visibility" | "language" | "created_at" | "updated_at"
+>;
 
 const COLS = "id, raw_text, visibility, language, created_at, updated_at";
 
@@ -26,7 +23,7 @@ function mapRow(r: DbRow): StatementRow {
     id: r.id,
     text: r.raw_text,
     visibility: r.visibility,
-    language: (r.language as "en" | "es" | null) ?? null,
+    language: r.language === "es" ? "es" : r.language === "en" ? "en" : null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

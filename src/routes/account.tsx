@@ -4,6 +4,7 @@ import { requireSurvivor } from "@/lib/auth/guard";
 import { Shell } from "@/components/Shell";
 import { StatementList } from "@/components/account/StatementList";
 import { TimelineList } from "@/components/account/TimelineList";
+import { DocumentList } from "@/components/account/DocumentList";
 import { copy } from "@/lib/copy";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/account")({
   component: AccountScreen,
 });
 
-type Tab = "statements" | "timeline";
+type Tab = "statements" | "timeline" | "documents";
 
 function AccountScreen() {
   const [tab, setTab] = useState<Tab>("statements");
@@ -33,7 +34,7 @@ function AccountScreen() {
         </p>
 
         <nav className="flex gap-2 border-b border-border">
-          {([["statements", copy.account.tabs.statements], ["timeline", copy.account.tabs.timeline]] as const).map(([k, label]) => (
+          {([["statements", copy.account.tabs.statements], ["timeline", copy.account.tabs.timeline], ["documents", copy.account.tabs.documents]] as const).map(([k, label]) => (
             <button key={k} type="button" onClick={() => setTab(k)}
               className={tab === k ? "border-b-2 border-foreground px-3 py-2 text-sm text-foreground" : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"}>
               {label}
@@ -43,6 +44,7 @@ function AccountScreen() {
 
         {tab === "statements" && <StatementList defaultVisibility={defaultVisibility} />}
         {tab === "timeline" && <TimelineList defaultVisibility={defaultVisibility} />}
+        {tab === "documents" && <DocumentList defaultVisibility={defaultVisibility} />}
       </div>
     </Shell>
   );

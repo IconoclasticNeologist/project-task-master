@@ -103,6 +103,7 @@ export type Database = {
           document_type: Database["public"]["Enums"]["document_type"]
           extracted_text: string | null
           id: string
+          note: string | null
           storage_path: string
           survivor_id: string
           uploaded_at: string
@@ -113,6 +114,7 @@ export type Database = {
           document_type?: Database["public"]["Enums"]["document_type"]
           extracted_text?: string | null
           id?: string
+          note?: string | null
           storage_path: string
           survivor_id: string
           uploaded_at?: string
@@ -123,6 +125,7 @@ export type Database = {
           document_type?: Database["public"]["Enums"]["document_type"]
           extracted_text?: string | null
           id?: string
+          note?: string | null
           storage_path?: string
           survivor_id?: string
           uploaded_at?: string

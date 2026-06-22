@@ -17,6 +17,7 @@ import {
 import type { DistressSignal } from "@/lib/agents/safety/distress";
 import type { CoachMode } from "@/lib/agents/coach";
 import { ADVOCATE_VOICE_CONFIG } from "@/lib/voice/config";
+import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 
 export const Route = createFileRoute("/session")({
   beforeLoad: requireSurvivor,
@@ -34,12 +35,25 @@ function SessionScreen() {
   const [distress, setDistress] = useState<DistressSignal>(null);
   const [sessionState, setSessionState] = useState<SessionState>({
     hardMaterialTouched: false,
-    // TODO(C): wire aftercare read from Supabase (loadSurvivorSettings → { supportPerson, calmingThing }).
-    // B retired the in-memory store; until C wires it, the care plan falls back to the calm "set this in Settings" card.
     aftercare: null,
     notableMoments: [],
   });
   const [witnessStand, setWitnessStand] = useState(false);
+
+  const settings = useSurvivorSettings();
+
+  useEffect(() => {
+    const data = settings.query.data;
+    if (data) {
+      setSessionState((s) => ({
+        ...s,
+        aftercare: {
+          supportPerson: data.supportPerson,
+          calmingThing: data.calmingAnchor,
+        },
+      }));
+    }
+  }, [settings.query.data]);
 
   const { status, micState, coachSpeaking, connect, disconnect, enableMic, disableMic, sendText } =
     useGeminiLive({

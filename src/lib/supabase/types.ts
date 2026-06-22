@@ -294,10 +294,13 @@ export type Database = {
       survivors: {
         Row: {
           auth_user_id: string | null
+          calming_anchor: string | null
           created_at: string
+          default_visibility: Database["public"]["Enums"]["content_visibility"]
           first_name: string | null
           gatekeeper_id: string
           id: string
+          onboarded_at: string | null
           preferred_language: string | null
           session_length_pref: string | null
           support_contact_name: string | null
@@ -306,10 +309,13 @@ export type Database = {
         }
         Insert: {
           auth_user_id?: string | null
+          calming_anchor?: string | null
           created_at?: string
+          default_visibility?: Database["public"]["Enums"]["content_visibility"]
           first_name?: string | null
           gatekeeper_id: string
           id?: string
+          onboarded_at?: string | null
           preferred_language?: string | null
           session_length_pref?: string | null
           support_contact_name?: string | null
@@ -318,10 +324,13 @@ export type Database = {
         }
         Update: {
           auth_user_id?: string | null
+          calming_anchor?: string | null
           created_at?: string
+          default_visibility?: Database["public"]["Enums"]["content_visibility"]
           first_name?: string | null
           gatekeeper_id?: string
           id?: string
+          onboarded_at?: string | null
           preferred_language?: string | null
           session_length_pref?: string | null
           support_contact_name?: string | null
@@ -347,10 +356,11 @@ export type Database = {
           event_date: string | null
           id: string
           order_index: number
+          relative_anchor: string | null
           source_document_id: string | null
           source_statement_id: string | null
           survivor_id: string
-          title: string
+          title: string | null
           updated_at: string
           visibility: Database["public"]["Enums"]["content_visibility"]
         }
@@ -362,10 +372,11 @@ export type Database = {
           event_date?: string | null
           id?: string
           order_index?: number
+          relative_anchor?: string | null
           source_document_id?: string | null
           source_statement_id?: string | null
           survivor_id: string
-          title: string
+          title?: string | null
           updated_at?: string
           visibility?: Database["public"]["Enums"]["content_visibility"]
         }
@@ -377,6 +388,7 @@ export type Database = {
           event_date?: string | null
           id?: string
           order_index?: number
+          relative_anchor?: string | null
           source_document_id?: string | null
           source_statement_id?: string | null
           survivor_id?: string

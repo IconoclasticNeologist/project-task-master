@@ -59,7 +59,13 @@ export function DocumentList({ defaultVisibility }: { defaultVisibility: "privat
       <Card>
         <CardContent className="space-y-3 py-4">
           <Label className="text-sm">{copy.account.documents.addCta}</Label>
-          <input ref={fileInputRef} type="file" onChange={onFile} className="text-sm" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf,.doc,.docx,.txt,.rtf"
+            onChange={onFile}
+            className="text-sm"
+          />
           {file && (
             <>
               <div className="space-y-1">

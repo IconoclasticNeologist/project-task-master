@@ -7,6 +7,9 @@ import { TimelineList } from "@/components/account/TimelineList";
 import { DocumentList } from "@/components/account/DocumentList";
 import { copy } from "@/lib/copy";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
+import { Input } from "@/components/ui/input";
+import { searchWords, type RagHit } from "@/lib/agents/rag";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: requireSurvivor,
@@ -21,6 +24,19 @@ function AccountScreen() {
   const { query } = useSurvivorSettings();
   const defaultVisibility = query.data?.defaultVisibility ?? "private";
 
+  const [q, setQ] = useState("");
+  const [pending, setPending] = useState(false);
+  const [hits, setHits] = useState<RagHit[] | null>(null);
+
+  function handleSearch() {
+    if (!q.trim()) return;
+    setPending(true);
+    searchWords(q)
+      .then(setHits)
+      .catch(() => toast(copy.account.loadError))
+      .finally(() => setPending(false));
+  }
+
   return (
     <Shell>
       <div className="space-y-6">
@@ -32,6 +48,38 @@ function AccountScreen() {
         <p className="rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground">
           {copy.account.sharedNote}
         </p>
+
+        <div className="flex gap-2">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={copy.account.searchPlaceholder}
+            className="flex-1"
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <button
+            type="button"
+            onClick={handleSearch}
+            disabled={pending}
+            className="rounded-md border border-border px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            Search
+          </button>
+        </div>
+
+        {hits !== null && (
+          <div className="space-y-2">
+            {hits.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{copy.account.searchEmpty}</p>
+            ) : (
+              hits.map((h, i) => (
+                <div key={i} className="rounded-md border border-border bg-card px-3 py-2 text-sm leading-relaxed">
+                  {h.chunk_text}
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         <nav className="flex gap-2 border-b border-border">
           {([["statements", copy.account.tabs.statements], ["timeline", copy.account.tabs.timeline], ["documents", copy.account.tabs.documents]] as const).map(([k, label]) => (

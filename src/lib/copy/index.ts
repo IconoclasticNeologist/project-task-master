@@ -165,6 +165,8 @@ export const copy = {
       tooLarge: "That file is over 10 MB. Try a smaller one.",
       uploading: "Adding…",
     },
+    searchPlaceholder: "Search your words…",
+    searchEmpty: "No matches yet.",
   },
 
   resources: {

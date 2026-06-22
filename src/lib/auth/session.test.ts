@@ -100,9 +100,9 @@ describe("getSurvivor", () => {
   it("returns the survivor row on success", async () => {
     mockClient.auth.getSession.mockResolvedValue({ data: { session: {} } });
     mockSurvivorQuery({
-      data: { id: "s-1", first_name: null, preferred_language: "en" },
+      data: { id: "s-1", first_name: null, preferred_language: "en", onboarded_at: null },
       error: null,
     });
-    expect(await getSurvivor()).toEqual({ id: "s-1", first_name: null, preferred_language: "en" });
+    expect(await getSurvivor()).toEqual({ id: "s-1", first_name: null, preferred_language: "en", onboarded_at: null });
   });
 });

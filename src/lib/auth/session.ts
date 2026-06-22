@@ -4,6 +4,7 @@ export interface Survivor {
   id: string;
   first_name: string | null;
   preferred_language: string | null;
+  onboarded_at: string | null;
 }
 
 export type RedeemResult = { ok: true; survivorId: string } | { ok: false };
@@ -59,7 +60,7 @@ export async function getSurvivor(): Promise<Survivor | null> {
   if (!sessionData.session) return null;
   const { data, error } = await supabase
     .from("survivors")
-    .select("id, first_name, preferred_language")
+    .select("id, first_name, preferred_language, onboarded_at")
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data;

@@ -22,6 +22,9 @@ export async function loadSurvivorSettings(): Promise<SurvivorSettings> {
   };
 }
 
+// NOTE: support_contact_name is written directly (RLS-permitted, plain column) rather than via the
+// set_support_contact RPC — that RPC is for the ENCRYPTED phone (p_phone non-null in its generated type).
+// If a future slice captures a phone, route BOTH name+phone through set_support_contact to avoid divergence.
 export async function saveSurvivorSettings(input: SurvivorSettings): Promise<void> {
   const survivor = await getSurvivor();
   if (!survivor) throw new Error("not authenticated");

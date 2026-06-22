@@ -32,7 +32,18 @@ function HomeScreen() {
           <Tile to="/resources" label={copy.home.findSupport} hint="People you can talk to now." />
         </div>
 
-        <AftercareCard plan={plan} title="Your care plan" />
+        {query.isError ? (
+          <Card className="paper-shadow">
+            <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
+              <p className="text-foreground">{copy.account.loadError}</p>
+              <button type="button" onClick={() => void query.refetch()} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+                {copy.account.retry}
+              </button>
+            </CardContent>
+          </Card>
+        ) : (
+          <AftercareCard plan={plan} title="Your care plan" />
+        )}
       </div>
     </Shell>
   );

@@ -46,6 +46,7 @@ export const copy = {
     session: "Session",
     resources: "Support",
     account: "Your space",
+    team: "Your team",
     settings: "Settings",
   },
 
@@ -192,18 +193,142 @@ export const copy = {
     searchEmpty: "No matches yet.",
   },
 
+  team: {
+    title: "Your team",
+    intro:
+      "You choose who can see parts of your space. You can say no, or end access, at any time.",
+    loading: "Loading your access choices…",
+    loadError: "We couldn't load this just now.",
+    retry: "Try again",
+    emptyTitle: "No one has access through this app right now.",
+    emptyBody:
+      "If a person asks to join your team, you will see exactly what they are asking to see before you decide.",
+    requested: "They are asking to see",
+    canSee: "They can see",
+    allow: "Allow access",
+    decline: "No thanks",
+    revoke: "End access",
+    confirmRevoke: "End this person's access? They will no longer be able to see the parts of your space listed here.",
+    unnamedProfessional: "A person from this organization",
+    expires: (date: string) => `This access ends on ${date}.`,
+    scopes: {
+      logistics: "Your court plan and practical details",
+      supportPlan: "Your support and care plan",
+      sharedStatements: "Only words you mark “okay to share”",
+      sharedTimeline: "Only timeline items you mark “okay to share”",
+      sharedDocuments: "Only papers you mark “okay to share”",
+      clientQuestions: "Questions you choose to send",
+    },
+    roles: {
+      owner: "Organization owner",
+      admin: "Organization administrator",
+      contentEditor: "Content editor",
+      legalReviewer: "Legal content reviewer",
+      wellbeingReviewer: "Wellbeing content reviewer",
+      legalProfessional: "Legal professional",
+      advocate: "Advocate",
+      caseWorker: "Case worker",
+      clinicalProfessional: "Clinical professional",
+      justicePartner: "Justice-system partner",
+    },
+  },
+
+  professional: {
+    title: "Professional workspace",
+    loading: "Loading…",
+    anonymousTitle: "Use a separate professional sign-in.",
+    anonymousBody:
+      "This browser is using a private client space. To protect both spaces, use a separate browser profile for professional work.",
+    signInTitle: "Sign in to your professional workspace.",
+    signInBody:
+      "Use your work email. We will send a sign-in link. This space is for approved professional accounts, not client accounts.",
+    emailLabel: "Your work email",
+    sendLink: "Send sign-in link",
+    linkSent: "Check your email for a sign-in link. You can close this page while you wait.",
+    approvalTitle: "Your professional account is not ready yet.",
+    approvalBody:
+      "Ask your organization administrator to finish setting up your professional access. This keeps client spaces protected.",
+    setupTitle: "Set up your organization.",
+    setupBody:
+      "This creates a separate workspace for your team. It does not give anyone access to a client.",
+    yourName: "Your name",
+    organizationName: "Organization name",
+    jurisdiction: "Main jurisdiction (optional)",
+    createOrganization: "Create organization",
+    yourOrganizations: "Your organizations",
+    createInviteTitle: "Invite a client",
+    createInviteBody:
+      "The client will see this request and choose whether to allow it. The code expires in 14 days.",
+    inviteLabel: "A short label (optional)",
+    purposeLabel: "Why are you asking for access?",
+    requestedAccess: "Ask to access",
+    createInvite: "Create client code",
+    defaultInvitePurpose: "Help with court-day planning.",
+    inviteCodeTitle: "Client code",
+    inviteCodeBody:
+      "Share this code carefully. It will not be shown again. The client sees the access request before anyone can see their information.",
+    codeExpires: "This code expires in 14 days.",
+    copied: "Copied.",
+    copyCode: "Copy code",
+    createFailed: "We couldn't save that just now. No invite was created.",
+    signInFailed: "We couldn't send that link just now. Please try again.",
+    setupFailed: "We couldn't create the organization just now.",
+  },
+
   resources: {
     title: "Support",
     intro:
-      "If you need to talk to a person right now, these are places that can help.",
-    placeholderName: `Support line name (${PLACEHOLDER})`,
-    placeholderNumber: `1-800-${PLACEHOLDER}`,
-    placeholderHours: "Open all day, every day",
-    placeholderDesc:
-      "A person trained to listen. You do not have to share your name.",
-    crisisLabel: "Crisis support",
-    legalLabel: "Legal help",
-    localLabel: "Local help",
+      "If you need to talk to a person right now, these can help. They are free, private, and open every day. You never have to give your name.",
+    crisisLabel: "If you need help right now",
+    legalLabel: "Help knowing your rights",
+    localLabel: "Help near you",
+    // United States national resources — verified public hotlines, numbers current
+    // as of 2026. Localize per jurisdiction before launch. Provenance + how to
+    // change these: docs/source-material/README.md.
+    crisis: [
+      {
+        name: "National Human Trafficking Hotline",
+        number: "1-888-373-7888",
+        text: "Or text 233733",
+        hours: "Every day, all day · 200+ languages",
+        desc: "A trained person who will listen, talk through your choices, and connect you with help near you. Free and confidential.",
+      },
+      {
+        name: "988 Suicide & Crisis Lifeline",
+        number: "Call or text 988",
+        hours: "Every day, all day",
+        desc: "If everything feels like too much, you can reach someone any time. Free and confidential.",
+      },
+    ],
+    legal: [
+      {
+        name: "National Human Trafficking Hotline",
+        number: "1-888-373-7888",
+        hours: "Every day, all day",
+        desc: "Ask them to connect you with free legal help and a victim advocate who can stand beside you.",
+      },
+      {
+        name: "RAINN — Sexual Assault Hotline",
+        number: "1-800-656-4673",
+        hours: "Every day, all day",
+        desc: "Free, confidential support, and referrals to legal and medical help in your area.",
+      },
+    ],
+    local: [
+      {
+        name: "211",
+        number: "Call or text 211",
+        hours: "Every day, all day",
+        desc: "One call connects you to local help — a safe place to stay, food, counseling, and more. Free and private.",
+      },
+      {
+        name: "National Domestic Violence Hotline",
+        number: "1-800-799-7233",
+        text: "Or text START to 88788",
+        hours: "Every day, all day",
+        desc: "If you are not safe where you are, they can help you make a plan. Free and confidential.",
+      },
+    ],
   },
 
   settings: {

@@ -303,6 +303,7 @@ export type Database = {
           first_name: string | null
           gatekeeper_id: string
           id: string
+          legacy_gatekeeper_revoked_at: string | null
           onboarded_at: string | null
           preferred_language: string | null
           session_length_pref: string | null
@@ -318,6 +319,7 @@ export type Database = {
           first_name?: string | null
           gatekeeper_id: string
           id?: string
+          legacy_gatekeeper_revoked_at?: string | null
           onboarded_at?: string | null
           preferred_language?: string | null
           session_length_pref?: string | null
@@ -333,6 +335,7 @@ export type Database = {
           first_name?: string | null
           gatekeeper_id?: string
           id?: string
+          legacy_gatekeeper_revoked_at?: string | null
           onboarded_at?: string | null
           preferred_language?: string | null
           session_length_pref?: string | null
@@ -443,6 +446,87 @@ export type Database = {
     }
     Functions: {
       app_secret: { Args: { p_name: string }; Returns: string }
+      can_create_organization: { Args: never; Returns: boolean }
+      create_client_invite: {
+        Args: {
+          p_code: string
+          p_expires_at?: string | null
+          p_label: string
+          p_organization_id: string
+          p_purpose: string
+          p_scopes: Database["public"]["Enums"]["client_access_scope"][]
+        }
+        Returns: string
+      }
+      create_court_plan_item: {
+        Args: {
+          p_category: Database["public"]["Enums"]["court_plan_category"]
+          p_details?: string | null
+          p_due_date?: string | null
+          p_title: string
+          p_workspace_id: string
+        }
+        Returns: string
+      }
+      create_resource_directory_entry: {
+        Args: {
+          p_category: Database["public"]["Enums"]["resource_category"]
+          p_description?: string | null
+          p_eligibility?: string | null
+          p_geographic_scope?: string | null
+          p_hours?: string | null
+          p_languages?: string | null
+          p_name: string
+          p_organization_id: string
+          p_phone?: string | null
+          p_source_url: string
+          p_text_contact?: string | null
+          p_website_url?: string | null
+        }
+        Returns: string
+      }
+      create_organization: {
+        Args: {
+          p_default_jurisdiction?: string | null
+          p_display_name?: string | null
+          p_name: string
+        }
+        Returns: string
+      }
+      create_organization_member_invite: {
+        Args: {
+          p_code: string
+          p_expires_at: string
+          p_organization_id: string
+          p_role: Database["public"]["Enums"]["organization_member_role"]
+        }
+        Returns: string
+      }
+      create_knowledge_item: {
+        Args: {
+          p_body: string
+          p_jurisdiction?: string | null
+          p_language?: string
+          p_organization_id: string
+          p_primary_source_id: string
+          p_risk_class: Database["public"]["Enums"]["knowledge_risk_class"]
+          p_title: string
+        }
+        Returns: string
+      }
+      create_knowledge_source: {
+        Args: {
+          p_jurisdiction?: string | null
+          p_organization_id: string
+          p_publication_date?: string | null
+          p_publisher: string
+          p_source_notes?: string | null
+          p_source_type: Database["public"]["Enums"]["knowledge_source_type"]
+          p_source_url: string
+          p_title: string
+        }
+        Returns: string
+      }
       current_gatekeeper_id: { Args: never; Returns: string }
       current_survivor_id: { Args: never; Returns: string }
       get_support_contact: {
@@ -452,7 +536,144 @@ export type Database = {
           phone: string
         }[]
       }
+      get_my_court_plan_workspace: { Args: never; Returns: string }
       is_gatekeeper_for: { Args: { p_survivor_id: string }; Returns: boolean }
+      is_approved_professional: { Args: never; Returns: boolean }
+      list_my_client_access_grants: {
+        Args: never
+        Returns: {
+          expires_at: string | null
+          grant_id: string
+          organization_name: string
+          origin: string
+          professional_name: string | null
+          professional_role: Database["public"]["Enums"]["organization_member_role"]
+          purpose: string
+          requested_at: string
+          responded_at: string | null
+          scopes: Database["public"]["Enums"]["client_access_scope"][]
+          status: Database["public"]["Enums"]["client_access_status"]
+        }[]
+      }
+      list_my_court_plan_items: {
+        Args: never
+        Returns: {
+          category: Database["public"]["Enums"]["court_plan_category"]
+          court_plan_item_id: string
+          details: string | null
+          due_date: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["court_plan_item_status"]
+          title: string
+          workspace_id: string
+        }[]
+      }
+      list_my_published_resources: {
+        Args: never
+        Returns: {
+          category: Database["public"]["Enums"]["resource_category"]
+          description: string | null
+          eligibility: string | null
+          geographic_scope: string | null
+          hours: string | null
+          languages: string | null
+          name: string
+          phone: string | null
+          resource_entry_id: string
+          text_contact: string | null
+          website_url: string | null
+        }[]
+      }
+      list_published_knowledge_for_workspace: {
+        Args: { p_jurisdiction?: string | null; p_workspace_id: string }
+        Returns: {
+          body: string
+          jurisdiction: string | null
+          knowledge_item_id: string
+          language: string
+          source_title: string
+          source_type: Database["public"]["Enums"]["knowledge_source_type"]
+          source_url: string
+          title: string
+        }[]
+      }
+      list_organization_resources: {
+        Args: { p_organization_id: string }
+        Returns: {
+          category: Database["public"]["Enums"]["resource_category"]
+          description: string | null
+          eligibility: string | null
+          geographic_scope: string | null
+          hours: string | null
+          languages: string | null
+          name: string
+          phone: string | null
+          resource_entry_id: string
+          source_url: string
+          status: Database["public"]["Enums"]["resource_status"]
+          text_contact: string | null
+          website_url: string | null
+        }[]
+      }
+      list_my_client_workspaces: {
+        Args: never
+        Returns: {
+          client_name: string
+          organization_name: string
+          scopes: Database["public"]["Enums"]["client_access_scope"][]
+          workspace_id: string
+        }[]
+      }
+      list_court_plan_items_for_workspace: {
+        Args: { p_workspace_id: string }
+        Returns: {
+          category: Database["public"]["Enums"]["court_plan_category"]
+          court_plan_item_id: string
+          details: string | null
+          due_date: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["court_plan_item_status"]
+          title: string
+        }[]
+      }
+      list_my_organizations: {
+        Args: never
+        Returns: {
+          default_jurisdiction: string | null
+          organization_id: string
+          organization_name: string
+          role: Database["public"]["Enums"]["organization_member_role"]
+        }[]
+      }
+      list_organization_knowledge: {
+        Args: { p_organization_id: string }
+        Returns: {
+          body: string
+          jurisdiction: string | null
+          knowledge_item_id: string
+          language: string
+          revision: number
+          risk_class: Database["public"]["Enums"]["knowledge_risk_class"]
+          source_id: string
+          source_title: string
+          source_type: Database["public"]["Enums"]["knowledge_source_type"]
+          source_url: string
+          status: Database["public"]["Enums"]["knowledge_item_status"]
+          title: string
+        }[]
+      }
+      list_organization_knowledge_sources: {
+        Args: { p_organization_id: string }
+        Returns: {
+          jurisdiction: string | null
+          publication_date: string | null
+          publisher: string | null
+          source_id: string
+          source_type: Database["public"]["Enums"]["knowledge_source_type"]
+          source_url: string
+          title: string
+        }[]
+      }
       mint_access_code: {
         Args: { p_code: string; p_expires_at: string; p_label: string }
         Returns: string
@@ -462,9 +683,86 @@ export type Database = {
         Returns: undefined
       }
       redeem_access_code: { Args: { p_code: string }; Returns: string }
+      redeem_client_invite: { Args: { p_code: string }; Returns: string }
+      redeem_organization_member_invite: {
+        Args: { p_code: string; p_display_name: string }
+        Returns: string
+      }
+      request_knowledge_review: {
+        Args: { p_knowledge_item_id: string }
+        Returns: undefined
+      }
+      publish_resource_directory_entry: {
+        Args: { p_resource_entry_id: string }
+        Returns: undefined
+      }
+      update_court_plan_item_status: {
+        Args: {
+          p_court_plan_item_id: string
+          p_status: Database["public"]["Enums"]["court_plan_item_status"]
+        }
+        Returns: undefined
+      }
+      review_knowledge_item: {
+        Args: {
+          p_decision: Database["public"]["Enums"]["knowledge_review_decision"]
+          p_knowledge_item_id: string
+          p_notes?: string | null
+          p_review_area: Database["public"]["Enums"]["knowledge_review_area"]
+        }
+        Returns: undefined
+      }
+      verify_resource_directory_entry: {
+        Args: {
+          p_decision: Database["public"]["Enums"]["resource_verification_decision"]
+          p_next_review_at?: string | null
+          p_notes?: string | null
+          p_resource_entry_id: string
+        }
+        Returns: undefined
+      }
+      revise_knowledge_item: {
+        Args: {
+          p_body: string
+          p_jurisdiction?: string | null
+          p_knowledge_item_id: string
+          p_language?: string
+          p_primary_source_id: string
+          p_risk_class: Database["public"]["Enums"]["knowledge_risk_class"]
+          p_title: string
+        }
+        Returns: undefined
+      }
+      publish_knowledge_item: {
+        Args: { p_knowledge_item_id: string }
+        Returns: undefined
+      }
+      respond_to_client_access_grant: {
+        Args: { p_decision: string; p_grant_id: string }
+        Returns: undefined
+      }
       verify_access_code: { Args: { p_code: string }; Returns: string }
+      verify_client_invite: { Args: { p_code: string }; Returns: string }
     }
     Enums: {
+      client_access_scope:
+        | "logistics"
+        | "support_plan"
+        | "shared_statements"
+        | "shared_timeline"
+        | "shared_documents"
+        | "client_questions"
+      client_access_status: "pending" | "active" | "declined" | "revoked" | "expired"
+      court_plan_category:
+        | "hearing_details"
+        | "travel"
+        | "accommodation"
+        | "support"
+        | "question"
+      court_plan_item_status: "not_started" | "in_progress" | "done"
+      resource_category: "crisis" | "legal" | "local" | "court" | "accommodation"
+      resource_status: "draft" | "published" | "retired"
+      resource_verification_decision: "verified" | "needs_update"
       content_visibility: "shareable" | "private"
       document_type:
         | "identification"
@@ -477,6 +775,29 @@ export type Database = {
       flag_status: "open" | "reviewed" | "resolved" | "dismissed"
       flag_type: "gap" | "inconsistency" | "trauma" | "other"
       gatekeeper_role: "advocate" | "attorney" | "prosecutor" | "case_manager"
+      organization_member_role:
+        | "owner"
+        | "admin"
+        | "content_editor"
+        | "legal_reviewer"
+        | "wellbeing_reviewer"
+        | "lived_experience_reviewer"
+        | "legal_professional"
+        | "advocate"
+        | "case_worker"
+        | "clinical_professional"
+        | "justice_partner"
+      organization_membership_status: "active" | "suspended"
+      knowledge_item_status: "draft" | "in_review" | "published" | "retired"
+      knowledge_risk_class: "low" | "legal_sensitive" | "wellbeing_sensitive" | "critical"
+      knowledge_review_area: "legal" | "wellbeing" | "lived_experience"
+      knowledge_review_decision: "approved" | "changes_requested" | "rejected"
+      knowledge_source_type:
+        | "law_or_rule"
+        | "official_guidance"
+        | "research"
+        | "professional_practice"
+        | "local_operations"
       revision_entity: "statement" | "timeline_event"
     }
     CompositeTypes: {
@@ -605,6 +926,26 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      client_access_scope: [
+        "logistics",
+        "support_plan",
+        "shared_statements",
+        "shared_timeline",
+        "shared_documents",
+        "client_questions",
+      ],
+      client_access_status: ["pending", "active", "declined", "revoked", "expired"],
+      court_plan_category: [
+        "hearing_details",
+        "travel",
+        "accommodation",
+        "support",
+        "question",
+      ],
+      court_plan_item_status: ["not_started", "in_progress", "done"],
+      resource_category: ["crisis", "legal", "local", "court", "accommodation"],
+      resource_status: ["draft", "published", "retired"],
+      resource_verification_decision: ["verified", "needs_update"],
       content_visibility: ["shareable", "private"],
       document_type: [
         "identification",
@@ -618,6 +959,31 @@ export const Constants = {
       flag_status: ["open", "reviewed", "resolved", "dismissed"],
       flag_type: ["gap", "inconsistency", "trauma", "other"],
       gatekeeper_role: ["advocate", "attorney", "prosecutor", "case_manager"],
+      organization_member_role: [
+        "owner",
+        "admin",
+        "content_editor",
+        "legal_reviewer",
+        "wellbeing_reviewer",
+        "lived_experience_reviewer",
+        "legal_professional",
+        "advocate",
+        "case_worker",
+        "clinical_professional",
+        "justice_partner",
+      ],
+      organization_membership_status: ["active", "suspended"],
+      knowledge_item_status: ["draft", "in_review", "published", "retired"],
+      knowledge_risk_class: ["low", "legal_sensitive", "wellbeing_sensitive", "critical"],
+      knowledge_review_area: ["legal", "wellbeing", "lived_experience"],
+      knowledge_review_decision: ["approved", "changes_requested", "rejected"],
+      knowledge_source_type: [
+        "law_or_rule",
+        "official_guidance",
+        "research",
+        "professional_practice",
+        "local_operations",
+      ],
       revision_entity: ["statement", "timeline_event"],
     },
   },

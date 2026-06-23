@@ -29,8 +29,15 @@ export async function ensureAnonymous(): Promise<boolean> {
 export async function redeemCode(code: string): Promise<RedeemResult> {
   const supabase = getSupabase();
 
-  const verify = await supabase.rpc("verify_access_code", { p_code: code });
-  if (verify.error || !verify.data) return { ok: false };
+  const legacyVerify = await supabase.rpc("verify_access_code", { p_code: code });
+  let redeemFunction: "redeem_access_code" | "redeem_client_invite" | null =
+    legacyVerify.error || !legacyVerify.data ? null : "redeem_access_code";
+
+  if (!redeemFunction) {
+    const organizationVerify = await supabase.rpc("verify_client_invite", { p_code: code });
+    if (organizationVerify.error || !organizationVerify.data) return { ok: false };
+    redeemFunction = "redeem_client_invite";
+  }
 
   let createdSession = false;
   try {
@@ -39,7 +46,7 @@ export async function redeemCode(code: string): Promise<RedeemResult> {
     return { ok: false };
   }
 
-  const redeem = await supabase.rpc("redeem_access_code", { p_code: code });
+  const redeem = await supabase.rpc(redeemFunction, { p_code: code });
   if (redeem.error || !redeem.data) {
     if (createdSession) await supabase.auth.signOut(); // only undo a session WE created
     return { ok: false };

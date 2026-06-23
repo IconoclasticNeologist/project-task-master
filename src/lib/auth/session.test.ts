@@ -22,7 +22,9 @@ beforeEach(() => {
 
 describe("redeemCode", () => {
   it("rejects an invalid code WITHOUT creating an anonymous user", async () => {
-    mockClient.rpc.mockResolvedValueOnce({ data: null, error: null }); // verify → null
+    mockClient.rpc
+      .mockResolvedValueOnce({ data: null, error: null }) // legacy verify → null
+      .mockResolvedValueOnce({ data: null, error: null }); // organization verify → null
     const result = await redeemCode("BAD");
     expect(result).toEqual({ ok: false });
     expect(mockClient.auth.signInAnonymously).not.toHaveBeenCalled();
@@ -35,6 +37,16 @@ describe("redeemCode", () => {
     const result = await redeemCode("GOOD");
     expect(result).toEqual({ ok: true, survivorId: "survivor-1" });
     expect(mockClient.auth.signInAnonymously).toHaveBeenCalledTimes(1);
+  });
+
+  it("redeems a valid organization invite and leaves access pending for the client to decide", async () => {
+    mockClient.rpc
+      .mockResolvedValueOnce({ data: null, error: null }) // legacy verify → null
+      .mockResolvedValueOnce({ data: "org-invite-1", error: null }) // organization verify
+      .mockResolvedValueOnce({ data: "survivor-1", error: null }); // organization redeem
+    const result = await redeemCode("SAFECODE");
+    expect(result).toEqual({ ok: true, survivorId: "survivor-1" });
+    expect(mockClient.rpc).toHaveBeenLastCalledWith("redeem_client_invite", { p_code: "SAFECODE" });
   });
 
   it("signs the anon session back out if redeem fails after sign-in (half-state guard)", async () => {

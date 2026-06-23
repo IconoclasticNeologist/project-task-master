@@ -9,15 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SessionRouteImport } from './routes/session'
 import { Route as ResourcesRouteImport } from './routes/resources'
+import { Route as ProfessionalRouteImport } from './routes/professional'
+import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as EnterRouteImport } from './routes/enter'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfessionalKnowledgeRouteImport } from './routes/professional.knowledge'
+import { Route as ProfessionalClientsRouteImport } from './routes/professional.clients'
 
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -31,6 +41,16 @@ const SessionRoute = SessionRouteImport.update({
 const ResourcesRoute = ResourcesRouteImport.update({
   id: '/resources',
   path: '/resources',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfessionalRoute = ProfessionalRouteImport.update({
+  id: '/professional',
+  path: '/professional',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -58,6 +78,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfessionalKnowledgeRoute = ProfessionalKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
+  getParentRoute: () => ProfessionalRoute,
+} as any)
+const ProfessionalClientsRoute = ProfessionalClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => ProfessionalRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,9 +95,14 @@ export interface FileRoutesByFullPath {
   '/enter': typeof EnterRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
+  '/professional': typeof ProfessionalRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/team': typeof TeamRoute
+  '/professional/clients': typeof ProfessionalClientsRoute
+  '/professional/knowledge': typeof ProfessionalKnowledgeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,9 +110,14 @@ export interface FileRoutesByTo {
   '/enter': typeof EnterRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
+  '/professional': typeof ProfessionalRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/team': typeof TeamRoute
+  '/professional/clients': typeof ProfessionalClientsRoute
+  '/professional/knowledge': typeof ProfessionalKnowledgeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,9 +126,14 @@ export interface FileRoutesById {
   '/enter': typeof EnterRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
+  '/professional': typeof ProfessionalRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/team': typeof TeamRoute
+  '/professional/clients': typeof ProfessionalClientsRoute
+  '/professional/knowledge': typeof ProfessionalKnowledgeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,9 +143,14 @@ export interface FileRouteTypes {
     | '/enter'
     | '/home'
     | '/onboarding'
+    | '/plan'
+    | '/professional'
     | '/resources'
     | '/session'
     | '/settings'
+    | '/team'
+    | '/professional/clients'
+    | '/professional/knowledge'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,9 +158,14 @@ export interface FileRouteTypes {
     | '/enter'
     | '/home'
     | '/onboarding'
+    | '/plan'
+    | '/professional'
     | '/resources'
     | '/session'
     | '/settings'
+    | '/team'
+    | '/professional/clients'
+    | '/professional/knowledge'
   id:
     | '__root__'
     | '/'
@@ -118,9 +173,14 @@ export interface FileRouteTypes {
     | '/enter'
     | '/home'
     | '/onboarding'
+    | '/plan'
+    | '/professional'
     | '/resources'
     | '/session'
     | '/settings'
+    | '/team'
+    | '/professional/clients'
+    | '/professional/knowledge'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -129,13 +189,23 @@ export interface RootRouteChildren {
   EnterRoute: typeof EnterRoute
   HomeRoute: typeof HomeRoute
   OnboardingRoute: typeof OnboardingRoute
+  PlanRoute: typeof PlanRoute
+  ProfessionalRoute: typeof ProfessionalRouteWithChildren
   ResourcesRoute: typeof ResourcesRoute
   SessionRoute: typeof SessionRoute
   SettingsRoute: typeof SettingsRoute
+  TeamRoute: typeof TeamRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -155,6 +225,20 @@ declare module '@tanstack/react-router' {
       path: '/resources'
       fullPath: '/resources'
       preLoaderRoute: typeof ResourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/professional': {
+      id: '/professional'
+      path: '/professional'
+      fullPath: '/professional'
+      preLoaderRoute: typeof ProfessionalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -192,8 +276,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/professional/knowledge': {
+      id: '/professional/knowledge'
+      path: '/knowledge'
+      fullPath: '/professional/knowledge'
+      preLoaderRoute: typeof ProfessionalKnowledgeRouteImport
+      parentRoute: typeof ProfessionalRoute
+    }
+    '/professional/clients': {
+      id: '/professional/clients'
+      path: '/clients'
+      fullPath: '/professional/clients'
+      preLoaderRoute: typeof ProfessionalClientsRouteImport
+      parentRoute: typeof ProfessionalRoute
+    }
   }
 }
+
+interface ProfessionalRouteChildren {
+  ProfessionalClientsRoute: typeof ProfessionalClientsRoute
+  ProfessionalKnowledgeRoute: typeof ProfessionalKnowledgeRoute
+}
+
+const ProfessionalRouteChildren: ProfessionalRouteChildren = {
+  ProfessionalClientsRoute: ProfessionalClientsRoute,
+  ProfessionalKnowledgeRoute: ProfessionalKnowledgeRoute,
+}
+
+const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
+  ProfessionalRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -201,9 +313,12 @@ const rootRouteChildren: RootRouteChildren = {
   EnterRoute: EnterRoute,
   HomeRoute: HomeRoute,
   OnboardingRoute: OnboardingRoute,
+  PlanRoute: PlanRoute,
+  ProfessionalRoute: ProfessionalRouteWithChildren,
   ResourcesRoute: ResourcesRoute,
   SessionRoute: SessionRoute,
   SettingsRoute: SettingsRoute,
+  TeamRoute: TeamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

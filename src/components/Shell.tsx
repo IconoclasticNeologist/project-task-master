@@ -15,6 +15,8 @@ const navItems = [
   { to: "/session", label: copy.nav.session },
   { to: "/resources", label: copy.nav.resources },
   { to: "/account", label: copy.nav.account },
+  { to: "/team", label: copy.nav.team },
+  { to: "/plan", label: copy.nav.plan },
   { to: "/settings", label: copy.nav.settings },
 ] as const;
 

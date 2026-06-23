@@ -64,7 +64,7 @@ function int16ToBase64(buf: Int16Array): string {
 }
 
 export async function startMicCapture(
-  onFrame: (base64Pcm16: string) => void,
+  onFrame: (base64Pcm16: string, rms: number) => void,
 ): Promise<CaptureHandle> {
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
@@ -81,7 +81,7 @@ export async function startMicCapture(
   node.port.onmessage = (e: MessageEvent<{ chunk: Float32Array; rms: number }>) => {
     handle.rms = e.data.rms;
     const pcm = downsampleTo16k(e.data.chunk, ctx.sampleRate);
-    onFrame(int16ToBase64(pcm));
+    onFrame(int16ToBase64(pcm), e.data.rms);
   };
   src.connect(node);
   // node not connected to destination — we don't want to echo mic to speakers.

@@ -70,6 +70,8 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [micState, setMicState] = useState<MicState>("off");
   const [coachSpeaking, setCoachSpeaking] = useState(false);
+  // Smoothed mic input level [0..~0.3], throttled for the "I can hear you" meter.
+  const [micLevel, setMicLevel] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const captureRef = useRef<CaptureHandle | null>(null);
@@ -79,6 +81,8 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const lastActivityRef = useRef<number>(Date.now());
   // Ensures the Coach's proactive opening turn is kicked off exactly once per session.
   const greetedRef = useRef(false);
+  // Throttle clock for mic-level UI updates (avoid re-rendering on every audio frame).
+  const lastLevelTickRef = useRef(0);
 
   const tearDown = useCallback(() => {
     captureRef.current?.stop();
@@ -97,6 +101,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     wsRef.current = null;
     setMicState("off");
     setCoachSpeaking(false);
+    setMicLevel(0);
   }, []);
 
   const disconnect = useCallback(() => {
@@ -127,10 +132,16 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     if (captureRef.current) return;
     setMicState("requesting");
     try {
-      const handle = await startMicCapture((b64) => {
+      const handle = await startMicCapture((b64, rms) => {
+        // Drive the level meter, throttled so we don't re-render on every frame.
+        const now = Date.now();
+        if (now - lastLevelTickRef.current > 100) {
+          lastLevelTickRef.current = now;
+          setMicLevel(rms);
+        }
         const ws = wsRef.current;
         if (!ws || ws.readyState !== WebSocket.OPEN) return;
-        lastActivityRef.current = Date.now();
+        lastActivityRef.current = now;
         ws.send(
           JSON.stringify({
             // Current Live API audio field (the older `mediaChunks` is legacy and
@@ -151,6 +162,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const disableMic = useCallback(() => {
     captureRef.current?.stop();
     captureRef.current = null;
+    setMicLevel(0);
     setMicState("off");
   }, []);
 
@@ -270,6 +282,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     status,
     micState,
     coachSpeaking,
+    micLevel,
     connect,
     disconnect,
     enableMic,

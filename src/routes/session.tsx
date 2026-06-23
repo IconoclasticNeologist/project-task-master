@@ -5,6 +5,7 @@ import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { VoiceOrb } from "@/components/session/VoiceOrb";
+import { MicSetup } from "@/components/session/MicSetup";
 import { AftercareCard } from "@/components/AftercareCard";
 import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { copy } from "@/lib/copy";
@@ -55,7 +56,7 @@ function SessionScreen() {
     }
   }, [settings.query.data]);
 
-  const { status, micState, coachSpeaking, connect, disconnect, enableMic, disableMic, sendText } =
+  const { status, micState, coachSpeaking, micLevel, connect, disconnect, enableMic, disableMic, sendText } =
     useGeminiLive({
       mode: coachMode,
       maxDurationSec: witnessStand
@@ -198,25 +199,13 @@ function SessionScreen() {
                 )}
 
                 {screenMode === "voice" ? (
-                  <div className="flex flex-col gap-3">
-                    {micState === "off" || micState === "denied" ? (
-                      <button
-                        type="button"
-                        onClick={enableMic}
-                        className="rounded-md border border-border px-4 py-3 text-sm text-foreground"
-                      >
-                        {micState === "denied" ? copy.session.permissionDenied : copy.session.permissionNeeded}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={disableMic}
-                        className="rounded-md border border-border px-4 py-3 text-sm text-muted-foreground"
-                      >
-                        Mute
-                      </button>
-                    )}
-                  </div>
+                  <MicSetup
+                    micState={micState}
+                    micLevel={micLevel}
+                    onEnable={enableMic}
+                    onMute={disableMic}
+                    onUseTyping={() => setScreenMode("type")}
+                  />
                 ) : (
                   <Card>
                     <CardContent className="space-y-3 py-4">

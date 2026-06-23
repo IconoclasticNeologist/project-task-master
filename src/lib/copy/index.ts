@@ -112,6 +112,20 @@ export const copy = {
     permissionNeeded: "I need permission to use your microphone to listen.",
     permissionDenied:
       "Microphone is off. You can still type, or change permissions in your browser.",
+    mic: {
+      primerTitle: "Talk, or type — your choice.",
+      primerBody:
+        "I can listen if you’d like to talk out loud. Your voice becomes words and is never recorded. Or you can type.",
+      useVoice: "Use my voice",
+      typeInstead: "I’ll type instead",
+      asking: "Asking your browser for permission…",
+      hearYou: "I can hear you.",
+      mute: "Mute",
+      blockedTitle: "Your microphone is blocked.",
+      blockedBody:
+        "Your browser is blocking the microphone for this page. Here’s how to turn it on — or you can just type.",
+      reload: "I’ve allowed it — reload",
+    },
     typePlaceholder: "Write whatever you want. Short is fine.",
     send: "Send",
     aftercareTitle: "Let’s pause together.",

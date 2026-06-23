@@ -1,9 +1,10 @@
 // Gemini Live client hook for The Advocate.
 //
 // PATTERN: mirrors MindCrafter's Liv voice path.
-//   - Supabase Edge Function `advocate-voice-token` reads GEMINI_API_KEY
-//     from Supabase secrets and returns { apiKey, voice, model }.
-//   - The browser connects WebSocket DIRECTLY to Gemini Live with that key.
+//   - Supabase Edge Function `advocate-voice-token` reads GEMINI_API_KEY from
+//     Supabase secrets and returns a short-lived EPHEMERAL token (never the key).
+//   - The browser connects a WebSocket DIRECTLY to Gemini Live's *Constrained*
+//     endpoint with that token (model / voice / system prompt are locked into it).
 //   - No Cloudflare Worker proxy. No app-side Worker secret.
 //
 // SAFETY INVARIANTS:
@@ -31,8 +32,14 @@ interface UseGeminiLiveOptions {
   onDistress?: (sig: DistressSignal) => void;
 }
 
+// Ephemeral (constrained) tokens MUST use the *Constrained* method. The plain
+// BidiGenerateContent endpoint rejects an access_token with close code 1008
+// ("Method doesn't allow unregistered callers"). The token already locks
+// model / voice / AUDIO modality / system instruction (minted in the
+// advocate-voice-token edge function via bidiGenerateContentSetup), so the
+// setup frame below only re-sends the model id.
 const GEMINI_WS_BASE =
-  "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
+  "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained";
 
 interface VoiceTokenPayload {
   token: string;

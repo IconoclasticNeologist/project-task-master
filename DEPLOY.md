@@ -37,6 +37,13 @@ The whole gate runs on Supabase anonymous auth. It's **off** by default.
   ```toml
   enable_anonymous_sign_ins = true
   ```
+- **⚠️ Also disable CAPTCHA / bot protection** — otherwise anonymous sign-in is rejected at runtime
+  with `400 captcha_failed`, which surfaces as the gate's calm *"that code didn't work"* message **even
+  when the access code is valid**. Dashboard → **Authentication → Attack Protection → "Enable Captcha
+  protection" → OFF** → Save
+  (https://supabase.com/dashboard/project/suanbsyewsudlhrrzfks/auth/protection). *(For production you
+  can instead keep CAPTCHA on and pass a `captchaToken` to `signInAnonymously()` — desirable, since it
+  blunts brute-forcing of access codes.)*
 
 *(Safe: a survivor row is only ever created after a valid access code is verified — see A's design.)*
 

@@ -153,19 +153,23 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uses: 1,
-          expire_time: expireTime,
-          new_session_expire_time: newSessionExpireTime,
-          live_connect_constraints: {
+          expireTime,
+          newSessionExpireTime,
+          // REST shape for POST /v1alpha/auth_tokens: the locked constraints live under
+          // bidiGenerateContentSetup (flat: model / generationConfig / systemInstruction),
+          // NOT "live_connect_constraints" (that is the SDK-level config name, which the raw
+          // endpoint rejects as an unknown field). Locking these into the token is what stops
+          // the client overriding the model, voice, or system prompt.
+          bidiGenerateContentSetup: {
             model: `models/${model}`,
-            config: {
-              response_modalities: ["AUDIO"],
-              speech_config: {
-                voice_config: { prebuilt_voice_config: { voice_name: voice } },
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
               },
-              system_instruction: {
-                role: "system",
-                parts: [{ text: promptFor(mode) }],
-              },
+            },
+            systemInstruction: {
+              parts: [{ text: promptFor(mode) }],
             },
           },
         }),

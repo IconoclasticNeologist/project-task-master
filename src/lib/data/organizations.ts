@@ -41,8 +41,8 @@ export async function createOrganization(input: {
 }): Promise<string> {
   const { data, error } = await getSupabase().rpc("create_organization", {
     p_name: input.name,
-    p_display_name: input.displayName || null,
-    p_default_jurisdiction: input.jurisdiction || null,
+    p_display_name: input.displayName || undefined,
+    p_default_jurisdiction: input.jurisdiction || undefined,
   });
   if (error) throw new Error(error.message);
   return data;

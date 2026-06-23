@@ -119,9 +119,9 @@ export async function createKnowledgeSource(input: {
     p_publisher: input.publisher,
     p_source_url: input.sourceUrl,
     p_source_type: input.sourceType,
-    p_jurisdiction: input.jurisdiction || null,
-    p_publication_date: input.publicationDate || null,
-    p_source_notes: input.sourceNotes || null,
+    p_jurisdiction: input.jurisdiction || undefined,
+    p_publication_date: input.publicationDate || undefined,
+    p_source_notes: input.sourceNotes || undefined,
   });
   if (error) throw new Error(error.message);
   return data;
@@ -141,7 +141,7 @@ export async function createKnowledgeItem(input: {
     p_title: input.title,
     p_body: input.body,
     p_risk_class: input.riskClass,
-    p_jurisdiction: input.jurisdiction || null,
+    p_jurisdiction: input.jurisdiction || undefined,
     p_language: "en",
   });
   if (error) throw new Error(error.message);
@@ -165,7 +165,7 @@ export async function reviewKnowledgeItem(input: {
     p_knowledge_item_id: input.id,
     p_review_area: input.area,
     p_decision: input.decision,
-    p_notes: input.notes || null,
+    p_notes: input.notes || undefined,
   });
   if (error) throw new Error(error.message);
 }

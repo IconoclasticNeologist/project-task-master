@@ -71,8 +71,8 @@ export async function createCourtPlanItem(input: {
     p_workspace_id: input.workspaceId,
     p_category: input.category,
     p_title: input.title,
-    p_details: input.details || null,
-    p_due_date: null,
+    p_details: input.details || undefined,
+    p_due_date: undefined,
   });
   if (error) throw new Error(error.message);
   return data;

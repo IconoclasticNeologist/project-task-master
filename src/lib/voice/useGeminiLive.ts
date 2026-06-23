@@ -77,6 +77,8 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
+  // Ensures the Coach's proactive opening turn is kicked off exactly once per session.
+  const greetedRef = useRef(false);
 
   const tearDown = useCallback(() => {
     captureRef.current?.stop();
@@ -152,6 +154,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
 
   const connect = useCallback(async () => {
     setStatus("connecting");
+    greetedRef.current = false;
     try {
       const { token, model } = await fetchVoiceToken(mode);
       // v1alpha + ?access_token=<ephemeral>. The token has model, voice,
@@ -211,6 +214,22 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
         }
         if (!parsed || typeof parsed !== "object") return;
         const msg = parsed as Record<string, unknown>;
+        // Coach speaks first: as soon as setup is acknowledged, send the opening
+        // signal so the model greets before the person has to say anything. The
+        // locked system prompt treats "BEGIN" as the session-open cue (and never
+        // reads it aloud). Guarded so it fires once per session.
+        if (msg.setupComplete && !greetedRef.current) {
+          greetedRef.current = true;
+          ws.send(
+            JSON.stringify({
+              clientContent: {
+                turns: [{ role: "user", parts: [{ text: "BEGIN" }] }],
+                turnComplete: true,
+              },
+            }),
+          );
+          return;
+        }
         const server = msg.serverContent as Record<string, unknown> | undefined;
         const modelTurn = server?.modelTurn as Record<string, unknown> | undefined;
         const parts = (modelTurn?.parts as Array<Record<string, unknown>> | undefined) ?? [];

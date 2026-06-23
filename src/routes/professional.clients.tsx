@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { copy } from "@/lib/copy";
+import { ProfessionalShell } from "@/components/professional/ProfessionalShell";
 import { getProfessionalSession } from "@/lib/auth/professional";
 import { isApprovedProfessional } from "@/lib/data/organizations";
 import {
@@ -66,7 +67,7 @@ function ClientPlansScreen() {
 }
 
 function Page({ children }: { children: ReactNode }) {
-  return <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col bg-background px-6 py-10 text-foreground">{children}</main>;
+  return <ProfessionalShell>{children}</ProfessionalShell>;
 }
 
 function Message({ title, body }: { title: string; body: string }) {

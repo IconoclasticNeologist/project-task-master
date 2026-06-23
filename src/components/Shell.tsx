@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { copy } from "@/lib/copy";
+import { HomeButton } from "@/components/HomeButton";
 
 /**
  * Calm, mobile-first layout shell.
@@ -27,18 +28,21 @@ export function Shell({ children, hideNav = false }: { children: ReactNode; hide
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border">
-          <button
-            type="button"
-            onClick={() => {
-              window.location.replace("https://www.weather.gov/");
-            }}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            {copy.shell.leaveNow}
-          </button>
-          <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">
-            {copy.shell.iNeedABreak}
-          </Link>
+          <HomeButton to="/home" />
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                window.location.replace("https://www.weather.gov/");
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              {copy.shell.leaveNow}
+            </button>
+            <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">
+              {copy.shell.iNeedABreak}
+            </Link>
+          </div>
         </header>
 
         <main className="flex flex-1 flex-col py-8">{children}</main>

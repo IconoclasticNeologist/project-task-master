@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { copy } from "@/lib/copy";
 import { ProfessionalShell } from "@/components/professional/ProfessionalShell";
+import { getSupabase } from "@/lib/supabase/client";
 import {
   getProfessionalSession,
   requestProfessionalSignIn,
@@ -62,10 +63,23 @@ function ProfessionalScreen() {
   if (session.data?.kind === "anonymous") {
     return (
       <Page>
-        <Message
-          title={copy.professional.anonymousTitle}
-          body={copy.professional.anonymousBody}
-        />
+        <Card>
+          <CardContent className="space-y-4 py-6">
+            <h1 className="text-2xl font-normal tracking-tight">{copy.professional.anonymousTitle}</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.anonymousBody}</p>
+            <button
+              type="button"
+              onClick={() => {
+                void getSupabase()
+                  .auth.signOut()
+                  .then(() => window.location.assign("/professional"));
+              }}
+              className="rounded-md bg-primary px-4 py-2.5 text-sm text-primary-foreground"
+            >
+              Sign out and sign in as a professional
+            </button>
+          </CardContent>
+        </Card>
       </Page>
     );
   }

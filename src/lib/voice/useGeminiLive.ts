@@ -133,8 +133,10 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
         lastActivityRef.current = Date.now();
         ws.send(
           JSON.stringify({
+            // Current Live API audio field (the older `mediaChunks` is legacy and
+            // can confuse end-of-turn detection).
             realtimeInput: {
-              mediaChunks: [{ mimeType: "audio/pcm;rate=16000", data: b64 }],
+              audio: { mimeType: "audio/pcm;rate=16000", data: b64 },
             },
           }),
         );

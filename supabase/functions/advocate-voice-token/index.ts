@@ -177,6 +177,18 @@ serve(async (req) => {
             systemInstruction: {
               parts: [{ text: promptFor(mode) }],
             },
+            // Keep server-side VAD, but make it commit to "the person is done"
+            // quickly so replies don't lag after they stop speaking. (If this still
+            // lags in practice, the escalation is manual turn control: set
+            // automaticActivityDetection.disabled=true here and send activityStart/
+            // activityEnd from the client off the mic level.)
+            realtimeInputConfig: {
+              automaticActivityDetection: {
+                startOfSpeechSensitivity: "START_SENSITIVITY_HIGH",
+                endOfSpeechSensitivity: "END_SENSITIVITY_HIGH",
+                silenceDurationMs: 700,
+              },
+            },
           },
         }),
       },

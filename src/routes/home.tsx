@@ -27,6 +27,7 @@ function HomeScreen() {
 
         <div className="grid grid-cols-1 gap-4">
           <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
+          <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
           <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
           <Tile to="/account" label={copy.home.seeTimeline} hint="What happened, in your order." />
           <Tile to="/resources" label={copy.home.findSupport} hint="People you can talk to now." />

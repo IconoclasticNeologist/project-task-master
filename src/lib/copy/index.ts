@@ -99,9 +99,82 @@ export const copy = {
     title: "Hello.",
     subtitle: "Take your time. There is no schedule here.",
     startSession: "Start a session",
+    courtGuide: "Preparing for court",
     continueWhereLeft: "Continue your space",
     seeTimeline: "See your timeline",
     findSupport: "Find support",
+  },
+
+  guide: {
+    title: "Preparing for court",
+    intro:
+      "This is general information about what court can be like. It is not legal advice, and every court is a little different — your advocate or lawyer can tell you what is true for yours. Read what helps and skip the rest. There is no rush.",
+    sections: [
+      {
+        heading: "What a hearing is",
+        points: [
+          "A hearing is a time when people come to a courtroom and a judge listens.",
+          "There may be more than one, and you will usually know the date ahead of time.",
+          "You can ask your advocate what this hearing is for.",
+        ],
+      },
+      {
+        heading: "Who you might see there",
+        points: [
+          "A judge, who is in charge and stays neutral.",
+          "Lawyers — one asks questions for the case, and one for the other side.",
+          "Sometimes a jury: people who listen and help decide.",
+          "A court reporter, who writes down what is said, and a guard.",
+          "The person the case is about may be in the room. You can ask ahead of time where they will be.",
+          "An advocate can sit with you.",
+        ],
+      },
+      {
+        heading: "If you are asked to testify",
+        points: [
+          "Testifying means answering questions out loud, after you promise to tell the truth.",
+          "Tell the truth. If you do not know or do not remember, it is okay to say so — you do not have to guess.",
+          "Take your time. You can ask for a question to be said again, or explained.",
+          "You only have to answer what is asked. It is okay to pause first.",
+          "If you need a break, or some water, you can ask.",
+        ],
+      },
+      {
+        heading: "Hard questions",
+        points: [
+          "The other side’s lawyer may ask questions that feel fast or unfair. You can still go slowly.",
+          "It is okay to say, “I don’t understand the question.”",
+          "There are rules that limit questions about your past, including your sexual history. Your lawyer can speak up if a question crosses that line.",
+          "Practicing out loud, with someone you trust, can make this feel less frightening.",
+        ],
+      },
+      {
+        heading: "What you can ask for",
+        points: [
+          "A support person or an advocate to come with you.",
+          "An interpreter, if another language is easier for you.",
+          "Other things you need to feel safe. Ask your advocate early, so there is time to set them up.",
+        ],
+      },
+      {
+        heading: "The day itself",
+        points: [
+          "Arrive early if you can. There may be a security check, a little like at an airport.",
+          "Bring an ID if you have one, and anything your lawyer asked you to bring.",
+          "Bring your care plan. Plan how you will get there, and one gentle thing for afterward.",
+        ],
+      },
+      {
+        heading: "How you might feel",
+        points: [
+          "Feeling nervous is normal. It does not mean anything is wrong.",
+          "You can use your care plan before, during a break, and after.",
+          "You have come through hard things before. You do not have to do this alone.",
+        ],
+      },
+    ],
+    sourceNote:
+      "General information, drawn from public victim-witness and court-preparation guidance. Courts vary — your advocate or lawyer knows your situation.",
   },
 
   session: {

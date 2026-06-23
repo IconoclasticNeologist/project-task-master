@@ -40,3 +40,13 @@ United States national hotlines, verified public numbers:
 - **211** — call/text 211 (United Way; local services, 24/7).
 
 Assumes a **US** audience. If the demo is elsewhere, drop a local resource list here and I'll swap them.
+
+### Court guide ("Preparing for court" screen) — added 2026-06-23
+General, plain-language court-preparation content for survivor-witnesses (US, general — not jurisdiction-specific, not legal advice, not testimony scripting). Drawn from public victim-witness guidance:
+- Office for Victims of Crime (OVC), U.S. DOJ — victims' rights and victim-witness services (ovc.ojp.gov).
+- U.S. Attorneys' Offices Victim-Witness Assistance Programs — "what to expect in court" / testifying guidance (justice.gov).
+- RAINN — what to expect from the criminal justice process; tips for survivors (rainn.org).
+- Crime Victims' Rights Act, 18 U.S.C. § 3771 — rights to be present, to confer, and to fair treatment.
+- Federal Rule of Evidence 412 (rape shield) + state equivalents — limits on questions about a witness's other sexual behavior.
+
+The screen states plainly that it is general, not legal advice, and that the survivor should confirm specifics with their advocate/lawyer. An attorney + a trauma specialist should still review this wording before a real survivor relies on it; for the hackathon demo it is principled, sourced content rather than a placeholder.

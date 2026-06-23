@@ -17,6 +17,7 @@ import { Route as ProfessionalRouteImport } from './routes/professional'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as GuideRouteImport } from './routes/guide'
 import { Route as EnterRouteImport } from './routes/enter'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
@@ -63,6 +64,11 @@ const HomeRoute = HomeRouteImport.update({
   path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuideRoute = GuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnterRoute = EnterRouteImport.update({
   id: '/enter',
   path: '/enter',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/enter': typeof EnterRoute
+  '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/enter': typeof EnterRoute
+  '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/enter': typeof EnterRoute
+  '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/enter'
+    | '/guide'
     | '/home'
     | '/onboarding'
     | '/plan'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/enter'
+    | '/guide'
     | '/home'
     | '/onboarding'
     | '/plan'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/enter'
+    | '/guide'
     | '/home'
     | '/onboarding'
     | '/plan'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
   EnterRoute: typeof EnterRoute
+  GuideRoute: typeof GuideRoute
   HomeRoute: typeof HomeRoute
   OnboardingRoute: typeof OnboardingRoute
   PlanRoute: typeof PlanRoute
@@ -255,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HomeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guide': {
+      id: '/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enter': {
       id: '/enter'
       path: '/enter'
@@ -311,6 +331,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
   EnterRoute: EnterRoute,
+  GuideRoute: GuideRoute,
   HomeRoute: HomeRoute,
   OnboardingRoute: OnboardingRoute,
   PlanRoute: PlanRoute,

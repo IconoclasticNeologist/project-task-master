@@ -1243,7 +1243,7 @@ create or replace function public.list_my_client_workspaces()
   select
     w.id,
     o.name,
-    coalesce(nullif(s.first_name, ''), 'Client'),
+    coalesce(nullif(s.first_name, ''), 'Client') as client_name,
     array_agg(distinct scope_value order by scope_value)
   from public.client_access_grants g
   join public.organization_memberships m on m.id = g.membership_id

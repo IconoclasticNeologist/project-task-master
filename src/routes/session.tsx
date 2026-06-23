@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { VoiceOrb } from "@/components/session/VoiceOrb";
 import { MicSetup } from "@/components/session/MicSetup";
 import { AftercareCard } from "@/components/AftercareCard";
-import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { copy } from "@/lib/copy";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
 import {
@@ -168,7 +167,6 @@ function SessionScreen() {
                     className="w-full rounded-md border border-border px-4 py-3 text-xs text-muted-foreground"
                   >
                     Practice (Witness Stand)
-                    <PlaceholderTag />
                   </button>
                 </CardContent>
               </Card>

@@ -50,3 +50,11 @@ General, plain-language court-preparation content for survivor-witnesses (US, ge
 - Federal Rule of Evidence 412 (rape shield) + state equivalents — limits on questions about a witness's other sexual behavior.
 
 The screen states plainly that it is general, not legal advice, and that the survivor should confirm specifics with their advocate/lawyer. An attorney + a trauma specialist should still review this wording before a real survivor relies on it; for the hackathon demo it is principled, sourced content rather than a placeholder.
+
+### Reflect agents + Witness Stand practice — surfaced for the demo 2026-06-23
+Per an explicit hackathon decision, the Reflect agents (reframer / recognition / interviewer) and the voice "Witness Stand" practice are now presented as finished features — the placeholder tags and the "reviewed wording is coming" framing are removed. The safety guardrails are unchanged and remain the whole point:
+- **Recognition** never tells a person a label applies to them, and refuses direct or indirect "was I trafficked?" asks.
+- **Reframer** surfaces only the person's own words as neutral observations; never their sexual history (FRE 412).
+- **Witness Stand** drills composure and process (it's okay to say "I don't know," take your time, ask for a break) and never supplies answers or coaches the content of testimony.
+
+These prompts have NOT had trauma-therapist / attorney sign-off. For the demo that risk is accepted and documented here; an attorney + trauma specialist should review the exact wording before any real survivor uses them. Canonical prompts live in `supabase/functions/advocate-agent/index.ts` (text) and `advocate-voice-token/index.ts` (voice).

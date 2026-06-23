@@ -43,6 +43,36 @@ function GuideScreen() {
           ))}
         </div>
 
+        <Card className="paper-shadow">
+          <CardContent className="space-y-2 py-5">
+            <h2 className="text-base font-normal text-foreground">{copy.guide.questionsHeading}</h2>
+            <ul className="space-y-1.5">
+              {copy.guide.questions.map((question, i) => (
+                <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
+                  <span aria-hidden className="select-none text-foreground/40">
+                    •
+                  </span>
+                  <span>{question}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card className="paper-shadow">
+          <CardContent className="space-y-3 py-5">
+            <h2 className="text-base font-normal text-foreground">{copy.guide.glossaryHeading}</h2>
+            <dl className="space-y-2">
+              {copy.guide.glossary.map((entry) => (
+                <div key={entry.term}>
+                  <dt className="text-sm font-medium text-foreground">{entry.term}</dt>
+                  <dd className="text-sm leading-relaxed text-muted-foreground">{entry.meaning}</dd>
+                </div>
+              ))}
+            </dl>
+          </CardContent>
+        </Card>
+
         <p className="text-xs leading-relaxed text-muted-foreground">{copy.guide.sourceNote}</p>
       </div>
     </Shell>

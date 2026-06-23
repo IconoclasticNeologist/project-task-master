@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { copy } from "@/lib/copy";
 import { useAgent } from "@/lib/agents/useAgent";
 import { useStatements } from "@/lib/data/useStatements";
@@ -29,10 +28,7 @@ export function ReflectPanel() {
   return (
     <Card className="paper-shadow">
       <CardContent className="space-y-3 py-5">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-normal text-foreground">{copy.account.reflect.title}</h2>
-          <PlaceholderTag />
-        </div>
+        <h2 className="text-base font-normal text-foreground">{copy.account.reflect.title}</h2>
         <p className="text-xs leading-relaxed text-muted-foreground">{copy.account.reflect.intro}</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={agent.isPending} onClick={() => run("reframer")} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40">

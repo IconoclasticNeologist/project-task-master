@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
@@ -17,9 +17,13 @@ export const Route = createFileRoute("/home")({
 function HomeScreen() {
   const { query } = useSurvivorSettings();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const seed = useMutation({
     mutationFn: loadExampleData,
-    onSuccess: () => void queryClient.invalidateQueries(),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      void navigate({ to: "/account" });
+    },
   });
   const plan = query.data
     ? { supportPerson: query.data.supportPerson, calmingThing: query.data.calmingAnchor }
@@ -32,18 +36,21 @@ function HomeScreen() {
           <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
         </header>
 
-        <button
-          type="button"
-          disabled={seed.isPending}
-          onClick={() => seed.mutate()}
-          className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
-        >
-          {seed.isPending
-            ? "Loading an example…"
-            : seed.isSuccess
-              ? "Example loaded — open “Your space” and start a session"
-              : "Load an example (demo)"}
-        </button>
+        <div className="space-y-1">
+          <button
+            type="button"
+            disabled={seed.isPending}
+            onClick={() => seed.mutate()}
+            className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            {seed.isPending ? "Loading an example…" : "Load an example (demo)"}
+          </button>
+          {seed.isError && (
+            <p className="text-xs text-destructive">
+              Couldn’t load the example: {seed.error?.message}
+            </p>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 gap-4">
           <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />

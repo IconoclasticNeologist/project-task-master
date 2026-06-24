@@ -24,7 +24,7 @@ export async function loadExampleData(): Promise<void> {
 
   const timeline = [
     {
-      date: "2023-06",
+      date: "2023-06-15",
       relativeAnchor: null,
       description: "I arrived in the country. He met me at the airport.",
     },

@@ -265,8 +265,8 @@ export const copy = {
       cancel: "Cancel",
       delete: "Delete",
       empty: "Nothing here yet. There is no rush.",
-      legalDraft: "Make a legal-language draft",
-      draftNote: "A draft in legal language. Your advocate reviews this — it is not a filed document.",
+      organize: "Help me organize this",
+      organizeNote: "A clearer version of your own words — yours to keep and edit. Not legal advice.",
       drafting: "Working…",
     },
     timeline: {

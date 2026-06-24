@@ -5,14 +5,12 @@ import { copy } from "@/lib/copy";
 import { useStatements } from "@/lib/data/useStatements";
 import type { StatementRow } from "@/lib/data/statements";
 import { useAgent } from "@/lib/agents/useAgent";
-import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 
 export function StatementList({ defaultVisibility }: { defaultVisibility: "private" | "shareable" }) {
   const { query, upsert, remove } = useStatements();
   const rows = query.data ?? [];
 
   const agent = useAgent();
-  const settings = useSurvivorSettings();
   const [draftFor, setDraftFor] = useState<string | null>(null);
   const [draftText, setDraftText] = useState("");
 
@@ -26,11 +24,10 @@ export function StatementList({ defaultVisibility }: { defaultVisibility: "priva
   const busy = upsert.isPending || remove.isPending;
 
   const makeDraft = (id: string, text: string) => {
-    const lang = settings.query.data?.language ?? "en";
     setDraftFor(id);
     setDraftText("");
     agent.mutate(
-      { agent: "translator", input: { text, fromLang: lang, toLang: lang, fromRegister: "narrative", toRegister: "legal" } },
+      { agent: "organizer", input: { text } },
       { onSuccess: (out) => setDraftText(out) },
     );
   };
@@ -113,7 +110,7 @@ export function StatementList({ defaultVisibility }: { defaultVisibility: "priva
                   </span>
                   <div className="flex gap-3 text-xs">
                     <button type="button" onClick={() => makeDraft(r.id, r.text)} disabled={agent.isPending} className="text-muted-foreground hover:text-foreground disabled:opacity-40">
-                      {agent.isPending && draftFor === r.id ? copy.account.statement.drafting : copy.account.statement.legalDraft}
+                      {agent.isPending && draftFor === r.id ? copy.account.statement.drafting : copy.account.statement.organize}
                     </button>
                     <button type="button" onClick={() => { setEditingId(r.id); setEditText(r.text); setEditVis(r.visibility); }} className="text-muted-foreground hover:text-foreground">
                       Edit
@@ -125,9 +122,9 @@ export function StatementList({ defaultVisibility }: { defaultVisibility: "priva
                 </div>
                 {draftFor === r.id && draftText && (
                   <div className="mt-2 space-y-1 rounded-md border border-border bg-card px-3 py-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{copy.account.statement.legalDraft}</p>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{copy.account.statement.organize}</p>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{draftText}</p>
-                    <p className="text-xs leading-relaxed text-muted-foreground">{copy.account.statement.draftNote}</p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{copy.account.statement.organizeNote}</p>
                   </div>
                 )}
               </>

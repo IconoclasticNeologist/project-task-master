@@ -24,6 +24,17 @@ const TRANSLATOR_PROMPT = [
   "Output only the translated/redrafted text. No preamble, no commentary.",
 ].join("\n");
 
+// Organizer: the survivor's OWN scattered words, made clearer and better ordered,
+// in their own plain voice. NOT legal language — survivors don't need legalese,
+// they need their unorganized thoughts organized.
+const ORGANIZER_PROMPT = [
+  "You take a person's own words — which may be scattered, out of order, or hard to follow — and hand them back a clearer, better-organized version IN THEIR OWN VOICE. Plain, everyday language. Never legal or clinical language.",
+  "Keep their meaning and their voice exactly. Do not add anything. Do not invent details, fill gaps, interpret, or judge. If something is unclear or missing, leave it out rather than guess.",
+  "Organize what is there: put events in the order they seem to have happened, group thoughts that belong together, and use short, simple sentences. Short bullet points are fine if they make it clearer.",
+  "Experience-based language only. Never 'victim', never 'your abuse', never a label for what they lived through. This is simply their own account, made clearer — never legal advice, never a filed document.",
+  "Output only the clearer version. No preamble, no labels, no commentary.",
+].join("\n");
+
 // PLACEHOLDER — demo only. SME review before real users:
 //   trauma therapist: re-traumatization + the survivor-visible-vs-advocate-only surfacing decision;
 //   attorney: pre-litigation surfacing safety + FRE 412 (never surface sexual-history detail).
@@ -68,7 +79,7 @@ const INTERVIEWER_PROMPT = [
   "Experience-based language. Output just the suggested invitation (and ground rules if starting). No commentary.",
 ].join("\n");
 
-type AgentName = "translator" | "reframer" | "recognition" | "interviewer";
+type AgentName = "translator" | "reframer" | "recognition" | "interviewer" | "organizer";
 
 function systemPromptFor(agent: AgentName): string {
   switch (agent) {
@@ -76,6 +87,7 @@ function systemPromptFor(agent: AgentName): string {
     case "reframer": return REFRAMER_PROMPT;
     case "recognition": return RECOGNITION_PROMPT;
     case "interviewer": return INTERVIEWER_PROMPT;
+    case "organizer": return ORGANIZER_PROMPT;
   }
 }
 
@@ -105,10 +117,15 @@ function userTextFor(agent: AgentName, input: Record<string, unknown>): string |
       ? "So far the person has shared:\n\n" + context + "\n\nSuggest one neutral next invitation."
       : "The person is just starting. Offer the ground rules and one open invitation.";
   }
+  if (agent === "organizer") {
+    const text = typeof input.text === "string" ? input.text : "";
+    if (!text.trim()) return null;
+    return "Here is what the person wrote, in their own words:\n\n" + text;
+  }
   return null;
 }
 
-const ALLOWED = ["translator", "reframer", "recognition", "interviewer"];
+const ALLOWED = ["translator", "reframer", "recognition", "interviewer", "organizer"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

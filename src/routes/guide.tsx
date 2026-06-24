@@ -1,4 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  Landmark,
+  Users,
+  MessageCircle,
+  HelpCircle,
+  Hand,
+  CalendarDays,
+  Heart,
+} from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
@@ -11,6 +20,9 @@ export const Route = createFileRoute("/guide")({
   component: GuideScreen,
 });
 
+// Index-mapped to copy.guide.sections (fixed order).
+const sectionIcons = [Landmark, Users, MessageCircle, HelpCircle, Hand, CalendarDays, Heart];
+
 function GuideScreen() {
   return (
     <Shell>
@@ -21,26 +33,34 @@ function GuideScreen() {
         </header>
 
         <div className="space-y-4">
-          {copy.guide.sections.map((section) => (
-            <Card key={section.heading} className="paper-shadow">
-              <CardContent className="space-y-2 py-5">
-                <h2 className="text-base font-normal text-foreground">{section.heading}</h2>
-                <ul className="space-y-1.5">
-                  {section.points.map((point, i) => (
-                    <li
-                      key={i}
-                      className="flex gap-2 text-sm leading-relaxed text-muted-foreground"
-                    >
-                      <span aria-hidden className="select-none text-foreground/40">
-                        •
-                      </span>
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
+          {copy.guide.sections.map((section, i) => {
+            const Icon = sectionIcons[i] ?? Landmark;
+            return (
+              <Card key={section.heading} className="paper-shadow">
+                <CardContent className="space-y-3 py-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[oklch(0.92_0.05_150)] text-[oklch(0.36_0.07_150)]">
+                      <Icon className="h-4 w-4" strokeWidth={2} />
+                    </span>
+                    <h2 className="text-base font-normal text-foreground">{section.heading}</h2>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {section.points.map((point, j) => (
+                      <li
+                        key={j}
+                        className="flex gap-2 text-sm leading-relaxed text-muted-foreground"
+                      >
+                        <span aria-hidden className="select-none text-foreground/40">
+                          •
+                        </span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <Card className="paper-shadow">

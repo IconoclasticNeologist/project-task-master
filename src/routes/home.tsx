@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
+import { loadExampleData } from "@/lib/data/demoSeed";
 import { AftercareCard } from "@/components/AftercareCard";
 import { requireSurvivor } from "@/lib/auth/guard";
 
@@ -14,6 +16,11 @@ export const Route = createFileRoute("/home")({
 
 function HomeScreen() {
   const { query } = useSurvivorSettings();
+  const queryClient = useQueryClient();
+  const seed = useMutation({
+    mutationFn: loadExampleData,
+    onSuccess: () => void queryClient.invalidateQueries(),
+  });
   const plan = query.data
     ? { supportPerson: query.data.supportPerson, calmingThing: query.data.calmingAnchor }
     : null;
@@ -24,6 +31,19 @@ function HomeScreen() {
           <h1 className="text-2xl font-normal tracking-tight">{copy.home.title}</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
         </header>
+
+        <button
+          type="button"
+          disabled={seed.isPending}
+          onClick={() => seed.mutate()}
+          className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+        >
+          {seed.isPending
+            ? "Loading an example…"
+            : seed.isSuccess
+              ? "Example loaded — open “Your space” and start a session"
+              : "Load an example (demo)"}
+        </button>
 
         <div className="grid grid-cols-1 gap-4">
           <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />

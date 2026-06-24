@@ -21,7 +21,13 @@ export const Route = createFileRoute("/account")({
 type Tab = "statements" | "timeline" | "documents";
 
 function AccountScreen() {
-  const [tab, setTab] = useState<Tab>("statements");
+  // Lets the home tiles deep-link to a tab (e.g. /account#timeline) without
+  // introducing a typed search param. Read once on mount; tab buttons take over after.
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "statements";
+    const h = window.location.hash.replace("#", "");
+    return h === "timeline" || h === "documents" ? (h as Tab) : "statements";
+  });
   const { query } = useSurvivorSettings();
   const defaultVisibility = query.data?.defaultVisibility ?? "private";
 

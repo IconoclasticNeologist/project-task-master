@@ -56,7 +56,7 @@ function HomeScreen() {
           <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
           <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
           <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
-          <Tile to="/account" label={copy.home.seeTimeline} hint="What happened, in your order." />
+          <Tile to="/account" hash="timeline" label={copy.home.seeTimeline} hint="What happened, in your order." />
           <Tile to="/resources" label={copy.home.findSupport} hint="People you can talk to now." />
         </div>
 
@@ -77,9 +77,9 @@ function HomeScreen() {
   );
 }
 
-function Tile({ to, label, hint }: { to: string; label: string; hint: string }) {
+function Tile({ to, hash, label, hint }: { to: string; hash?: string; label: string; hint: string }) {
   return (
-    <Link to={to}>
+    <Link to={to} hash={hash}>
       <Card className="paper-shadow">
         <CardContent className="flex items-center justify-between py-5">
           <div>

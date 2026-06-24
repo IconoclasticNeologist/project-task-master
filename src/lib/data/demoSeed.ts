@@ -1,12 +1,13 @@
 import { upsertStatement } from "./statements";
 import { upsertTimeline } from "./timeline";
 import { saveAftercare } from "./settings";
+import { indexStatement } from "@/lib/agents/rag";
 
 // DEMO ONLY — a presenter aid, not a survivor feature. Fills the current
 // (logged-in) survivor's space with one believable, fictional example so every
 // screen and AI feature has real content to work on. The statements are written
 // so the recognition/reframer agents have genuine patterns to surface and the
-// legal-language draft has something to transform. Remove before any real use.
+// organizer has something to clarify. Remove before any real use.
 export async function loadExampleData(): Promise<void> {
   await saveAftercare({
     supportPerson: "My sister, Ana",
@@ -19,7 +20,11 @@ export async function loadExampleData(): Promise<void> {
     "When I said I wanted to leave, he reminded me that he knew the town where my mother lives.",
   ];
   for (const text of statements) {
-    await upsertStatement({ text, visibility: "shareable" });
+    const row = await upsertStatement({ text, visibility: "shareable" });
+    // Index so the demo's "Search your words" returns real hits, matching the
+    // normal add path (useStatements indexes on every save). Awaited here so the
+    // example is searchable the moment the presenter lands on the account screen.
+    await indexStatement(row.id, row.text, row.language);
   }
 
   const timeline = [

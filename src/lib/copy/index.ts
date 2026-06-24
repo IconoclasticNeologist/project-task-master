@@ -92,7 +92,8 @@ export const copy = {
         "It is okay to say “I don’t know.” It is okay to skip. It is okay to correct me. It is okay to stop.",
       cta: "I’m ready",
     },
-    emergencyNote: `If you are in danger right now, please use the support page. (${PLACEHOLDER})`,
+    emergencyNote:
+      "If you are in danger right now, the Support page has hotlines you can reach any time.",
   },
 
   home: {

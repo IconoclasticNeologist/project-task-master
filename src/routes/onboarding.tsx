@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProgressDots } from "@/components/ProgressDots";
-import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { copy } from "@/lib/copy";
 
 export const Route = createFileRoute("/onboarding")({
@@ -52,7 +51,6 @@ function OnboardingScreen() {
       extra = (
         <p className="text-xs leading-relaxed text-muted-foreground">
           {copy.onboarding.emergencyNote}
-          <PlaceholderTag />
         </p>
       );
       break;

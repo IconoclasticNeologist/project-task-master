@@ -89,7 +89,7 @@ export function DocumentList({ defaultVisibility }: { defaultVisibility: "privat
             {r.note && <p className="text-sm text-muted-foreground">{r.note}</p>}
             <div className="flex items-center justify-between pt-1">
               <span className={r.visibility === "shareable" ? "text-xs uppercase tracking-wide text-primary" : "text-xs uppercase tracking-wide text-muted-foreground"}>
-                {r.visibility}
+                {r.visibility === "shareable" ? copy.account.statement.shareable : copy.account.statement.private}
               </span>
               <div className="flex gap-3 text-xs">
                 <button type="button" onClick={() => void onView(r.storagePath)} className="text-muted-foreground hover:text-foreground">

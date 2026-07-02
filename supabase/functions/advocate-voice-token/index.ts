@@ -5,10 +5,12 @@
  * `?access_token=`. The raw GEMINI_API_KEY never leaves this function.
  *
  * The token is locked to:
- *   - the chosen model
- *   - AUDIO response modality + the chosen voice
+ *   - the chosen model (allowlisted)
+ *   - AUDIO response modality + the per-mode voice (allowlisted; Defense=Charon)
  *   - the mode-specific system instruction (Coach / Defense / Interview /
  *     Regulator) — picked here, never overridable by the client
+ *   - input/output audio transcription, feeding the client-side deterministic
+ *     distress tripwire and containment tracking (never retained)
  *
  * Caps:
  *   - expire_time ~15min  → covers the full Gemini Live audio session
@@ -32,6 +34,22 @@ const SESSION_SECONDS = 15 * 60; // 15 min — full audio session window
 const START_WINDOW_SECONDS = 60; // 1 min to open the WS after minting
 
 type Mode = "base" | "regulator" | "defense" | "interview";
+
+// The client may SUGGEST a model/voice, but only from these lists — otherwise
+// a tampered client could mint tokens for arbitrary (more expensive) models
+// or voices. Unknown values fall back to the server default, never error.
+const MODEL_ALLOWLIST = [DEFAULT_MODEL];
+const VOICE_ALLOWLIST = ["Aoede", "Charon", "Kore", "Leda", "Puck", "Fenrir"];
+
+// Persona distinction is server-owned: the Defense practice voice is Charon
+// (firmer, lower) so the persona change is audible; every Coach-side mode
+// stays Aoede (warm, steady).
+const MODE_DEFAULT_VOICE: Record<Mode, string> = {
+  base: DEFAULT_VOICE,
+  regulator: DEFAULT_VOICE,
+  interview: DEFAULT_VOICE,
+  defense: "Charon",
+};
 
 // ---------------------------------------------------------------------------
 // System instructions
@@ -90,10 +108,14 @@ const COACH_DEFENSE = [
 
 function promptFor(mode: Mode): string {
   switch (mode) {
-    case "regulator": return COACH_REGULATOR;
-    case "interview": return COACH_INTERVIEW;
-    case "defense":   return COACH_DEFENSE;
-    default:          return COACH_BASE;
+    case "regulator":
+      return COACH_REGULATOR;
+    case "interview":
+      return COACH_INTERVIEW;
+    case "defense":
+      return COACH_DEFENSE;
+    default:
+      return COACH_BASE;
   }
 }
 
@@ -116,22 +138,28 @@ serve(async (req) => {
     });
 
   try {
-    const apiKey =
-      Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_AI_API_KEY");
+    const apiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_AI_API_KEY");
     if (!apiKey) return json(503, { error: "Voice service not configured" });
 
-    // Parse optional overrides
+    // Parse optional overrides — allowlisted only; unknown values degrade to defaults.
     let model = DEFAULT_MODEL;
-    let voice = DEFAULT_VOICE;
     let mode: Mode = "base";
+    let requestedVoice: string | null = null;
     try {
       const body = await req.json().catch(() => null);
       if (body && typeof body === "object") {
-        if (typeof body.model === "string" && body.model) model = body.model;
-        if (typeof body.voice === "string" && body.voice) voice = body.voice;
+        if (typeof body.model === "string" && MODEL_ALLOWLIST.includes(body.model)) {
+          model = body.model;
+        }
+        if (typeof body.voice === "string" && VOICE_ALLOWLIST.includes(body.voice)) {
+          requestedVoice = body.voice;
+        }
         mode = pickMode(body.mode);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
+    const voice = requestedVoice ?? MODE_DEFAULT_VOICE[mode];
 
     // Daily cap check via Supabase RPC (service role).
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -147,7 +175,9 @@ serve(async (req) => {
       });
       if (error) {
         if (error.message?.includes("voice_daily_cap_exceeded")) {
-          return json(429, { error: "Voice service is at today's limit. Please try again tomorrow." });
+          return json(429, {
+            error: "Voice service is at today's limit. Please try again tomorrow.",
+          });
         }
         // Counter failed for an unrelated reason — fail closed.
         return json(503, { error: "Voice service unavailable" });
@@ -184,6 +214,13 @@ serve(async (req) => {
             systemInstruction: {
               parts: [{ text: promptFor(mode) }],
             },
+            // Live transcription of BOTH sides, locked into the token:
+            //  - input (the person's speech) feeds the client-side deterministic
+            //    distress tripwire, so a spoken stop word works in voice mode;
+            //  - output (the model's speech) feeds containment tracking.
+            // Transcripts flow through the client and are never retained.
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
             // Keep server-side VAD, but make it commit to "the person is done"
             // quickly so replies don't lag after they stop speaking. (If this still
             // lags in practice, the escalation is manual turn control: set

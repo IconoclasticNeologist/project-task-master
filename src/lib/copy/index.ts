@@ -17,8 +17,7 @@ export const copy = {
 
   enter: {
     codeTitle: "Enter your code.",
-    codeBody:
-      "Whoever invited you gave you a code. You can type it here. There is no rush.",
+    codeBody: "Whoever invited you gave you a code. You can type it here. There is no rush.",
     codeHint: "Type it exactly as it was given to you.",
     codeLabel: "Your code",
     codePlaceholder: "The code you were given",
@@ -54,26 +53,22 @@ export const copy = {
   onboarding: {
     welcome: {
       title: "Welcome.",
-      body:
-        "This is a quiet place. You can go at your own pace. You can stop at any time.",
+      body: "This is a quiet place. You can go at your own pace. You can stop at any time.",
       cta: "Start",
     },
     feelings: {
       title: "This can bring up hard feelings.",
-      body:
-        "Sometimes talking about things you have lived through brings up strong feelings. That is okay. You can pause. You can stop.",
+      body: "Sometimes talking about things you have lived through brings up strong feelings. That is okay. You can pause. You can stop.",
       cta: "I understand",
     },
     care: {
       title: "Take care of yourself first.",
-      body:
-        "Before we begin, it helps to plan how you will take care of yourself today. There is no rush.",
+      body: "Before we begin, it helps to plan how you will take care of yourself today. There is no rush.",
       cta: "Continue",
     },
     aftercare: {
       title: "Your care plan.",
-      body:
-        "Name one person who helps you feel safe. Name one thing that helps you feel calm. We will come back to this if things feel heavy.",
+      body: "Name one person who helps you feel safe. Name one thing that helps you feel calm. We will come back to this if things feel heavy.",
       supportLabel: "Someone who helps me feel safe",
       supportPlaceholder: "A name or a relationship",
       calmLabel: "Something that helps me feel calm",
@@ -82,14 +77,12 @@ export const copy = {
     },
     how: {
       title: "How this works.",
-      body:
-        "You can talk or type. You can stop any time. The “I need a break” button is always at the top. The “Leave now” button takes you off this page right away.",
+      body: "You can talk or type. You can stop any time. The “I need a break” button is always at the top. The “Leave now” button takes you off this page right away.",
       cta: "Got it",
     },
     rules: {
       title: "Some ground rules.",
-      body:
-        "It is okay to say “I don’t know.” It is okay to skip. It is okay to correct me. It is okay to stop.",
+      body: "It is okay to say “I don’t know.” It is okay to skip. It is okay to correct me. It is okay to stop.",
       cta: "I’m ready",
     },
     emergencyNote:
@@ -190,14 +183,24 @@ export const copy = {
     glossaryHeading: "Words you might hear",
     glossary: [
       { term: "Hearing", meaning: "A time in court when a judge listens." },
-      { term: "Testify", meaning: "To answer questions out loud after promising to tell the truth." },
+      {
+        term: "Testify",
+        meaning: "To answer questions out loud after promising to tell the truth.",
+      },
       { term: "Oath", meaning: "The promise to tell the truth." },
       { term: "Judge", meaning: "The person in charge of the courtroom, who stays neutral." },
       { term: "Jury", meaning: "A group of people who listen and help decide." },
-      { term: "Prosecutor", meaning: "The lawyer who brings the case, often for “the state” or “the people.”" },
+      {
+        term: "Prosecutor",
+        meaning: "The lawyer who brings the case, often for “the state” or “the people.”",
+      },
       { term: "Defense lawyer", meaning: "The lawyer for the person the case is about." },
       { term: "Cross-examination", meaning: "When the other side’s lawyer asks you questions." },
-      { term: "Objection", meaning: "When a lawyer tells the judge a question may not be allowed. You can stop and wait." },
+      {
+        term: "Objection",
+        meaning:
+          "When a lawyer tells the judge a question may not be allowed. You can stop and wait.",
+      },
       { term: "Advocate", meaning: "A person whose job is to support you through this." },
       { term: "Subpoena", meaning: "An official paper telling you to come to court." },
       { term: "Continuance", meaning: "When court is moved to a later day." },
@@ -210,10 +213,35 @@ export const copy = {
   session: {
     title: "Session",
     coachIntro: "Hi. I’m here. We can go slowly.",
-    stop: "Stop",
-    pause: "Pause",
+    pause: "I need a pause",
+    end: "End the session",
     voice: "Talk",
     type: "Type",
+    // Who is speaking, stated plainly on screen. The person always knows.
+    persona: {
+      coach: "Your Coach is with you.",
+      regulator: "Your Coach is here. We are going slowly.",
+      practice: "This is the practice voice. Your Coach is nearby.",
+    },
+    // Witness Stand practice — consent gate shown EVERY time, before any
+    // practice voice speaks. Wording is PLACEHOLDER pending trauma-therapist
+    // review (docs/sme-research-needed.md); the structure is not.
+    witness: {
+      consentTitle: "Practice being asked questions.",
+      consentBody:
+        "This is a practice space. A different voice will ask you practice questions, a little like a lawyer might. None of it is real. Nothing here counts.",
+      consentPoints: [
+        "Your Coach stays nearby, and closes the practice with you.",
+        "Say “stop” at any time, or tap “I need a pause.” Everything stops right away.",
+        "Practice lasts 8 minutes at most. A quiet clock shows the time.",
+        "It is okay to say “I don’t know.” It is okay to stop.",
+      ],
+      begin: "Start the practice",
+      notNow: "Not now",
+      timerLabel: "Practice time left",
+      oneMinuteLeft: "About a minute left. We will wind down soon.",
+      capReached: "That’s enough practice for now.",
+    },
     permissionNeeded: "I need permission to use your microphone to listen.",
     permissionDenied:
       "Microphone is off. You can still type, or change permissions in your browser.",
@@ -233,21 +261,20 @@ export const copy = {
     },
     typePlaceholder: "Write whatever you want. Short is fine.",
     send: "Send",
+    connectError: "We couldn’t connect just now. You can try again in a moment.",
     aftercareTitle: "Let’s pause together.",
     aftercareBody:
       "Some of what came up was heavy. Before we close, let’s come back to your care plan.",
     closingTitle: "Thank you for trusting me with that.",
     closingBody:
       "You named something today. That took something. Your care plan is here when you need it.",
-    end: "End session",
   },
 
   account: {
     title: "Your space",
     intro:
       "These are your own words and your own pieces. You decide what is private and what is okay to share.",
-    sharedNote:
-      "Anything you mark “okay to share” is read by a real person who is helping you.",
+    sharedNote: "Anything you mark “okay to share” is read by a real person who is helping you.",
     cloudOff:
       "Sign-in is not turned on yet, so this is saved on this device only. When sign-in is turned on, your space will move with you.",
     loadError: "We couldn't load this just now.",
@@ -267,7 +294,8 @@ export const copy = {
       delete: "Delete",
       empty: "Nothing here yet. There is no rush.",
       organize: "Help me organize this",
-      organizeNote: "A clearer version of your own words — yours to keep and edit. Not legal advice.",
+      organizeNote:
+        "A clearer version of your own words — yours to keep and edit. Not legal advice.",
       drafting: "Working…",
     },
     timeline: {
@@ -286,7 +314,8 @@ export const copy = {
     },
     reflect: {
       title: "Reflect",
-      intro: "Optional. These use your own words to help you notice things you might want to talk through with your advocate. They are starting points, not legal advice.",
+      intro:
+        "Optional. These use your own words to help you notice things you might want to talk through with your advocate. They are starting points, not legal advice.",
       reframe: "Things to look at with your advocate",
       recognize: "Ways the law sometimes sees things",
       prompt: "A gentle question to start",
@@ -312,7 +341,8 @@ export const copy = {
     allow: "Allow access",
     decline: "No thanks",
     revoke: "End access",
-    confirmRevoke: "End this person's access? They will no longer be able to see the parts of your space listed here.",
+    confirmRevoke:
+      "End this person's access? They will no longer be able to see the parts of your space listed here.",
     unnamedProfessional: "A person from this organization",
     expires: (date: string) => `This access ends on ${date}.`,
     scopes: {
@@ -567,24 +597,33 @@ export const copy = {
   },
 
   recognition: {
-    intro:
-      `These are ways the law sometimes names what people have lived through. (${PLACEHOLDER}) Reviewed wording is coming.`,
+    intro: `These are ways the law sometimes names what people have lived through. (${PLACEHOLDER}) Reviewed wording is coming.`,
     item: (n: number) =>
       `Recognition statement #${n} — ${PLACEHOLDER}. This will be reviewed before anyone reads it.`,
   },
 
   defense: {
-    intro:
-      `This is the practice space. The questions you will hear are practice questions only. (${PLACEHOLDER})`,
-    closing:
-      "That’s enough for now. You did real work. Let’s come back to your care plan.",
+    intro: `This is the practice space. The questions you will hear are practice questions only. (${PLACEHOLDER})`,
+    closing: "That’s enough for now. You did real work. Let’s come back to your care plan.",
   },
 
   safety: {
     tripwireDetected:
       "I want to slow down for a moment. Let’s breathe together. Your care plan is right here.",
     breakTitle: "Take your time.",
-    breakBody:
-      "There is no clock. Come back when you are ready. Or don’t. Both are okay.",
+    breakBody: "There is no clock. Come back when you are ready. Or don’t. Both are okay.",
+    resume: "I’m ready to continue",
+    // Handoff signposting — shown the moment everything stops, before the
+    // Coach's voice returns. The person always knows who speaks next.
+    stoppedTitle: "Everything is stopped.",
+    practiceOver: "The practice voice is gone. Your Coach is here.",
+    coachStepsIn: "Let’s slow down together. Your Coach is here.",
+    continueWithCoach: "Continue with your Coach",
+    takeABreath: "Take a breath. There is no rush.",
+    // Crisis tier — shown when the tripwire hears self-harm language.
+    // Calm in its own visual language; a real person is one tap away.
+    crisisTitle: "Let’s pause here, together.",
+    crisisBody:
+      "What you said matters. If everything feels like too much, you can reach a real person right now, any time. You never have to give your name.",
   },
 } as const;

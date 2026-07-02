@@ -30,10 +30,7 @@ const CRISIS_PATTERNS: RegExp[] = [
   /\bcan('|)t do this\b/i,
 ];
 
-export type DistressSignal =
-  | { kind: "stop" }
-  | { kind: "crisis"; match: string }
-  | null;
+export type DistressSignal = { kind: "stop" } | { kind: "crisis"; match: string } | null;
 
 export function tripwire(text: string): DistressSignal {
   if (!text) return null;
@@ -51,4 +48,29 @@ export function tripwire(text: string): DistressSignal {
 /** Tier 2 affect hook. Returns null until a model is wired. No-op safe. */
 export async function assessAffect(_text: string): Promise<DistressSignal> {
   return null;
+}
+
+/**
+ * Rolling-window tripwire for live voice transcription.
+ *
+ * Gemini Live delivers user speech as incremental transcript fragments, so a
+ * stop word can arrive split across messages ("sto" + "p"). This accumulates
+ * fragments into a small rolling window and runs the same deterministic
+ * tripwire over the window. After a signal fires the window is cleared, so one
+ * utterance produces one signal instead of re-firing on every fragment.
+ */
+export function makeTranscriptTripwire(windowChars = 300) {
+  let window = "";
+  return {
+    push(fragment: string): DistressSignal {
+      if (!fragment) return null;
+      window = (window + fragment).slice(-windowChars);
+      const sig = tripwire(window);
+      if (sig) window = "";
+      return sig;
+    },
+    reset() {
+      window = "";
+    },
+  };
 }

@@ -8,17 +8,26 @@
 //   - No Cloudflare Worker proxy. No app-side Worker secret.
 //
 // SAFETY INVARIANTS:
-//   - No transcript array is kept on the client. Frames flow through.
+//   - No transcript array is kept on the client. Frames flow through; the
+//     rolling tripwire window holds at most ~300 chars and is cleared on fire.
 //   - Mic audio frames are forwarded and discarded after send. No recording.
-//   - Distress tripwire runs on user text as it goes out so the Coach can
-//     shift to regulator mode without a server roundtrip.
+//   - Distress tripwire runs on user text as it goes out AND on the live
+//     input transcription of the person's speech, so a spoken stop word
+//     interrupts without any model round trip.
+//   - interrupt() is local and instant: it silences playback and drops any
+//     in-flight audio frames. It never waits on the network.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ADVOCATE_VOICE_CONFIG } from "./config";
 import { startMicCapture, type CaptureHandle } from "./audio/capture";
 import { PcmPlayer } from "./audio/playback";
-import { tripwire, type DistressSignal } from "@/lib/agents/safety/distress";
+import {
+  tripwire,
+  makeTranscriptTripwire,
+  type DistressSignal,
+} from "@/lib/agents/safety/distress";
 import type { CoachMode } from "@/lib/agents/coach";
+import { geminiVoiceForMode } from "@/lib/agents/personas/voices";
 import { getSupabase } from "@/lib/supabase/client";
 
 export type VoiceStatus = "idle" | "connecting" | "open" | "closed" | "error";
@@ -28,7 +37,10 @@ interface UseGeminiLiveOptions {
   mode?: CoachMode;
   /** Override max session seconds (defense uses a tighter cap). */
   maxDurationSec?: number;
+  /** The model's words (live output transcription + any text parts). */
   onCoachText?: (text: string) => void;
+  /** The person's spoken words (live input transcription). Never retained. */
+  onUserText?: (text: string) => void;
   onDistress?: (sig: DistressSignal) => void;
 }
 
@@ -55,7 +67,9 @@ async function fetchVoiceToken(mode: CoachMode): Promise<VoiceTokenPayload> {
     {
       body: {
         model: ADVOCATE_VOICE_CONFIG.connection.model,
-        voice: ADVOCATE_VOICE_CONFIG.connection.voice,
+        // Per-persona voice (Coach=Aoede, Defense=Charon). The server
+        // enforces its own per-mode default and allowlist regardless.
+        voice: geminiVoiceForMode(mode),
         mode,
       },
     },
@@ -66,12 +80,14 @@ async function fetchVoiceToken(mode: CoachMode): Promise<VoiceTokenPayload> {
 }
 
 export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
-  const { mode = "base", maxDurationSec, onCoachText, onDistress } = opts;
+  const { mode = "base", maxDurationSec } = opts;
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [micState, setMicState] = useState<MicState>("off");
   const [coachSpeaking, setCoachSpeaking] = useState(false);
   // Smoothed mic input level [0..~0.3], throttled for the "I can hear you" meter.
   const [micLevel, setMicLevel] = useState(0);
+  // The mode of the CURRENT live session (a reconnect can change it).
+  const [activeMode, setActiveMode] = useState<CoachMode>(mode);
 
   const wsRef = useRef<WebSocket | null>(null);
   const captureRef = useRef<CaptureHandle | null>(null);
@@ -83,6 +99,22 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const greetedRef = useRef(false);
   // Throttle clock for mic-level UI updates (avoid re-rendering on every audio frame).
   const lastLevelTickRef = useRef(0);
+  // interrupt() flips this; while set, incoming audio frames are dropped so an
+  // interrupted voice cannot resume from frames already in flight.
+  const mutedRef = useRef(false);
+  // Rolling-window tripwire over the person's live speech transcription.
+  const transcriptTripRef = useRef(makeTranscriptTripwire());
+
+  // The consumer's callbacks live in refs so the long-lived WebSocket message
+  // listener never closes over stale render values.
+  const onCoachTextRef = useRef(opts.onCoachText);
+  const onUserTextRef = useRef(opts.onUserText);
+  const onDistressRef = useRef(opts.onDistress);
+  useEffect(() => {
+    onCoachTextRef.current = opts.onCoachText;
+    onUserTextRef.current = opts.onUserText;
+    onDistressRef.current = opts.onDistress;
+  }, [opts.onCoachText, opts.onUserText, opts.onDistress]);
 
   const tearDown = useCallback(() => {
     captureRef.current?.stop();
@@ -109,24 +141,32 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     setStatus("closed");
   }, [tearDown]);
 
-  const sendText = useCallback(
-    (text: string) => {
-      const ws = wsRef.current;
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
-      const sig = tripwire(text);
-      if (sig) onDistress?.(sig);
-      lastActivityRef.current = Date.now();
-      ws.send(
-        JSON.stringify({
-          clientContent: {
-            turns: [{ role: "user", parts: [{ text }] }],
-            turnComplete: true,
-          },
-        }),
-      );
-    },
-    [onDistress],
-  );
+  /**
+   * Deterministic, local, instant: silence the voice mid-word and drop any
+   * audio frames still in flight. No network, no model. The stop word and
+   * the pause button both come through here before anything else happens.
+   */
+  const interrupt = useCallback(() => {
+    mutedRef.current = true;
+    playerRef.current?.stop();
+    setCoachSpeaking(false);
+  }, []);
+
+  const sendText = useCallback((text: string) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const sig = tripwire(text);
+    if (sig) onDistressRef.current?.(sig);
+    lastActivityRef.current = Date.now();
+    ws.send(
+      JSON.stringify({
+        clientContent: {
+          turns: [{ role: "user", parts: [{ text }] }],
+          turnComplete: true,
+        },
+      }),
+    );
+  }, []);
 
   const enableMic = useCallback(async () => {
     if (captureRef.current) return;
@@ -166,115 +206,145 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     setMicState("off");
   }, []);
 
-  const connect = useCallback(async () => {
-    setStatus("connecting");
-    greetedRef.current = false;
-    try {
-      const { token, model } = await fetchVoiceToken(mode);
-      // v1alpha + ?access_token=<ephemeral>. The token has model, voice,
-      // AUDIO modality, and system instruction locked into its constraints,
-      // so we MUST NOT resend those in the setup frame.
-      const wsUrl = `${GEMINI_WS_BASE}?access_token=${encodeURIComponent(token)}`;
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-      playerRef.current = new PcmPlayer(24000);
+  const connect = useCallback(
+    async (modeOverride?: CoachMode, connectOpts?: { maxDurationSec?: number }) => {
+      const sessionMode = modeOverride ?? mode;
+      const sessionMaxSec = connectOpts?.maxDurationSec ?? maxDurationSec;
+      setActiveMode(sessionMode);
+      setStatus("connecting");
+      greetedRef.current = false;
+      mutedRef.current = false;
+      transcriptTripRef.current.reset();
+      try {
+        const { token, model } = await fetchVoiceToken(sessionMode);
+        // v1alpha + ?access_token=<ephemeral>. The token has model, voice,
+        // AUDIO modality, and system instruction locked into its constraints,
+        // so we MUST NOT resend those in the setup frame.
+        const wsUrl = `${GEMINI_WS_BASE}?access_token=${encodeURIComponent(token)}`;
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+        playerRef.current = new PcmPlayer(24000);
 
-      ws.addEventListener("open", () => {
-        setStatus("open");
-        // Minimal setup frame. If on first real session audio is missing,
-        // add back: generationConfig: { responseModalities: ["AUDIO"] }
-        // (non-sensitive, redundant with the token constraint).
-        // If the upstream rejects the model id, drop the "models/" prefix
-        // here AND in the edge function constraint so they still match.
-        ws.send(
-          JSON.stringify({
-            setup: { model: `models/${model}` },
-          }),
-        );
-
-        const maxSec = maxDurationSec ?? ADVOCATE_VOICE_CONFIG.caps.maxSessionDurationSec;
-        if (maxSec > 0) {
-          sessionTimerRef.current = setTimeout(() => disconnect(), maxSec * 1000);
-        }
-
-        const idleSec = ADVOCATE_VOICE_CONFIG.caps.idleTimeoutSec;
-        if (idleSec > 0) {
-          const tick = () => {
-            const since = (Date.now() - lastActivityRef.current) / 1000;
-            if (since >= idleSec) {
-              disconnect();
-              return;
-            }
-            idleTimerRef.current = setTimeout(tick, 5000);
-          };
-          idleTimerRef.current = setTimeout(tick, 5000);
-        }
-      });
-
-      ws.addEventListener("message", async (evt) => {
-        lastActivityRef.current = Date.now();
-        let raw: string | null = null;
-        if (typeof evt.data === "string") {
-          raw = evt.data;
-        } else if (evt.data instanceof Blob) {
-          raw = await evt.data.text();
-        }
-        if (!raw) return;
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(raw);
-        } catch {
-          return;
-        }
-        if (!parsed || typeof parsed !== "object") return;
-        const msg = parsed as Record<string, unknown>;
-        // Coach speaks first: as soon as setup is acknowledged, send the opening
-        // signal so the model greets before the person has to say anything. The
-        // locked system prompt treats "BEGIN" as the session-open cue (and never
-        // reads it aloud). Guarded so it fires once per session.
-        if (msg.setupComplete && !greetedRef.current) {
-          greetedRef.current = true;
+        ws.addEventListener("open", () => {
+          setStatus("open");
+          // Minimal setup frame. If on first real session audio is missing,
+          // add back: generationConfig: { responseModalities: ["AUDIO"] }
+          // (non-sensitive, redundant with the token constraint).
+          // If the upstream rejects the model id, drop the "models/" prefix
+          // here AND in the edge function constraint so they still match.
           ws.send(
             JSON.stringify({
-              clientContent: {
-                turns: [{ role: "user", parts: [{ text: "BEGIN" }] }],
-                turnComplete: true,
-              },
+              setup: { model: `models/${model}` },
             }),
           );
-          return;
-        }
-        const server = msg.serverContent as Record<string, unknown> | undefined;
-        const modelTurn = server?.modelTurn as Record<string, unknown> | undefined;
-        const parts = (modelTurn?.parts as Array<Record<string, unknown>> | undefined) ?? [];
-        for (const p of parts) {
-          const inline = p.inlineData as { mimeType?: string; data?: string } | undefined;
-          if (inline?.data && typeof inline.mimeType === "string" && inline.mimeType.startsWith("audio/")) {
-            setCoachSpeaking(true);
-            playerRef.current?.enqueueBase64Pcm16(inline.data);
-          }
-          if (typeof p.text === "string" && p.text) {
-            onCoachText?.(p.text);
-          }
-        }
-        if (server?.turnComplete) {
-          setCoachSpeaking(false);
-        }
-      });
 
-      ws.addEventListener("close", () => {
-        tearDown();
-        setStatus("closed");
-      });
-      ws.addEventListener("error", () => {
+          const maxSec = sessionMaxSec ?? ADVOCATE_VOICE_CONFIG.caps.maxSessionDurationSec;
+          if (maxSec > 0) {
+            sessionTimerRef.current = setTimeout(() => disconnect(), maxSec * 1000);
+          }
+
+          const idleSec = ADVOCATE_VOICE_CONFIG.caps.idleTimeoutSec;
+          if (idleSec > 0) {
+            const tick = () => {
+              const since = (Date.now() - lastActivityRef.current) / 1000;
+              if (since >= idleSec) {
+                disconnect();
+                return;
+              }
+              idleTimerRef.current = setTimeout(tick, 5000);
+            };
+            idleTimerRef.current = setTimeout(tick, 5000);
+          }
+        });
+
+        ws.addEventListener("message", async (evt) => {
+          lastActivityRef.current = Date.now();
+          let raw: string | null = null;
+          if (typeof evt.data === "string") {
+            raw = evt.data;
+          } else if (evt.data instanceof Blob) {
+            raw = await evt.data.text();
+          }
+          if (!raw) return;
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            return;
+          }
+          if (!parsed || typeof parsed !== "object") return;
+          const msg = parsed as Record<string, unknown>;
+          // Coach speaks first: as soon as setup is acknowledged, send the opening
+          // signal so the model greets before the person has to say anything. The
+          // locked system prompt treats "BEGIN" as the session-open cue (and never
+          // reads it aloud). Guarded so it fires once per session.
+          if (msg.setupComplete && !greetedRef.current) {
+            greetedRef.current = true;
+            ws.send(
+              JSON.stringify({
+                clientContent: {
+                  turns: [{ role: "user", parts: [{ text: "BEGIN" }] }],
+                  turnComplete: true,
+                },
+              }),
+            );
+            return;
+          }
+          const server = msg.serverContent as Record<string, unknown> | undefined;
+
+          // Live transcription of the person's speech → deterministic tripwire.
+          // Fragments flow through the rolling window and are not retained.
+          const inputTx = server?.inputTranscription as { text?: string } | undefined;
+          if (typeof inputTx?.text === "string" && inputTx.text) {
+            onUserTextRef.current?.(inputTx.text);
+            const sig = transcriptTripRef.current.push(inputTx.text);
+            if (sig) onDistressRef.current?.(sig);
+          }
+
+          // Live transcription of the model's speech → containment tracking.
+          const outputTx = server?.outputTranscription as { text?: string } | undefined;
+          if (typeof outputTx?.text === "string" && outputTx.text) {
+            onCoachTextRef.current?.(outputTx.text);
+          }
+
+          const modelTurn = server?.modelTurn as Record<string, unknown> | undefined;
+          const parts = (modelTurn?.parts as Array<Record<string, unknown>> | undefined) ?? [];
+          for (const p of parts) {
+            const inline = p.inlineData as { mimeType?: string; data?: string } | undefined;
+            if (
+              inline?.data &&
+              typeof inline.mimeType === "string" &&
+              inline.mimeType.startsWith("audio/")
+            ) {
+              if (!mutedRef.current) {
+                setCoachSpeaking(true);
+                playerRef.current?.enqueueBase64Pcm16(inline.data);
+              }
+            }
+            if (typeof p.text === "string" && p.text) {
+              onCoachTextRef.current?.(p.text);
+            }
+          }
+          if (server?.turnComplete) {
+            setCoachSpeaking(false);
+          }
+        });
+
+        ws.addEventListener("close", () => {
+          tearDown();
+          setStatus("closed");
+        });
+        ws.addEventListener("error", () => {
+          tearDown();
+          setStatus("error");
+        });
+      } catch {
         tearDown();
         setStatus("error");
-      });
-    } catch {
-      tearDown();
-      setStatus("error");
-    }
-  }, [mode, maxDurationSec, onCoachText, disconnect, tearDown]);
+      }
+    },
+    [mode, maxDurationSec, disconnect, tearDown],
+  );
 
   useEffect(() => () => tearDown(), [tearDown]);
 
@@ -283,8 +353,10 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     micState,
     coachSpeaking,
     micLevel,
+    activeMode,
     connect,
     disconnect,
+    interrupt,
     enableMic,
     disableMic,
     sendText,

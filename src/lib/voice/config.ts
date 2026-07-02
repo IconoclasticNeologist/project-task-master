@@ -35,6 +35,8 @@ export interface AdvocateVoiceConfig {
     orbColor: string;
     orbColorListening: string;
     orbColorSpeaking: string;
+    /** The practice (Defense) voice reads as clay, not sage — visibly a different speaker. */
+    orbColorSpeakingPractice: string;
   };
   copy: {
     micPermissionTitle: string;
@@ -55,7 +57,7 @@ export const ADVOCATE_VOICE_CONFIG: AdvocateVoiceConfig = {
   caps: {
     maxSessionDurationSec: 60 * 45, // 45 min soft session cap
     idleTimeoutSec: 60 * 3, // 3 min idle
-    witnessStandMaxDurationSec: 60 * 10, // 10 min hard cap on practice cross
+    witnessStandMaxDurationSec: 60 * 8, // 8 min cap on practice cross (visible timer)
     dailyDollarCap: 0, // disabled until pricing set
   },
   pricing: {
@@ -80,6 +82,7 @@ export const ADVOCATE_VOICE_CONFIG: AdvocateVoiceConfig = {
     orbColor: "oklch(0.94 0.022 90)",
     orbColorListening: "oklch(0.85 0.04 150)",
     orbColorSpeaking: "oklch(0.78 0.06 150)",
+    orbColorSpeakingPractice: "oklch(0.72 0.05 60)",
   },
   copy: {
     micPermissionTitle: "Microphone",

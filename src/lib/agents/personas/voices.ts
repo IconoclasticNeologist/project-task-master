@@ -1,9 +1,11 @@
 // Per-persona voice profiles.
 //
-// Working baseline: every persona uses Gemini Live's Aoede voice. The
-// structure is here so distinct TTS voices can be wired in later without
-// changing call sites. `ttsVoice` is null until a per-persona TTS provider
-// is selected.
+// The Coach (and its regulator/interviewer modes) speaks with Aoede; the
+// Defense practice voice speaks with Charon — a firmer, lower prebuilt
+// Gemini Live voice — so a persona change is AUDIBLE, not just labeled.
+// The server (advocate-voice-token) enforces its own per-mode default and
+// allowlist, so a tampered client cannot pick an arbitrary voice.
+// `ttsVoice` is null until a per-persona TTS provider is selected.
 
 export interface VoiceProfile {
   /** Internal id, matches the agent module name. */
@@ -36,8 +38,15 @@ export const VOICE_PROFILES: Record<string, VoiceProfile> = {
   defense: {
     id: "defense",
     name: "Defense (practice only)",
-    geminiVoice: "Aoede",
+    geminiVoice: "Charon",
     ttsVoice: null,
     style: "firm, direct, but never cruel — practice posture only",
   },
 };
+
+/** The Gemini Live voice for a given live-session mode. */
+export function geminiVoiceForMode(mode: "base" | "regulator" | "defense" | "interview"): string {
+  if (mode === "defense") return VOICE_PROFILES.defense.geminiVoice;
+  if (mode === "interview") return VOICE_PROFILES.interviewer.geminiVoice;
+  return VOICE_PROFILES.coach.geminiVoice;
+}

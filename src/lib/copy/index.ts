@@ -323,11 +323,35 @@ export const copy = {
       reframe: "Things to look at with your advocate",
       recognize: "Ways the law sometimes sees things",
       prompt: "A gentle question to start",
+      directAsk: "What if I ask it, “Was I trafficked?”",
+      directAskExplain:
+        "This is on purpose. This tool never decides what happened to you — only you, with a legal partner, can name it.",
       empty: "Add some of your words first, then come back here.",
       working: "Working…",
     },
     searchPlaceholder: "Search your words…",
     searchEmpty: "No matches yet.",
+    // The export draft. Framing is deliberate (see United States v. Heppner):
+    // always "a draft to bring to your lawyer", never "your legal document",
+    // never anything that implies the draft is confidential or filed.
+    draft: {
+      title: "A draft for your lawyer",
+      intro:
+        "This gathers everything you marked “okay to share” into one draft, written the way lawyers write. Nothing marked private goes in.",
+      make: "Make the draft",
+      remake: "Make it again",
+      working: "Putting your words together…",
+      heading: "DRAFT — for your lawyer to review",
+      disclaimer:
+        "This is a draft to bring to your lawyer. It is not a legal document. Your lawyer will check it, fix it, and decide what to use.",
+      empty:
+        "Nothing is marked “okay to share” yet. Mark the words or timeline moments you want in the draft first.",
+      copyButton: "Copy the draft",
+      copied: "Copied. You can paste it anywhere.",
+      wordsHeading: "My words",
+      timelineHeading: "What happened, in order",
+      error: "We couldn’t make the draft just now. You can try again.",
+    },
   },
 
   team: {

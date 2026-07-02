@@ -12,10 +12,14 @@ export function ReflectPanel() {
   const { query } = useStatements();
   const entries = (query.data ?? []).map((s) => s.text);
   const [out, setOut] = useState("");
+  const [lastRun, setLastRun] = useState<
+    "reframer" | "recognition" | "interviewer" | "directAsk" | null
+  >(null);
 
-  const run = (which: "reframer" | "recognition" | "interviewer") => {
+  const run = (which: "reframer" | "recognition" | "interviewer" | "directAsk") => {
     setOut("");
-    if ((which === "reframer" || which === "recognition") && entries.length === 0) {
+    setLastRun(null);
+    if (which !== "interviewer" && entries.length === 0) {
       setOut(copy.account.reflect.empty);
       return;
     }
@@ -24,8 +28,20 @@ export function ReflectPanel() {
         ? { entries }
         : which === "recognition"
           ? { narrative: entries.join("\n\n") }
-          : { context: "" };
-    agent.mutate({ agent: which, input }, { onSuccess: setOut });
+          : which === "directAsk"
+            ? // The scripted refusal: the exact ask is fixed server-side; the
+              // recognition layer declines the conclusion, visibly, every time.
+              { narrative: entries.join("\n\n"), directAsk: true }
+            : { context: "" };
+    agent.mutate(
+      { agent: which === "directAsk" ? "recognition" : which, input },
+      {
+        onSuccess: (text) => {
+          setOut(text);
+          setLastRun(which);
+        },
+      },
+    );
   };
 
   return (
@@ -80,6 +96,20 @@ export function ReflectPanel() {
             {out && !agent.isPending && (
               <p className="whitespace-pre-wrap rounded-md border border-border bg-card px-3 py-2 text-sm leading-relaxed text-foreground">
                 {out}
+              </p>
+            )}
+            {lastRun === "recognition" && out && !agent.isPending && (
+              <button
+                type="button"
+                onClick={() => run("directAsk")}
+                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                {copy.account.reflect.directAsk}
+              </button>
+            )}
+            {lastRun === "directAsk" && out && !agent.isPending && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {copy.account.reflect.directAskExplain}
               </p>
             )}
           </div>

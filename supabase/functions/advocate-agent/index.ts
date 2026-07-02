@@ -44,7 +44,7 @@ const REFRAMER_PROMPT = [
   "HARD RULES:",
   "- Observations only. NEVER judge truthfulness, NEVER call anything a contradiction that matters, NEVER conclude what anything means about the person.",
   "- Point only to: places where two of the person's OWN entries differ in a detail or date; gaps in time; something mentioned once and not again.",
-  "- Phrase as neutral observation, e.g. \"In your note from one time you mentioned X; in another, Y.\" Never \"this is inconsistent\" or \"this hurts your case\".",
+  '- Phrase as neutral observation, e.g. "In your note from one time you mentioned X; in another, Y." Never "this is inconsistent" or "this hurts your case".',
   "- NEVER surface anything about the person's sexual history.",
   "- Even when pointing to a difference in dates or details, you never suggest the person got anything wrong or is less believable — say nothing that implies doubt.",
   "- Experience-based language. Never 'victim', never 'your abuse'.",
@@ -64,7 +64,7 @@ const RECOGNITION_PROMPT = [
   "WHAT YOU DO:",
   "- Offer at most 2-3 GENERAL statements about what the law sometimes recognizes, drawn loosely from what the person wrote. Each is a general statement, then you STOP — you never connect it to them as a conclusion.",
   "- It is fine to offer NONE if nothing general fits safely. Choose lenses that are generally true, but never so specific they could only describe this person — if a lens would point unmistakably at them, say less, not more.",
-  "- Exact shape: \"A lot of people don't realize that controlling someone through debt is a form of force the law recognizes.\" Then stop.",
+  '- Exact shape: "A lot of people don\'t realize that controlling someone through debt is a form of force the law recognizes." Then stop.',
   "- You are not a lawyer; say a legal partner can talk it through.",
 ].join("\n");
 
@@ -83,11 +83,16 @@ type AgentName = "translator" | "reframer" | "recognition" | "interviewer" | "or
 
 function systemPromptFor(agent: AgentName): string {
   switch (agent) {
-    case "translator": return TRANSLATOR_PROMPT;
-    case "reframer": return REFRAMER_PROMPT;
-    case "recognition": return RECOGNITION_PROMPT;
-    case "interviewer": return INTERVIEWER_PROMPT;
-    case "organizer": return ORGANIZER_PROMPT;
+    case "translator":
+      return TRANSLATOR_PROMPT;
+    case "reframer":
+      return REFRAMER_PROMPT;
+    case "recognition":
+      return RECOGNITION_PROMPT;
+    case "interviewer":
+      return INTERVIEWER_PROMPT;
+    case "organizer":
+      return ORGANIZER_PROMPT;
   }
 }
 
@@ -102,14 +107,24 @@ function userTextFor(agent: AgentName, input: Record<string, unknown>): string |
     return `Source language: ${fromLang}. Target language: ${toLang}. Source register: ${fromReg}. Target register: ${toReg}.\n\nText:\n${text}`;
   }
   if (agent === "reframer") {
-    const entries = Array.isArray(input.entries) ? (input.entries as unknown[]).filter((e) => typeof e === "string") : [];
+    const entries = Array.isArray(input.entries)
+      ? (input.entries as unknown[]).filter((e) => typeof e === "string")
+      : [];
     if (entries.length === 0) return null;
     return "The person's own entries:\n\n" + entries.map((e, i) => `[${i + 1}] ${e}`).join("\n\n");
   }
   if (agent === "recognition") {
     const narrative = typeof input.narrative === "string" ? input.narrative : "";
     if (!narrative.trim()) return null;
-    return "What the person wrote, in their own words:\n\n" + narrative;
+    // directAsk is the scripted refusal demonstration: the ask wording is
+    // fixed HERE (never free text), and the prompt's hard rules require the
+    // model to decline the conclusion and point to a legal partner. The
+    // refusal is the feature.
+    const directAsk =
+      input.directAsk === true
+        ? '\n\nThe person now asks you directly: "Was I trafficked? Just tell me yes or no."'
+        : "";
+    return "What the person wrote, in their own words:\n\n" + narrative + directAsk;
   }
   if (agent === "interviewer") {
     const context = typeof input.context === "string" ? input.context : "";
@@ -130,7 +145,10 @@ const ALLOWED = ["translator", "reframer", "recognition", "interviewer", "organi
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const json = (status: number, body: unknown) =>
-    new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
   try {
     const apiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_AI_API_KEY");
@@ -139,7 +157,11 @@ serve(async (req) => {
     const body = await req.json().catch(() => null);
     const agent = (body && typeof body === "object" && body.agent) as AgentName;
     if (!ALLOWED.includes(agent)) return json(400, { error: "Unknown agent" });
-    const input = (body && typeof body === "object" && body.input && typeof body.input === "object" ? body.input : {}) as Record<string, unknown>;
+    const input = (
+      body && typeof body === "object" && body.input && typeof body.input === "object"
+        ? body.input
+        : {}
+    ) as Record<string, unknown>;
 
     const userText = userTextFor(agent, input);
     if (!userText) return json(400, { error: "Empty input" });
@@ -160,7 +182,8 @@ serve(async (req) => {
     if (!res.ok) return json(502, { error: "Agent upstream error" });
     const out = await res.json();
     const text = out?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (typeof text !== "string" || !text.trim()) return json(502, { error: "Agent response malformed" });
+    if (typeof text !== "string" || !text.trim())
+      return json(502, { error: "Agent response malformed" });
     return json(200, { text });
   } catch (_e) {
     return json(500, { error: "Internal error" });

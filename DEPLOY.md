@@ -21,7 +21,12 @@ Demoing to yourself / your team is fine now. **Before a real survivor touches it
   advocate-only decision**; FRE 412).
 - **Coach voice prompts + guardrails** (`supabase/functions/advocate-voice-token/index.ts`,
   `src/lib/voice/guardrails.ts`) → trauma-therapist + attorney.
-- **Real crisis-hotline numbers** for the Resources screen (currently `PlaceholderTag` placeholders).
+- **Witness Stand practice** — consent-gate wording, the Defense question rules (voice prompt in
+  `advocate-voice-token`, avatar shim prompt in `advocate-defense-llm`), and **whether a visible
+  practice person (avatar) is appropriate at all** → trauma-therapist + attorney
+  (see the graduated-exposure entry in `docs/sme-research-needed.md`).
+- ~~Real crisis-hotline numbers~~ ✅ shipped 2026-06-23 (`copy.resources` — verified US national
+  hotlines; localize per jurisdiction before launch).
 
 Everything below is safe to run for a dev/demo build; none of it ships vetted survivor-facing content by itself.
 
@@ -87,6 +92,58 @@ bunx supabase functions deploy advocate-voice-token
 bunx supabase functions deploy advocate-agent
 bunx supabase functions deploy advocate-rag
 ```
+
+### 3b. The practice person (HeyGen LiveAvatar) — optional, Witness Stand only
+
+Two more functions power the on-screen practice person. Without their secrets the app quietly
+falls back to the voice-only practice path, so this section can be done last.
+
+```bash
+# Deploy (note --no-verify-jwt on the shim — LiveAvatar's servers call it with
+# a shared bearer secret, not a Supabase JWT; the bearer check is the gate):
+bunx supabase functions deploy advocate-avatar-session
+bunx supabase functions deploy advocate-defense-llm --no-verify-jwt
+```
+
+**One-time LiveAvatar setup** (needs your API key from app.liveavatar.com → Developers):
+
+```bash
+export LIVEAVATAR_API_KEY=<your key>
+
+# 0) Generate the shim's shared secret and give it to Supabase:
+SHIM_KEY=$(openssl rand -hex 24)
+bunx supabase secrets set LIVEAVATAR_SHIM_KEY=$SHIM_KEY
+
+# 1) Store the same secret with LiveAvatar (it authenticates them TO the shim):
+curl -s -X POST https://api.liveavatar.com/v1/secrets \
+  -H "X-API-KEY: $LIVEAVATAR_API_KEY" -H "Content-Type: application/json" \
+  -d "{\"secret_type\":\"LLM_API_KEY\",\"secret_value\":\"$SHIM_KEY\",\"secret_name\":\"advocate-defense-shim\"}"
+# → note data.secret_id
+
+# 2) Register the shim as the practice person's ONLY brain (RAG-lock):
+curl -s -X POST https://api.liveavatar.com/v1/llm_configurations \
+  -H "X-API-KEY: $LIVEAVATAR_API_KEY" -H "Content-Type: application/json" \
+  -d '{"display_name":"advocate-defense","model_name":"practice","secret_id":"<step-1 secret_id>","base_url":"https://suanbsyewsudlhrrzfks.supabase.co/functions/v1/advocate-defense-llm"}'
+# → note data.llm_configuration_id
+
+# 3) Point the session minter at everything:
+bunx supabase secrets set \
+  LIVEAVATAR_API_KEY=$LIVEAVATAR_API_KEY \
+  LIVEAVATAR_LLM_CONFIG_ID=<step-2 id> \
+  LIVEAVATAR_SANDBOX=true      # free watermarked rehearsals; set false / unset for the judged demo
+# Optional: LIVEAVATAR_AVATAR_ID=<a courtroom-plausible avatar from their gallery>
+```
+
+What each does:
+- **`advocate-avatar-session`** — mints the LiveAvatar FULL-mode session token (API key never
+  reaches the browser). Refuses (503 → voice-only fallback) unless the RAG-lock LLM config is set —
+  the avatar is never allowed to run on LiveAvatar's default general-purpose LLM.
+- **`advocate-defense-llm`** — the OpenAI-compatible shim that IS the practice person's brain:
+  our Defense practice prompt + the person's shareable-only statements, Gemini underneath.
+
+> 💳 **Credits:** FULL mode costs 2 credits/min; the free tier is 10 credits/month. Rehearse in
+> sandbox mode (free, watermarked) and budget ~6–8 credits for the judged run. Ambassador credits
+> or the Essential plan cover deeper rehearsal.
 
 What each does:
 - **`advocate-voice-token`** — mints the ephemeral Gemini Live token for the voice session (key never reaches the browser).

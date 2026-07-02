@@ -229,7 +229,7 @@ export const copy = {
     witness: {
       consentTitle: "Practice being asked questions.",
       consentBody:
-        "This is a practice space. A different voice will ask you practice questions, a little like a lawyer might. None of it is real. Nothing here counts.",
+        "This is a practice space. A practice person on your screen — or a practice voice — will ask you questions, a little like a lawyer might. None of it is real. Nothing here counts.",
       consentPoints: [
         "Your Coach stays nearby, and closes the practice with you.",
         "Say “stop” at any time, or tap “I need a pause.” Everything stops right away.",
@@ -241,6 +241,9 @@ export const copy = {
       timerLabel: "Practice time left",
       oneMinuteLeft: "About a minute left. We will wind down soon.",
       capReached: "That’s enough practice for now.",
+      avatarNote: "This is a practice person — a computer picture. It is not a real person.",
+      voiceFallback:
+        "The practice person is not available right now. You will hear the practice voice instead.",
     },
     permissionNeeded: "I need permission to use your microphone to listen.",
     permissionDenied:
@@ -254,6 +257,7 @@ export const copy = {
       asking: "Asking your browser for permission…",
       hearYou: "I can hear you.",
       mute: "Mute",
+      unmute: "Unmute",
       blockedTitle: "Your microphone is blocked.",
       blockedBody:
         "Your browser is blocking the microphone for this page. Here’s how to turn it on — or you can just type.",

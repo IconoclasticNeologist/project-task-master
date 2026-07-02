@@ -32,3 +32,9 @@ enabled = true
 
 [realtime]
 enabled = true
+
+# The defense-LLM shim is called by HeyGen LiveAvatar's servers, which cannot
+# carry a Supabase JWT — auth is a shared bearer secret checked in-function
+# (LIVEAVATAR_SHIM_KEY). Deploy with: supabase functions deploy advocate-defense-llm --no-verify-jwt
+[functions.advocate-defense-llm]
+verify_jwt = false

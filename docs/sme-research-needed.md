@@ -78,6 +78,46 @@ Trauma therapist.
 
 ---
 
+## Witness Stand practice: the visible practice person (avatar) — graduated exposure decision
+
+**Added 2026-07-02. This gates real-survivor use of the LiveAvatar practice person, not the demo.**
+
+### What the build does
+
+Witness Stand practice can show a photoreal on-screen "practice person" (HeyGen LiveAvatar) instead
+of a disembodied practice voice. It is opt-in, consent-gated on every entry, labeled plainly as "a
+computer picture, not a real person," capped at 8 minutes with a visible timer, interruptible
+mid-word by the stop word or a tap, and RAG-locked so it can only ask about what the person already
+said (`supabase/functions/advocate-defense-llm/index.ts`). The Coach voice — deliberately — never
+has a face; stillness stays the design for the supportive voice.
+
+### The clinical rationale to validate
+
+A visible questioner is closer to the actual courtroom stressor than a voice alone, which makes the
+avatar defensible as **graduated exposure** — practice at a survivable intensity, chosen by the
+person. That is a hypothesis, not a finding.
+
+### SME(s) needed
+
+Trauma therapist **and** attorney.
+
+### Must validate before launch
+
+- **Whether a photoreal adversary is appropriate at all** for this population, even opt-in — or
+  whether it should be advocate-supervised only, or removed for real users.
+- **Uncanny-valley and dissociation risk**: whether a synthetic face in a pressurized rehearsal can
+  re-traumatize, and what screening or framing mitigates that.
+- **The consent-gate wording** (`copy.session.witness` in `src/lib/copy/index.ts`) — currently a
+  marked placeholder.
+- **The intensity ceiling**: the shim's practice prompt is deliberately gentle; the attorney and
+  therapist together should set how much courtroom pressure is appropriate, and the FRE 412 rule in
+  the shim prompt must get the same review as the voice path's.
+- **Third-party data surface**: practice audio and account-derived questions transit HeyGen
+  LiveAvatar (STT: Deepgram/AssemblyAI; TTS: ElevenLabs). Confirm this is acceptable for real
+  survivors or demo-only.
+
+---
+
 ## Sources
 
 - TVPA / force, fraud, and coercion: [U.S. Department of State — What Is Trafficking in Persons?](https://www.state.gov/what-is-trafficking-in-persons/) and [National Human Trafficking Hotline — Federal Law](https://humantraffickinghotline.org/en/human-trafficking/federal-law)

@@ -26,6 +26,7 @@ import { AftercareCard } from "@/components/AftercareCard";
 import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { copy } from "@/lib/copy";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
+import { useLiveAvatarPractice } from "@/lib/voice/useLiveAvatarPractice";
 import {
   generateContainmentClose,
   requiresContainment,
@@ -44,6 +45,8 @@ export const Route = createFileRoute("/session")({
 type ScreenMode = "voice" | "type";
 type Stage = "start" | "consent" | "live" | "handoff" | "paused" | "closing";
 type HandoffReason = "stopped" | "crisis" | "timer" | "dropped";
+/** What is carrying the live audio/video right now. */
+type Medium = "gemini" | "avatar";
 
 const PRACTICE_CAP_SEC = ADVOCATE_VOICE_CONFIG.caps.witnessStandMaxDurationSec;
 // The person has to have SAID something substantive before a close is owed —
@@ -82,6 +85,8 @@ function SessionScreen() {
   const [composer, setComposer] = useState("");
   const [closing, setClosing] = useState<string | null>(null);
   const [connectFailed, setConnectFailed] = useState(false);
+  const [medium, setMedium] = useState<Medium>("gemini");
+  const [avatarFellBack, setAvatarFellBack] = useState(false);
   const [sessionState, setSessionState] = useState<SessionState>({
     hardMaterialTouched: false,
     aftercare: null,
@@ -92,6 +97,7 @@ function SessionScreen() {
   // signal arriving between renders always sees the current stage.
   const stageRef = useRef(stage);
   const witnessRef = useRef(witnessStand);
+  const mediumRef = useRef(medium);
   const micWasOnRef = useRef(false);
   const intentionalStopRef = useRef(false);
   const everOpenedRef = useRef(false);
@@ -102,6 +108,9 @@ function SessionScreen() {
   useEffect(() => {
     witnessRef.current = witnessStand;
   }, [witnessStand]);
+  useEffect(() => {
+    mediumRef.current = medium;
+  }, [medium]);
 
   const settings = useSurvivorSettings();
   useEffect(() => {
@@ -124,6 +133,10 @@ function SessionScreen() {
     }
   }, []);
 
+  // Both media route distress through this ref so the handler below can use
+  // whichever hook is live without a use-before-declare cycle.
+  const handleDistressRef = useRef<(sig: DistressSignal) => void>(() => {});
+
   const {
     status,
     micState,
@@ -139,22 +152,39 @@ function SessionScreen() {
   } = useGeminiLive({
     mode: "base",
     onUserText: markUserContent,
-    onDistress: (sig: DistressSignal) => {
-      if (!sig) return;
-      if (stageRef.current !== "live") return; // one transition per signal
-      // Deterministic first: silence and close, before any UI or model work.
-      intentionalStopRef.current = true;
-      micWasOnRef.current = micState === "on";
+    onDistress: (sig) => handleDistressRef.current(sig),
+  });
+
+  const avatar = useLiveAvatarPractice({
+    onUserText: markUserContent,
+    onDistress: (sig) => handleDistressRef.current(sig),
+  });
+
+  /** Silence and close whichever medium is carrying the session. Local-first. */
+  const stopActiveMedia = () => {
+    if (mediumRef.current === "avatar") {
+      avatar.interrupt();
+      avatar.disconnect();
+    } else {
       interrupt();
       disconnect();
-      setSessionState((s) => ({ ...s, hardMaterialTouched: true }));
-      setHandoff({
-        reason: sig.kind === "crisis" ? "crisis" : "stopped",
-        fromPractice: witnessRef.current,
-      });
-      setStage("handoff");
-    },
-  });
+    }
+  };
+
+  handleDistressRef.current = (sig: DistressSignal) => {
+    if (!sig) return;
+    if (stageRef.current !== "live") return; // one transition per signal
+    // Deterministic first: silence and close, before any UI or model work.
+    intentionalStopRef.current = true;
+    micWasOnRef.current = micState === "on";
+    stopActiveMedia();
+    setSessionState((s) => ({ ...s, hardMaterialTouched: true }));
+    setHandoff({
+      reason: sig.kind === "crisis" ? "crisis" : "stopped",
+      fromPractice: witnessRef.current,
+    });
+    setStage("handoff");
+  };
 
   useEffect(() => {
     if (status === "open") everOpenedRef.current = true;
@@ -163,7 +193,7 @@ function SessionScreen() {
   // A connection that drops on its own (network, idle timeout, backstop cap)
   // must never leave the person on a dead screen: offer the Coach back.
   useEffect(() => {
-    if (stage !== "live") return;
+    if (stage !== "live" || medium !== "gemini") return;
     if (status !== "closed" && status !== "error") return;
     if (intentionalStopRef.current) return;
     if (!everOpenedRef.current) {
@@ -175,16 +205,31 @@ function SessionScreen() {
     }
     setHandoff({ reason: "dropped", fromPractice: witnessRef.current });
     setStage("handoff");
-  }, [status, stage]);
+  }, [status, stage, medium]);
+
+  // Same guarantee for the practice person: if its stream drops mid-practice
+  // (network, LiveAvatar cap), land on the handoff with the Coach offered.
+  useEffect(() => {
+    if (stage !== "live" || medium !== "avatar") return;
+    if (avatar.status !== "closed" && avatar.status !== "error") return;
+    if (intentionalStopRef.current) return;
+    setHandoff({ reason: "dropped", fromPractice: true });
+    setStage("handoff");
+  }, [avatar.status, stage, medium]);
 
   useEffect(() => {
-    return () => disconnect();
+    return () => {
+      disconnect();
+      avatar.disconnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const resetToStart = () => {
     setStage("start");
     setWitnessStand(false);
+    setMedium("gemini");
+    setAvatarFellBack(false);
     setHandoff(null);
     setClosing(null);
     setComposer("");
@@ -197,26 +242,36 @@ function SessionScreen() {
     everOpenedRef.current = false;
     setConnectFailed(false);
     setWitnessStand(false);
+    setMedium("gemini");
     setStage("live");
     void connect("base");
   };
 
-  const beginPractice = () => {
+  const beginPractice = async () => {
     intentionalStopRef.current = false;
     everOpenedRef.current = false;
     setConnectFailed(false);
     setWitnessStand(true);
+    setAvatarFellBack(false);
     // Practice is heavy by definition: it always earns a containment close.
     setSessionState((s) => ({ ...s, hardMaterialTouched: true }));
     setStage("live");
-    void connect("defense", { maxDurationSec: PRACTICE_CAP_SEC + 15 });
+    // The practice person (LiveAvatar) is the preferred medium; the voice-only
+    // practice path is the automatic, quietly-noted fallback.
+    setMedium("avatar");
+    const result = await avatar.connect();
+    if (result !== "open") {
+      if (stageRef.current !== "live") return; // person already stopped/left
+      setMedium("gemini");
+      setAvatarFellBack(true);
+      void connect("defense", { maxDurationSec: PRACTICE_CAP_SEC + 15 });
+    }
   };
 
   const pauseFromLive = () => {
     intentionalStopRef.current = true;
     micWasOnRef.current = micState === "on";
-    interrupt();
-    disconnect();
+    stopActiveMedia();
     if (witnessRef.current) {
       // A pause during practice ends the practice — the person never has to
       // step back in front of the practice voice to finish their session.
@@ -229,8 +284,7 @@ function SessionScreen() {
 
   const finishSession = () => {
     intentionalStopRef.current = true;
-    interrupt();
-    disconnect();
+    stopActiveMedia();
     if (requiresContainment(sessionState)) {
       setClosing(generateContainmentClose(sessionState));
       setHandoff(null);
@@ -253,6 +307,7 @@ function SessionScreen() {
     intentionalStopRef.current = false;
     everOpenedRef.current = false;
     setWitnessStand(false);
+    setMedium("gemini"); // the Coach is always the still voice, never the avatar
     setHandoff(null);
     setStage("live");
     void connect("regulator");
@@ -270,7 +325,11 @@ function SessionScreen() {
   const onSendText = () => {
     if (!composer.trim()) return;
     const text = composer.trim();
-    sendText(text);
+    if (mediumRef.current === "avatar") {
+      avatar.sendText(text);
+    } else {
+      sendText(text);
+    }
     markUserContent(text);
     setSessionState((s) => ({
       ...s,
@@ -289,6 +348,9 @@ function SessionScreen() {
     : activeMode === "regulator"
       ? copy.session.persona.regulator
       : copy.session.persona.coach;
+  const mediumConnecting =
+    medium === "avatar" ? avatar.status === "connecting" : status === "connecting";
+  const mediumOpen = medium === "avatar" ? avatar.status === "open" : status === "open";
 
   const sessionActive = stage === "live" || stage === "handoff" || stage === "paused";
 
@@ -407,20 +469,40 @@ function SessionScreen() {
             </header>
 
             <div className="flex flex-col items-center gap-4">
-              <VoiceOrb state={orbState} tone={witnessStand ? "practice" : "coach"} />
+              {medium === "avatar" ? (
+                <div className="w-full max-w-xs space-y-2">
+                  {/* The practice person. Named plainly as not real — a design
+                      choice, not a disclaimer: honesty lowers the startle. */}
+                  <video
+                    ref={avatar.attachVideo}
+                    autoPlay
+                    playsInline
+                    className="paper-shadow-lg aspect-[3/4] w-full rounded-lg bg-secondary object-cover"
+                  />
+                  <p className="text-center text-xs leading-relaxed text-muted-foreground">
+                    {copy.session.witness.avatarNote}
+                  </p>
+                </div>
+              ) : (
+                <VoiceOrb state={orbState} tone={witnessStand ? "practice" : "coach"} />
+              )}
               <p className="text-center text-sm text-muted-foreground" role="status">
-                {status === "connecting" ? "Connecting…" : personaLine}
+                {mediumConnecting ? "Connecting…" : personaLine}
               </p>
+              {witnessStand && avatarFellBack && (
+                <p className="text-center text-xs leading-relaxed text-muted-foreground">
+                  {copy.session.witness.voiceFallback}
+                </p>
+              )}
               {witnessStand && (
                 <PracticeTimer
                   totalSec={PRACTICE_CAP_SEC}
-                  running={status === "open"}
+                  running={mediumOpen}
                   onElapsed={() => {
                     if (stageRef.current !== "live") return;
                     intentionalStopRef.current = true;
                     micWasOnRef.current = micState === "on";
-                    interrupt();
-                    disconnect();
+                    stopActiveMedia();
                     setHandoff({ reason: "timer", fromPractice: true });
                     setStage("handoff");
                   }}
@@ -428,7 +510,17 @@ function SessionScreen() {
               )}
             </div>
 
-            {screenMode === "voice" ? (
+            {medium === "avatar" ? (
+              screenMode === "voice" && (
+                <button
+                  type="button"
+                  onClick={() => void avatar.toggleMic()}
+                  className="mx-auto rounded-md border border-border px-4 py-2 text-sm text-muted-foreground"
+                >
+                  {avatar.micMuted ? copy.session.mic.unmute : copy.session.mic.mute}
+                </button>
+              )
+            ) : screenMode === "voice" ? (
               <MicSetup
                 micState={micState}
                 micLevel={micLevel}
@@ -436,7 +528,8 @@ function SessionScreen() {
                 onMute={disableMic}
                 onUseTyping={() => setScreenMode("type")}
               />
-            ) : (
+            ) : null}
+            {screenMode === "type" && (
               <Card>
                 <CardContent className="space-y-3 py-4">
                   <Textarea

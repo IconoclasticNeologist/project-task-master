@@ -64,7 +64,9 @@ export const reviewDecisionLabels: Record<KnowledgeReviewDecision, string> = {
   rejected: copy.knowledge.reject,
 };
 
-export async function listOrganizationKnowledgeSources(organizationId: string): Promise<KnowledgeSource[]> {
+export async function listOrganizationKnowledgeSources(
+  organizationId: string,
+): Promise<KnowledgeSource[]> {
   const { data, error } = await getSupabase().rpc("list_organization_knowledge_sources", {
     p_organization_id: organizationId,
   });

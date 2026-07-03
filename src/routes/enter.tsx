@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { copy } from "@/lib/copy";
 import { redeemCode, updateProfile } from "@/lib/auth/session";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/enter")({
-  head: () => ({ meta: [{ title: "Enter — The Advocate" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Enter") }] }),
   component: EnterScreen,
 });
 
@@ -77,7 +78,10 @@ function EnterScreen() {
               <p className="text-base leading-relaxed text-foreground">{copy.enter.codeBody}</p>
               <Card>
                 <CardContent className="space-y-2 py-5">
-                  <Label htmlFor="code" className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <Label
+                    htmlFor="code"
+                    className="text-xs uppercase tracking-wide text-muted-foreground"
+                  >
                     {copy.enter.codeLabel}
                   </Label>
                   <Input
@@ -88,9 +92,13 @@ function EnterScreen() {
                     onChange={(e) => setCode(e.target.value)}
                     placeholder={copy.enter.codePlaceholder}
                   />
-                  <p className="text-xs leading-relaxed text-muted-foreground">{copy.enter.codeHint}</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {copy.enter.codeHint}
+                  </p>
                   {failed && (
-                    <p className="pt-1 text-sm leading-relaxed text-foreground">{copy.enter.codeError}</p>
+                    <p className="pt-1 text-sm leading-relaxed text-foreground">
+                      {copy.enter.codeError}
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -115,7 +123,10 @@ function EnterScreen() {
               <Card>
                 <CardContent className="space-y-5 py-5">
                   <div className="space-y-2" role="group" aria-labelledby="language-label">
-                    <Label id="language-label" className="text-xs uppercase tracking-wide text-muted-foreground">
+                    <Label
+                      id="language-label"
+                      className="text-xs uppercase tracking-wide text-muted-foreground"
+                    >
                       {copy.enter.languageLabel}
                     </Label>
                     <div className="flex gap-2">
@@ -124,7 +135,9 @@ function EnterScreen() {
                         aria-pressed={language === "en"}
                         onClick={() => setLanguage("en")}
                         className={`flex-1 rounded-md border px-3 py-2 text-sm ${
-                          language === "en" ? "border-primary text-foreground" : "border-border text-muted-foreground"
+                          language === "en"
+                            ? "border-primary text-foreground"
+                            : "border-border text-muted-foreground"
                         }`}
                       >
                         {copy.enter.languageEn}
@@ -134,7 +147,9 @@ function EnterScreen() {
                         aria-pressed={language === "es"}
                         onClick={() => setLanguage("es")}
                         className={`flex-1 rounded-md border px-3 py-2 text-sm ${
-                          language === "es" ? "border-primary text-foreground" : "border-border text-muted-foreground"
+                          language === "es"
+                            ? "border-primary text-foreground"
+                            : "border-border text-muted-foreground"
                         }`}
                       >
                         {copy.enter.languageEs}
@@ -142,7 +157,10 @@ function EnterScreen() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-xs uppercase tracking-wide text-muted-foreground">
+                    <Label
+                      htmlFor="name"
+                      className="text-xs uppercase tracking-wide text-muted-foreground"
+                    >
                       {copy.enter.nameLabel}
                     </Label>
                     <Input

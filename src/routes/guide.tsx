@@ -11,12 +11,13 @@ import {
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
+import { pageTitle } from "@/lib/product";
 
 // General, plain-language court-preparation guide. No private data, no auth gate,
 // no case-specific or legal advice — see docs/source-material/README.md for the
 // public sources behind this content.
 export const Route = createFileRoute("/guide")({
-  head: () => ({ meta: [{ title: "Preparing for court — The Advocate" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Preparing for court") }] }),
   component: GuideScreen,
 });
 

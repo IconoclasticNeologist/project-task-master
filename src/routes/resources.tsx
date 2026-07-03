@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/resources")({
-  head: () => ({ meta: [{ title: "Support — The Advocate" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Support") }] }),
   component: ResourcesScreen,
 });
 
@@ -58,7 +59,9 @@ function ResourcesScreen() {
 
         {sections.map((section) => (
           <section key={section.label} className="space-y-3">
-            <h2 className="text-xs uppercase tracking-wide text-muted-foreground">{section.label}</h2>
+            <h2 className="text-xs uppercase tracking-wide text-muted-foreground">
+              {section.label}
+            </h2>
             {section.entries.map((entry) => (
               <ResourceCard key={entry.name} entry={entry} />
             ))}

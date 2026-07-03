@@ -9,10 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { copy } from "@/lib/copy";
 import { ProfessionalShell } from "@/components/professional/ProfessionalShell";
 import { getSupabase } from "@/lib/supabase/client";
-import {
-  getProfessionalSession,
-  requestProfessionalSignIn,
-} from "@/lib/auth/professional";
+import { getProfessionalSession, requestProfessionalSignIn } from "@/lib/auth/professional";
 import {
   createClientInvite,
   createOrganization,
@@ -26,9 +23,10 @@ import {
   type OrganizationRole,
 } from "@/lib/data/organizations";
 import { accessScopeLabels, professionalRoleLabel } from "@/lib/data/access";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/professional")({
-  head: () => ({ meta: [{ title: `${copy.professional.title} — The Advocate` }] }),
+  head: () => ({ meta: [{ title: pageTitle(copy.professional.title) }] }),
   component: ProfessionalScreen,
 });
 
@@ -47,26 +45,42 @@ const teammateRoles: Exclude<OrganizationRole, "owner">[] = [
 
 function ProfessionalScreen() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  if (pathname !== "/professional") return <Outlet />;
-
+  const onIndex = pathname === "/professional";
+  // Hooks run unconditionally (navigating between /professional and a child
+  // route must not change hook order); the query simply stays disabled on
+  // child routes, where <Outlet/> renders instead.
   const session = useQuery({
     queryKey: ["professional-session"],
     queryFn: getProfessionalSession,
+    enabled: onIndex,
   });
+  if (!onIndex) return <Outlet />;
 
   if (session.isLoading) {
-    return <Page><p className="text-sm text-muted-foreground">{copy.professional.loading}</p></Page>;
+    return (
+      <Page>
+        <p className="text-sm text-muted-foreground">{copy.professional.loading}</p>
+      </Page>
+    );
   }
   if (session.isError) {
-    return <Page><Message title={copy.professional.title} body={copy.professional.signInFailed} /></Page>;
+    return (
+      <Page>
+        <Message title={copy.professional.title} body={copy.professional.signInFailed} />
+      </Page>
+    );
   }
   if (session.data?.kind === "anonymous") {
     return (
       <Page>
         <Card>
           <CardContent className="space-y-4 py-6">
-            <h1 className="text-2xl font-normal tracking-tight">{copy.professional.anonymousTitle}</h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.anonymousBody}</p>
+            <h1 className="text-2xl font-normal tracking-tight">
+              {copy.professional.anonymousTitle}
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {copy.professional.anonymousBody}
+            </p>
             <button
               type="button"
               onClick={() => {
@@ -114,7 +128,9 @@ function ProfessionalSignIn() {
         <CardContent className="space-y-5 py-6">
           <div className="space-y-2">
             <h1 className="text-2xl font-normal tracking-tight">{copy.professional.signInTitle}</h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.signInBody}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {copy.professional.signInBody}
+            </p>
           </div>
           {signIn.isSuccess ? (
             <p className="rounded-md bg-muted px-3 py-3 text-sm leading-relaxed text-foreground">
@@ -139,7 +155,9 @@ function ProfessionalSignIn() {
                   required
                 />
               </div>
-              {signIn.isError && <p className="text-sm text-destructive">{copy.professional.signInFailed}</p>}
+              {signIn.isError && (
+                <p className="text-sm text-destructive">{copy.professional.signInFailed}</p>
+              )}
               <button
                 type="submit"
                 disabled={signIn.isPending}
@@ -199,7 +217,9 @@ function ProfessionalWorkspace() {
               <CardContent className="space-y-5 py-6">
                 <div className="space-y-2">
                   <h2 className="text-xl font-normal">{copy.professional.setupTitle}</h2>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.setupBody}</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {copy.professional.setupBody}
+                  </p>
                 </div>
                 <form
                   className="space-y-4"
@@ -224,10 +244,14 @@ function ProfessionalWorkspace() {
                     id="organization-jurisdiction"
                     label={copy.professional.jurisdiction}
                     value={form.jurisdiction}
-                    onChange={(jurisdiction) => setForm((current) => ({ ...current, jurisdiction }))}
+                    onChange={(jurisdiction) =>
+                      setForm((current) => ({ ...current, jurisdiction }))
+                    }
                     required={false}
                   />
-                  {setup.isError && <p className="text-sm text-destructive">{copy.professional.setupFailed}</p>}
+                  {setup.isError && (
+                    <p className="text-sm text-destructive">{copy.professional.setupFailed}</p>
+                  )}
                   <button
                     type="submit"
                     disabled={setup.isPending}
@@ -260,7 +284,9 @@ function JoinOrganization() {
       <CardContent className="space-y-5 py-6">
         <div className="space-y-2">
           <h2 className="text-xl font-normal">{copy.professional.joinTitle}</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.joinBody}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {copy.professional.joinBody}
+          </p>
         </div>
         <form
           className="space-y-4"
@@ -283,7 +309,9 @@ function JoinOrganization() {
             value={code}
             onChange={setCode}
           />
-          {join.isError && <p className="text-sm text-destructive">{copy.professional.joinFailed}</p>}
+          {join.isError && (
+            <p className="text-sm text-destructive">{copy.professional.joinFailed}</p>
+          )}
           <button
             type="submit"
             disabled={join.isPending}
@@ -317,8 +345,11 @@ function OrganizationTools({
     mutationFn: createOrganizationMemberInvite,
     onSuccess: (_inviteId, variables) => setTeammateCode(variables.code),
   });
-  const selectedOrganization = organizations.find((organization) => organization.id === organizationId);
-  const canInviteTeammates = selectedOrganization?.role === "owner" || selectedOrganization?.role === "admin";
+  const selectedOrganization = organizations.find(
+    (organization) => organization.id === organizationId,
+  );
+  const canInviteTeammates =
+    selectedOrganization?.role === "owner" || selectedOrganization?.role === "admin";
   const canManageKnowledge = [
     "owner",
     "admin",
@@ -361,7 +392,9 @@ function OrganizationTools({
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
               >
                 {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>{organization.name}</option>
+                  <option key={organization.id} value={organization.id}>
+                    {organization.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -388,13 +421,21 @@ function OrganizationTools({
           <CardContent className="space-y-5 py-6">
             <div className="space-y-2">
               <h2 className="text-xl font-normal">{copy.professional.createTeamInviteTitle}</h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.createTeamInviteBody}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {copy.professional.createTeamInviteBody}
+              </p>
             </div>
             {teammateCode ? (
               <div className="space-y-3 rounded-md border border-border bg-muted/40 p-4">
-                <p className="text-sm font-medium text-foreground">{copy.professional.teamCodeTitle}</p>
-                <p className="select-all break-all font-mono text-xl tracking-[0.18em] text-foreground">{teammateCode}</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.teamCodeBody}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {copy.professional.teamCodeTitle}
+                </p>
+                <p className="select-all break-all font-mono text-xl tracking-[0.18em] text-foreground">
+                  {teammateCode}
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {copy.professional.teamCodeBody}
+                </p>
                 <p className="text-xs text-muted-foreground">{copy.professional.teamCodeExpires}</p>
                 <button
                   type="button"
@@ -422,15 +463,21 @@ function OrganizationTools({
                   <select
                     id="teammate-role"
                     value={teammateRole}
-                    onChange={(event) => setTeammateRole(event.target.value as Exclude<OrganizationRole, "owner">)}
+                    onChange={(event) =>
+                      setTeammateRole(event.target.value as Exclude<OrganizationRole, "owner">)
+                    }
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                   >
                     {teammateRoles.map((role) => (
-                      <option key={role} value={role}>{professionalRoleLabel(role)}</option>
+                      <option key={role} value={role}>
+                        {professionalRoleLabel(role)}
+                      </option>
                     ))}
                   </select>
                 </div>
-                {teammateInvite.isError && <p className="text-sm text-destructive">{copy.professional.teamInviteFailed}</p>}
+                {teammateInvite.isError && (
+                  <p className="text-sm text-destructive">{copy.professional.teamInviteFailed}</p>
+                )}
                 <button
                   type="submit"
                   disabled={teammateInvite.isPending}
@@ -448,13 +495,21 @@ function OrganizationTools({
         <CardContent className="space-y-5 py-6">
           <div className="space-y-2">
             <h2 className="text-xl font-normal">{copy.professional.createInviteTitle}</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.createInviteBody}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {copy.professional.createInviteBody}
+            </p>
           </div>
           {inviteCode ? (
             <div className="space-y-3 rounded-md border border-border bg-muted/40 p-4">
-              <p className="text-sm font-medium text-foreground">{copy.professional.inviteCodeTitle}</p>
-              <p className="select-all break-all font-mono text-xl tracking-[0.18em] text-foreground">{inviteCode}</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">{copy.professional.inviteCodeBody}</p>
+              <p className="text-sm font-medium text-foreground">
+                {copy.professional.inviteCodeTitle}
+              </p>
+              <p className="select-all break-all font-mono text-xl tracking-[0.18em] text-foreground">
+                {inviteCode}
+              </p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {copy.professional.inviteCodeBody}
+              </p>
               <p className="text-xs text-muted-foreground">{copy.professional.codeExpires}</p>
               <button
                 type="button"
@@ -479,7 +534,13 @@ function OrganizationTools({
                 });
               }}
             >
-              <Field id="invite-label" label={copy.professional.inviteLabel} value={label} onChange={setLabel} required={false} />
+              <Field
+                id="invite-label"
+                label={copy.professional.inviteLabel}
+                value={label}
+                onChange={setLabel}
+                required={false}
+              />
               <div className="space-y-2">
                 <Label htmlFor="invite-purpose">{copy.professional.purposeLabel}</Label>
                 <Textarea
@@ -493,7 +554,10 @@ function OrganizationTools({
               <fieldset className="space-y-3">
                 <legend className="text-sm font-medium">{copy.professional.requestedAccess}</legend>
                 {(Object.keys(accessScopeLabels) as AccessScope[]).map((scope) => (
-                  <label key={scope} className="flex items-start gap-3 text-sm leading-relaxed text-foreground">
+                  <label
+                    key={scope}
+                    className="flex items-start gap-3 text-sm leading-relaxed text-foreground"
+                  >
                     <Checkbox
                       checked={scopes.includes(scope)}
                       onCheckedChange={() => toggleScope(scope)}
@@ -503,7 +567,9 @@ function OrganizationTools({
                   </label>
                 ))}
               </fieldset>
-              {invite.isError && <p className="text-sm text-destructive">{copy.professional.createFailed}</p>}
+              {invite.isError && (
+                <p className="text-sm text-destructive">{copy.professional.createFailed}</p>
+              )}
               <button
                 type="submit"
                 disabled={invite.isPending || scopes.length === 0}

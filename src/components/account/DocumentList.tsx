@@ -7,7 +7,11 @@ import { copy } from "@/lib/copy";
 import { useDocuments } from "@/lib/data/useDocuments";
 import { getDocumentUrl, MAX_DOCUMENT_BYTES } from "@/lib/data/documents";
 
-export function DocumentList({ defaultVisibility }: { defaultVisibility: "private" | "shareable" }) {
+export function DocumentList({
+  defaultVisibility,
+}: {
+  defaultVisibility: "private" | "shareable";
+}) {
   const { query, upload, remove } = useDocuments();
   const rows = query.data ?? [];
   const [file, setFile] = useState<File | null>(null);
@@ -29,7 +33,13 @@ export function DocumentList({ defaultVisibility }: { defaultVisibility: "privat
     if (!file || busy) return;
     upload.mutate(
       { file, note, visibility: defaultVisibility },
-      { onSuccess: () => { setFile(null); setNote(""); if (fileInputRef.current) fileInputRef.current.value = ""; } },
+      {
+        onSuccess: () => {
+          setFile(null);
+          setNote("");
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        },
+      },
     );
   };
 
@@ -47,7 +57,11 @@ export function DocumentList({ defaultVisibility }: { defaultVisibility: "privat
     return (
       <div className="space-y-3">
         <p className="text-sm leading-relaxed text-foreground">{copy.account.loadError}</p>
-        <button type="button" onClick={() => void query.refetch()} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+        <button
+          type="button"
+          onClick={() => void query.refetch()}
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+        >
           {copy.account.retry}
         </button>
       </div>
@@ -72,7 +86,12 @@ export function DocumentList({ defaultVisibility }: { defaultVisibility: "privat
                 <Label htmlFor="note">{copy.account.documents.noteLabel}</Label>
                 <Input id="note" value={note} onChange={(e) => setNote(e.target.value)} />
               </div>
-              <button type="button" onClick={onAdd} disabled={busy} className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-40">
+              <button
+                type="button"
+                onClick={onAdd}
+                disabled={busy}
+                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-40"
+              >
                 {upload.isPending ? copy.account.documents.uploading : "Add"}
               </button>
             </>
@@ -80,7 +99,9 @@ export function DocumentList({ defaultVisibility }: { defaultVisibility: "privat
         </CardContent>
       </Card>
 
-      {rows.length === 0 && <p className="text-sm text-muted-foreground">{copy.account.documents.empty}</p>}
+      {rows.length === 0 && (
+        <p className="text-sm text-muted-foreground">{copy.account.documents.empty}</p>
+      )}
 
       {rows.map((r) => (
         <Card key={r.id}>
@@ -88,14 +109,31 @@ export function DocumentList({ defaultVisibility }: { defaultVisibility: "privat
             <div className="text-sm font-medium">{r.fileName}</div>
             {r.note && <p className="text-sm text-muted-foreground">{r.note}</p>}
             <div className="flex items-center justify-between pt-1">
-              <span className={r.visibility === "shareable" ? "text-xs uppercase tracking-wide text-primary" : "text-xs uppercase tracking-wide text-muted-foreground"}>
-                {r.visibility === "shareable" ? copy.account.statement.shareable : copy.account.statement.private}
+              <span
+                className={
+                  r.visibility === "shareable"
+                    ? "text-xs uppercase tracking-wide text-primary"
+                    : "text-xs uppercase tracking-wide text-muted-foreground"
+                }
+              >
+                {r.visibility === "shareable"
+                  ? copy.account.statement.shareable
+                  : copy.account.statement.private}
               </span>
               <div className="flex gap-3 text-xs">
-                <button type="button" onClick={() => void onView(r.storagePath)} className="text-muted-foreground hover:text-foreground">
+                <button
+                  type="button"
+                  onClick={() => void onView(r.storagePath)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   {copy.account.documents.view}
                 </button>
-                <button type="button" onClick={() => !busy && remove.mutate({ id: r.id, storagePath: r.storagePath })} disabled={busy} className="text-muted-foreground hover:text-destructive disabled:opacity-40">
+                <button
+                  type="button"
+                  onClick={() => !busy && remove.mutate({ id: r.id, storagePath: r.storagePath })}
+                  disabled={busy}
+                  className="text-muted-foreground hover:text-destructive disabled:opacity-40"
+                >
                   Delete
                 </button>
               </div>

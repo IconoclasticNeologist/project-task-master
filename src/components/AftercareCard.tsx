@@ -25,11 +25,15 @@ export function AftercareCard({ plan, title }: { plan: AftercarePlan | null; tit
       </CardHeader>
       <CardContent className="space-y-3 text-sm leading-relaxed text-foreground">
         <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Helps me feel safe</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Helps me feel safe
+          </div>
           <div>{plan.supportPerson || "—"}</div>
         </div>
         <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Helps me feel calm</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Helps me feel calm
+          </div>
           <div>{plan.calmingThing || "—"}</div>
         </div>
       </CardContent>

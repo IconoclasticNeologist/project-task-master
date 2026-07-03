@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { requireSurvivor } from "@/lib/auth/guard";
 import { getSurvivor } from "@/lib/auth/session";
 import { saveAftercare, markOnboarded } from "@/lib/data/settings";
@@ -9,17 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProgressDots } from "@/components/ProgressDots";
 import { copy } from "@/lib/copy";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/onboarding")({
   beforeLoad: async () => {
-    await requireSurvivor();            // A's guard: SSR-skip, redirect to "/" on clean no-survivor, no eviction on transient error
+    await requireSurvivor(); // A's guard: SSR-skip, redirect to "/" on clean no-survivor, no eviction on transient error
     if (typeof document === "undefined") return;
     const survivor = await getSurvivor().catch(() => null);
     if (survivor?.onboarded_at) {
-      throw redirect({ to: "/home" });  // already onboarded → skip the emotional flow
+      throw redirect({ to: "/home" }); // already onboarded → skip the emotional flow
     }
   },
-  head: () => ({ meta: [{ title: "Begin — The Advocate" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Begin") }] }),
   component: OnboardingScreen,
 });
 
@@ -47,21 +48,40 @@ function OnboardingScreen() {
 
   switch (step) {
     case "welcome":
-      body = { title: copy.onboarding.welcome.title, copy: copy.onboarding.welcome.body, cta: copy.onboarding.welcome.cta };
+      body = {
+        title: copy.onboarding.welcome.title,
+        copy: copy.onboarding.welcome.body,
+        cta: copy.onboarding.welcome.cta,
+      };
       extra = (
         <p className="text-xs leading-relaxed text-muted-foreground">
-          {copy.onboarding.emergencyNote}
+          {copy.onboarding.emergencyNote}{" "}
+          <Link to="/resources" className="text-foreground underline underline-offset-2">
+            {copy.onboarding.emergencyLink}
+          </Link>
         </p>
       );
       break;
     case "feelings":
-      body = { title: copy.onboarding.feelings.title, copy: copy.onboarding.feelings.body, cta: copy.onboarding.feelings.cta };
+      body = {
+        title: copy.onboarding.feelings.title,
+        copy: copy.onboarding.feelings.body,
+        cta: copy.onboarding.feelings.cta,
+      };
       break;
     case "care":
-      body = { title: copy.onboarding.care.title, copy: copy.onboarding.care.body, cta: copy.onboarding.care.cta };
+      body = {
+        title: copy.onboarding.care.title,
+        copy: copy.onboarding.care.body,
+        cta: copy.onboarding.care.cta,
+      };
       break;
     case "aftercare":
-      body = { title: copy.onboarding.aftercare.title, copy: copy.onboarding.aftercare.body, cta: copy.onboarding.aftercare.cta };
+      body = {
+        title: copy.onboarding.aftercare.title,
+        copy: copy.onboarding.aftercare.body,
+        cta: copy.onboarding.aftercare.cta,
+      };
       extra = (
         <Card>
           <CardContent className="space-y-4 py-5">
@@ -92,15 +112,24 @@ function OnboardingScreen() {
       );
       break;
     case "how":
-      body = { title: copy.onboarding.how.title, copy: copy.onboarding.how.body, cta: copy.onboarding.how.cta };
+      body = {
+        title: copy.onboarding.how.title,
+        copy: copy.onboarding.how.body,
+        cta: copy.onboarding.how.cta,
+      };
       break;
     case "rules":
-      body = { title: copy.onboarding.rules.title, copy: copy.onboarding.rules.body, cta: copy.onboarding.rules.cta };
+      body = {
+        title: copy.onboarding.rules.title,
+        copy: copy.onboarding.rules.body,
+        cta: copy.onboarding.rules.cta,
+      };
       break;
   }
 
   const onCta = () => {
-    if (step === "aftercare") void saveAftercare({ supportPerson, calmingAnchor: calmingThing }).catch(() => {});
+    if (step === "aftercare")
+      void saveAftercare({ supportPerson, calmingAnchor: calmingThing }).catch(() => {});
     next();
   };
 

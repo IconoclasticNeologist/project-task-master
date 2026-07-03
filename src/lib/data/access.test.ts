@@ -17,35 +17,39 @@ beforeEach(() => {
 describe("client access data", () => {
   it("maps the survivor-safe access projection", async () => {
     rpc.mockResolvedValue({
-      data: [{
-        grant_id: "grant-1",
-        organization_name: "Harbor House",
-        professional_name: "Jordan",
-        professional_role: "advocate",
+      data: [
+        {
+          grant_id: "grant-1",
+          organization_name: "Harbor House",
+          professional_name: "Jordan",
+          professional_role: "advocate",
+          scopes: ["support_plan", "shared_timeline"],
+          purpose: "Help with court-day planning.",
+          status: "pending",
+          origin: "organization_request",
+          requested_at: "2026-06-23T00:00:00Z",
+          responded_at: null,
+          expires_at: null,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(listMyClientAccessGrants()).resolves.toEqual([
+      {
+        id: "grant-1",
+        organizationName: "Harbor House",
+        professionalName: "Jordan",
+        professionalRole: "advocate",
         scopes: ["support_plan", "shared_timeline"],
         purpose: "Help with court-day planning.",
         status: "pending",
         origin: "organization_request",
-        requested_at: "2026-06-23T00:00:00Z",
-        responded_at: null,
-        expires_at: null,
-      }],
-      error: null,
-    });
-
-    await expect(listMyClientAccessGrants()).resolves.toEqual([{
-      id: "grant-1",
-      organizationName: "Harbor House",
-      professionalName: "Jordan",
-      professionalRole: "advocate",
-      scopes: ["support_plan", "shared_timeline"],
-      purpose: "Help with court-day planning.",
-      status: "pending",
-      origin: "organization_request",
-      requestedAt: "2026-06-23T00:00:00Z",
-      respondedAt: null,
-      expiresAt: null,
-    }]);
+        requestedAt: "2026-06-23T00:00:00Z",
+        respondedAt: null,
+        expiresAt: null,
+      },
+    ]);
   });
 
   it("sends only an explicit client decision to the protected RPC", async () => {

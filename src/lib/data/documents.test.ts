@@ -4,7 +4,12 @@ const storageBucket = { upload: vi.fn(), remove: vi.fn(), createSignedUrl: vi.fn
 const mockClient = { from: vi.fn(), storage: { from: vi.fn(() => storageBucket) } };
 vi.mock("@/lib/supabase/client", () => ({ getSupabase: () => mockClient }));
 vi.mock("@/lib/auth/session", () => ({
-  getSurvivor: vi.fn().mockResolvedValue({ id: "sv1", first_name: null, preferred_language: "en", onboarded_at: null }),
+  getSurvivor: vi.fn().mockResolvedValue({
+    id: "sv1",
+    first_name: null,
+    preferred_language: "en",
+    onboarded_at: null,
+  }),
 }));
 
 import { listDocuments, uploadDocument, deleteDocument, getDocumentUrl } from "./documents";
@@ -14,12 +19,26 @@ beforeEach(() => vi.clearAllMocks());
 describe("listDocuments", () => {
   it("maps a row and derives fileName from storage_path (stripping the uuid prefix)", async () => {
     const order = vi.fn().mockResolvedValue({
-      data: [{ id: "1", storage_path: "sv1/abc-123_report.pdf", note: "court", visibility: "private", uploaded_at: "t" }],
+      data: [
+        {
+          id: "1",
+          storage_path: "sv1/abc-123_report.pdf",
+          note: "court",
+          visibility: "private",
+          uploaded_at: "t",
+        },
+      ],
       error: null,
     });
     mockClient.from.mockReturnValue({ select: () => ({ order }) });
     const rows = await listDocuments();
-    expect(rows[0]).toMatchObject({ id: "1", fileName: "report.pdf", note: "court", visibility: "private", storagePath: "sv1/abc-123_report.pdf" });
+    expect(rows[0]).toMatchObject({
+      id: "1",
+      fileName: "report.pdf",
+      note: "court",
+      visibility: "private",
+      storagePath: "sv1/abc-123_report.pdf",
+    });
   });
 });
 
@@ -27,7 +46,13 @@ describe("uploadDocument", () => {
   it("uploads to the survivor's folder then inserts metadata", async () => {
     storageBucket.upload.mockResolvedValue({ data: { path: "p" }, error: null });
     const single = vi.fn().mockResolvedValue({
-      data: { id: "2", storage_path: "sv1/u_report.pdf", note: null, visibility: "private", uploaded_at: "t" },
+      data: {
+        id: "2",
+        storage_path: "sv1/u_report.pdf",
+        note: null,
+        visibility: "private",
+        uploaded_at: "t",
+      },
       error: null,
     });
     const insert = vi.fn(() => ({ select: () => ({ single }) }));
@@ -47,7 +72,9 @@ describe("uploadDocument", () => {
     const single = vi.fn().mockResolvedValue({ data: null, error: { message: "insert boom" } });
     mockClient.from.mockReturnValue({ insert: () => ({ select: () => ({ single }) }) });
     const file = new File(["x"], "a.pdf", { type: "application/pdf" });
-    await expect(uploadDocument({ file, note: "", visibility: "private" })).rejects.toThrow("insert boom");
+    await expect(uploadDocument({ file, note: "", visibility: "private" })).rejects.toThrow(
+      "insert boom",
+    );
     expect(storageBucket.remove).toHaveBeenCalledTimes(1);
   });
 });
@@ -65,7 +92,10 @@ describe("deleteDocument", () => {
 
 describe("getDocumentUrl", () => {
   it("returns a signed url", async () => {
-    storageBucket.createSignedUrl.mockResolvedValue({ data: { signedUrl: "https://signed" }, error: null });
+    storageBucket.createSignedUrl.mockResolvedValue({
+      data: { signedUrl: "https://signed" },
+      error: null,
+    });
     expect(await getDocumentUrl("sv1/x_a.pdf")).toBe("https://signed");
   });
 });

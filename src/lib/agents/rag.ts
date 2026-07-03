@@ -9,7 +9,11 @@ export interface RagHit {
 }
 
 /** Best-effort: a failed index must never disrupt the survivor's flow. */
-export async function indexStatement(sourceId: string, text: string, language: "en" | "es" | null): Promise<void> {
+export async function indexStatement(
+  sourceId: string,
+  text: string,
+  language: "en" | "es" | null,
+): Promise<void> {
   try {
     await getSupabase().functions.invoke("advocate-rag", {
       body: { action: "index", sourceType: "statement", sourceId, text, language },
@@ -24,5 +28,5 @@ export async function searchWords(query: string, k = 6): Promise<RagHit[]> {
     body: { action: "search", query, k },
   });
   if (error) throw new Error(error.message);
-  return ((data as { hits?: RagHit[] } | null)?.hits ?? []);
+  return (data as { hits?: RagHit[] } | null)?.hits ?? [];
 }

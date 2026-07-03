@@ -3,34 +3,68 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockClient = { from: vi.fn() };
 vi.mock("@/lib/supabase/client", () => ({ getSupabase: () => mockClient }));
 vi.mock("@/lib/auth/session", () => ({
-  getSurvivor: vi.fn().mockResolvedValue({ id: "sv1", first_name: null, preferred_language: "en", onboarded_at: null }),
+  getSurvivor: vi.fn().mockResolvedValue({
+    id: "sv1",
+    first_name: null,
+    preferred_language: "en",
+    onboarded_at: null,
+  }),
 }));
 
-import { loadSurvivorSettings, saveSurvivorSettings, markOnboarded, saveAftercare } from "./settings";
+import {
+  loadSurvivorSettings,
+  saveSurvivorSettings,
+  markOnboarded,
+  saveAftercare,
+} from "./settings";
 
 beforeEach(() => vi.clearAllMocks());
 
 describe("loadSurvivorSettings", () => {
   it("reads the survivor row and applies calm defaults", async () => {
     const maybeSingle = vi.fn().mockResolvedValue({
-      data: { preferred_language: "es", default_visibility: "shareable", calming_anchor: "music", support_contact_name: "Sam" },
+      data: {
+        preferred_language: "es",
+        default_visibility: "shareable",
+        calming_anchor: "music",
+        support_contact_name: "Sam",
+      },
       error: null,
     });
     mockClient.from.mockReturnValue({ select: () => ({ maybeSingle }) });
-    expect(await loadSurvivorSettings()).toEqual({ language: "es", defaultVisibility: "shareable", calmingAnchor: "music", supportPerson: "Sam" });
+    expect(await loadSurvivorSettings()).toEqual({
+      language: "es",
+      defaultVisibility: "shareable",
+      calmingAnchor: "music",
+      supportPerson: "Sam",
+    });
   });
 
   it("falls back to en/private/empty when columns are null", async () => {
     const maybeSingle = vi.fn().mockResolvedValue({
-      data: { preferred_language: null, default_visibility: "private", calming_anchor: null, support_contact_name: null },
+      data: {
+        preferred_language: null,
+        default_visibility: "private",
+        calming_anchor: null,
+        support_contact_name: null,
+      },
       error: null,
     });
     mockClient.from.mockReturnValue({ select: () => ({ maybeSingle }) });
-    expect(await loadSurvivorSettings()).toEqual({ language: "en", defaultVisibility: "private", calmingAnchor: "", supportPerson: "" });
+    expect(await loadSurvivorSettings()).toEqual({
+      language: "en",
+      defaultVisibility: "private",
+      calmingAnchor: "",
+      supportPerson: "",
+    });
   });
 
   it("throws on a query error", async () => {
-    mockClient.from.mockReturnValue({ select: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: { message: "boom" } }) }) });
+    mockClient.from.mockReturnValue({
+      select: () => ({
+        maybeSingle: () => Promise.resolve({ data: null, error: { message: "boom" } }),
+      }),
+    });
     await expect(loadSurvivorSettings()).rejects.toThrow("boom");
   });
 });
@@ -40,9 +74,17 @@ describe("saveSurvivorSettings", () => {
     const eq = vi.fn().mockResolvedValue({ error: null });
     const update = vi.fn(() => ({ eq }));
     mockClient.from.mockReturnValue({ update });
-    await saveSurvivorSettings({ language: "es", defaultVisibility: "shareable", calmingAnchor: "walk", supportPerson: "Lee" });
+    await saveSurvivorSettings({
+      language: "es",
+      defaultVisibility: "shareable",
+      calmingAnchor: "walk",
+      supportPerson: "Lee",
+    });
     expect(update).toHaveBeenCalledWith({
-      preferred_language: "es", default_visibility: "shareable", calming_anchor: "walk", support_contact_name: "Lee",
+      preferred_language: "es",
+      default_visibility: "shareable",
+      calming_anchor: "walk",
+      support_contact_name: "Lee",
     });
     expect(eq).toHaveBeenCalledWith("id", "sv1");
   });

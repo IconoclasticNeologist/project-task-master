@@ -32,7 +32,7 @@ describe("redeemCode", () => {
 
   it("redeems a valid code and returns the survivor id", async () => {
     mockClient.rpc
-      .mockResolvedValueOnce({ data: "gk-1", error: null })        // verify → gatekeeper
+      .mockResolvedValueOnce({ data: "gk-1", error: null }) // verify → gatekeeper
       .mockResolvedValueOnce({ data: "survivor-1", error: null }); // redeem → survivor
     const result = await redeemCode("GOOD");
     expect(result).toEqual({ ok: true, survivorId: "survivor-1" });
@@ -115,6 +115,11 @@ describe("getSurvivor", () => {
       data: { id: "s-1", first_name: null, preferred_language: "en", onboarded_at: null },
       error: null,
     });
-    expect(await getSurvivor()).toEqual({ id: "s-1", first_name: null, preferred_language: "en", onboarded_at: null });
+    expect(await getSurvivor()).toEqual({
+      id: "s-1",
+      first_name: null,
+      preferred_language: "en",
+      onboarded_at: null,
+    });
   });
 });

@@ -7,10 +7,11 @@ import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { loadExampleData } from "@/lib/data/demoSeed";
 import { AftercareCard } from "@/components/AftercareCard";
 import { requireSurvivor } from "@/lib/auth/guard";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/home")({
   beforeLoad: requireSurvivor,
-  head: () => ({ meta: [{ title: "Home — The Advocate" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Home") }] }),
   component: HomeScreen,
 });
 
@@ -36,27 +37,37 @@ function HomeScreen() {
           <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
         </header>
 
-        <div className="space-y-1">
-          <button
-            type="button"
-            disabled={seed.isPending}
-            onClick={() => seed.mutate()}
-            className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            {seed.isPending ? "Loading an example…" : "Load an example (demo)"}
-          </button>
-          {seed.isError && (
-            <p className="text-xs text-destructive">
-              Couldn’t load the example: {seed.error?.message}
-            </p>
-          )}
-        </div>
+        {/* Presenter aid, never survivor-facing: only in dev builds or when the
+            deploy env opts in with VITE_DEMO_TOOLS=true (set it for the judged
+            demo build; leave unset anywhere a real person could land). */}
+        {(import.meta.env.DEV || import.meta.env.VITE_DEMO_TOOLS === "true") && (
+          <div className="space-y-1">
+            <button
+              type="button"
+              disabled={seed.isPending}
+              onClick={() => seed.mutate()}
+              className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              {seed.isPending ? "Loading an example…" : "Load an example (demo)"}
+            </button>
+            {seed.isError && (
+              <p className="text-xs text-destructive">
+                Couldn’t load the example: {seed.error?.message}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4">
           <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
           <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
           <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
-          <Tile to="/account" hash="timeline" label={copy.home.seeTimeline} hint="What happened, in your order." />
+          <Tile
+            to="/account"
+            hash="timeline"
+            label={copy.home.seeTimeline}
+            hint="What happened, in your order."
+          />
           <Tile to="/resources" label={copy.home.findSupport} hint="People you can talk to now." />
         </div>
 
@@ -64,7 +75,11 @@ function HomeScreen() {
           <Card className="paper-shadow">
             <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
               <p className="text-foreground">{copy.account.loadError}</p>
-              <button type="button" onClick={() => void query.refetch()} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+              <button
+                type="button"
+                onClick={() => void query.refetch()}
+                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
                 {copy.account.retry}
               </button>
             </CardContent>
@@ -77,7 +92,17 @@ function HomeScreen() {
   );
 }
 
-function Tile({ to, hash, label, hint }: { to: string; hash?: string; label: string; hint: string }) {
+function Tile({
+  to,
+  hash,
+  label,
+  hint,
+}: {
+  to: string;
+  hash?: string;
+  label: string;
+  hint: string;
+}) {
   return (
     <Link to={to} hash={hash}>
       <Card className="paper-shadow">

@@ -14,7 +14,13 @@ export interface TimelineRow {
 
 type DbRow = Pick<
   Tables<"timeline_events">,
-  "id" | "event_date" | "relative_anchor" | "description" | "visibility" | "created_at" | "updated_at"
+  | "id"
+  | "event_date"
+  | "relative_anchor"
+  | "description"
+  | "visibility"
+  | "created_at"
+  | "updated_at"
 >;
 
 const COLS = "id, event_date, relative_anchor, description, visibility, created_at, updated_at";

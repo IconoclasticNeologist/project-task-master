@@ -10,10 +10,12 @@
 // Strings marked __PLACEHOLDER__ are flagged in-UI with <PlaceholderTag/>.
 // They MUST be replaced by reviewed copy before any real person uses the app.
 
+import { PRODUCT_NAME } from "@/lib/product";
+
 export const PLACEHOLDER = "__PLACEHOLDER__";
 
 export const copy = {
-  appName: "The Advocate",
+  appName: PRODUCT_NAME,
 
   enter: {
     codeTitle: "Enter your code.",
@@ -87,6 +89,7 @@ export const copy = {
     },
     emergencyNote:
       "If you are in danger right now, the Support page has hotlines you can reach any time.",
+    emergencyLink: "Open Support",
   },
 
   home: {
@@ -207,7 +210,7 @@ export const copy = {
       { term: "Recess", meaning: "A short break." },
     ],
     sourceNote:
-      "General information, drawn from public victim-witness and court-preparation guidance. Courts vary — your advocate or lawyer knows your situation.",
+      "General information, drawn from public court-preparation guidance for witnesses. Courts vary — your advocate or lawyer knows your situation.",
   },
 
   session: {
@@ -586,7 +589,7 @@ export const copy = {
         name: "National Human Trafficking Hotline",
         number: "1-888-373-7888",
         hours: "Every day, all day",
-        desc: "Ask them to connect you with free legal help and a victim advocate who can stand beside you.",
+        desc: "Ask them to connect you with free legal help and a trained advocate who can stand beside you.",
       },
       {
         name: "RAINN — Sexual Assault Hotline",
@@ -616,6 +619,8 @@ export const copy = {
     title: "Settings",
     aftercareSection: "Your care plan",
     languageSection: "Language",
+    languageNote:
+      "The Coach speaks this language with you, and your draft starts from it. Menus stay in English for now.",
     languageEn: "English",
     languageEs: "Español",
     sharingSection: "What I share by default",

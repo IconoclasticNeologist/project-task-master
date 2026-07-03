@@ -12,10 +12,11 @@ import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { Input } from "@/components/ui/input";
 import { searchWords, type RagHit } from "@/lib/agents/rag";
 import { toast } from "sonner";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: requireSurvivor,
-  head: () => ({ meta: [{ title: "Your space — The Advocate" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Your space") }] }),
   component: AccountScreen,
 });
 

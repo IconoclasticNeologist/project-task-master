@@ -18,11 +18,13 @@ beforeEach(() => {
 describe("organization data", () => {
   it("creates an organization without creating client access", async () => {
     rpc.mockResolvedValue({ data: "org-1", error: null });
-    await expect(createOrganization({
-      name: "Harbor House",
-      displayName: "Jordan",
-      jurisdiction: "Illinois",
-    })).resolves.toBe("org-1");
+    await expect(
+      createOrganization({
+        name: "Harbor House",
+        displayName: "Jordan",
+        jurisdiction: "Illinois",
+      }),
+    ).resolves.toBe("org-1");
     expect(rpc).toHaveBeenCalledWith("create_organization", {
       p_name: "Harbor House",
       p_display_name: "Jordan",

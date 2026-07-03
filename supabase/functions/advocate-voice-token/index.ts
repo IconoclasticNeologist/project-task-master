@@ -76,8 +76,16 @@ const COACH_BASE = [
   "When the session opens, you speak first: a short, warm hello that makes your purpose clear and offers a gentle choice. Sound like a real person who is glad they came, not a script or a list. A few short sentences.",
   "Open in this spirit, in your own words: \"Hi — I'm really glad you're here. I'm here to help you get ready for your court hearing, at whatever pace feels right today. We could talk through what happened, so it's in your own words. I can tell you what a hearing is usually like. Or we can practice what it feels like to be asked questions. We can also just talk for a bit first. What would feel most useful right now?\"",
   "Then stop, and follow their lead. Whatever they choose, keep gently helping them toward feeling ready.",
+  "Language: follow the person. If they speak Spanish, speak Spanish with them — calm and plain, the same as in English. If they switch languages mid-conversation, switch with them, without comment.",
   "If the first message you receive is only the word BEGIN, that is the cue the session just opened — greet them like that. Never say the word BEGIN out loud.",
 ].join("\n");
+
+/** Per-language opening guidance, appended AFTER the mode prompt. */
+function languageLineFor(language: "en" | "es"): string {
+  return language === "es"
+    ? "\nThe person prefers Spanish. Open in Spanish and stay in Spanish unless they switch."
+    : "";
+}
 
 const COACH_REGULATOR = [
   COACH_BASE,
@@ -144,6 +152,7 @@ serve(async (req) => {
     // Parse optional overrides — allowlisted only; unknown values degrade to defaults.
     let model = DEFAULT_MODEL;
     let mode: Mode = "base";
+    let language: "en" | "es" = "en";
     let requestedVoice: string | null = null;
     try {
       const body = await req.json().catch(() => null);
@@ -154,6 +163,7 @@ serve(async (req) => {
         if (typeof body.voice === "string" && VOICE_ALLOWLIST.includes(body.voice)) {
           requestedVoice = body.voice;
         }
+        if (body.language === "es") language = "es";
         mode = pickMode(body.mode);
       }
     } catch {
@@ -212,7 +222,7 @@ serve(async (req) => {
               },
             },
             systemInstruction: {
-              parts: [{ text: promptFor(mode) }],
+              parts: [{ text: promptFor(mode) + languageLineFor(language) }],
             },
             // Live transcription of BOTH sides, locked into the token:
             //  - input (the person's speech) feeds the client-side deterministic

@@ -28,11 +28,14 @@ describe("knowledge data", () => {
       publicationDate: "2026-01-01",
       sourceNotes: "Check annually.",
     });
-    expect(rpc).toHaveBeenCalledWith("create_knowledge_source", expect.objectContaining({
-      p_organization_id: "org-1",
-      p_source_type: "law_or_rule",
-      p_source_url: "https://example.test/rule",
-    }));
+    expect(rpc).toHaveBeenCalledWith(
+      "create_knowledge_source",
+      expect.objectContaining({
+        p_organization_id: "org-1",
+        p_source_type: "law_or_rule",
+        p_source_url: "https://example.test/rule",
+      }),
+    );
   });
 
   it("creates a draft card with an explicit risk class and source", async () => {
@@ -45,10 +48,13 @@ describe("knowledge data", () => {
       riskClass: "wellbeing_sensitive",
       jurisdiction: "Federal",
     });
-    expect(rpc).toHaveBeenCalledWith("create_knowledge_item", expect.objectContaining({
-      p_primary_source_id: "source-1",
-      p_risk_class: "wellbeing_sensitive",
-    }));
+    expect(rpc).toHaveBeenCalledWith(
+      "create_knowledge_item",
+      expect.objectContaining({
+        p_primary_source_id: "source-1",
+        p_risk_class: "wellbeing_sensitive",
+      }),
+    );
   });
 
   it("keeps review and publishing as separate explicit actions", async () => {

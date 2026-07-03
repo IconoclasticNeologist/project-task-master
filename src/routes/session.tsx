@@ -35,10 +35,11 @@ import {
 import type { DistressSignal } from "@/lib/agents/safety/distress";
 import { ADVOCATE_VOICE_CONFIG } from "@/lib/voice/config";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/session")({
   beforeLoad: requireSurvivor,
-  head: () => ({ meta: [{ title: "Session — The Advocate" }] }),
+  head: () => ({ meta: [{ title: pageTitle("Session") }] }),
   component: SessionScreen,
 });
 
@@ -151,6 +152,7 @@ function SessionScreen() {
     sendText,
   } = useGeminiLive({
     mode: "base",
+    language: settings.query.data?.language ?? "en",
     onUserText: markUserContent,
     onDistress: (sig) => handleDistressRef.current(sig),
   });

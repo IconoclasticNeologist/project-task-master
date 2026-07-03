@@ -41,7 +41,10 @@ export async function saveSurvivorSettings(input: SurvivorSettings): Promise<voi
 }
 
 /** Partial aftercare write (support person + calming anchor only) — used by the emotional onboarding. */
-export async function saveAftercare(input: { supportPerson: string; calmingAnchor: string }): Promise<void> {
+export async function saveAftercare(input: {
+  supportPerson: string;
+  calmingAnchor: string;
+}): Promise<void> {
   const survivor = await getSurvivor();
   if (!survivor) throw new Error("not authenticated");
   const { error } = await getSupabase()

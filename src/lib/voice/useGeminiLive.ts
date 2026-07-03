@@ -35,6 +35,8 @@ export type MicState = "off" | "requesting" | "on" | "denied";
 
 interface UseGeminiLiveOptions {
   mode?: CoachMode;
+  /** Preferred spoken language — the Coach opens in it and follows switches. */
+  language?: "en" | "es";
   /** Override max session seconds (defense uses a tighter cap). */
   maxDurationSec?: number;
   /** The model's words (live output transcription + any text parts). */
@@ -60,7 +62,7 @@ interface VoiceTokenPayload {
   expiresIn: number;
 }
 
-async function fetchVoiceToken(mode: CoachMode): Promise<VoiceTokenPayload> {
+async function fetchVoiceToken(mode: CoachMode, language: "en" | "es"): Promise<VoiceTokenPayload> {
   const supabase = getSupabase();
   const { data, error } = await supabase.functions.invoke<VoiceTokenPayload>(
     "advocate-voice-token",
@@ -71,6 +73,7 @@ async function fetchVoiceToken(mode: CoachMode): Promise<VoiceTokenPayload> {
         // enforces its own per-mode default and allowlist regardless.
         voice: geminiVoiceForMode(mode),
         mode,
+        language,
       },
     },
   );
@@ -80,7 +83,7 @@ async function fetchVoiceToken(mode: CoachMode): Promise<VoiceTokenPayload> {
 }
 
 export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
-  const { mode = "base", maxDurationSec } = opts;
+  const { mode = "base", language = "en", maxDurationSec } = opts;
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [micState, setMicState] = useState<MicState>("off");
   const [coachSpeaking, setCoachSpeaking] = useState(false);
@@ -216,7 +219,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
       mutedRef.current = false;
       transcriptTripRef.current.reset();
       try {
-        const { token, model } = await fetchVoiceToken(sessionMode);
+        const { token, model } = await fetchVoiceToken(sessionMode, language);
         // v1alpha + ?access_token=<ephemeral>. The token has model, voice,
         // AUDIO modality, and system instruction locked into its constraints,
         // so we MUST NOT resend those in the setup frame.
@@ -343,7 +346,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
         setStatus("error");
       }
     },
-    [mode, maxDurationSec, disconnect, tearDown],
+    [mode, language, maxDurationSec, disconnect, tearDown],
   );
 
   useEffect(() => () => tearDown(), [tearDown]);

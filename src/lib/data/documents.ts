@@ -11,7 +11,10 @@ export interface DocumentRow {
   uploadedAt: string;
 }
 
-type DbRow = Pick<Tables<"documents">, "id" | "storage_path" | "note" | "visibility" | "uploaded_at">;
+type DbRow = Pick<
+  Tables<"documents">,
+  "id" | "storage_path" | "note" | "visibility" | "uploaded_at"
+>;
 
 const COLS = "id, storage_path, note, visibility, uploaded_at";
 const BUCKET = "documents";
@@ -58,7 +61,12 @@ export async function uploadDocument(input: {
   if (up.error) throw new Error(up.error.message);
   const { data, error } = await supabase
     .from("documents")
-    .insert({ survivor_id: survivor.id, storage_path: path, note: input.note || null, visibility: input.visibility })
+    .insert({
+      survivor_id: survivor.id,
+      storage_path: path,
+      note: input.note || null,
+      visibility: input.visibility,
+    })
     .select(COLS)
     .single();
   if (error) {

@@ -9,26 +9,27 @@ import {
 } from "@/lib/data/access";
 import { useAccessGrants } from "@/lib/data/useAccessGrants";
 import { copy } from "@/lib/copy";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/team")({
   beforeLoad: requireSurvivor,
-  head: () => ({ meta: [{ title: `${copy.team.title} — The Advocate` }] }),
+  head: () => ({ meta: [{ title: pageTitle(copy.team.title) }] }),
   component: TeamScreen,
 });
 
 function TeamScreen() {
   const { query, respond } = useAccessGrants();
   const grants = query.data ?? [];
-  const visibleGrants = grants.filter((grant) => grant.status === "pending" || grant.status === "active");
+  const visibleGrants = grants.filter(
+    (grant) => grant.status === "pending" || grant.status === "active",
+  );
 
   return (
     <Shell>
       <div className="space-y-6">
         <header className="space-y-2">
           <h1 className="text-2xl font-normal tracking-tight">{copy.team.title}</h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {copy.team.intro}
-          </p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{copy.team.intro}</p>
         </header>
 
         {query.isLoading ? (
@@ -107,7 +108,9 @@ function AccessGrantCard({
           {grant.expiresAt && (
             <p className="text-xs text-muted-foreground">
               {copy.team.expires(
-                new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date(grant.expiresAt)),
+                new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+                  new Date(grant.expiresAt),
+                ),
               )}
             </p>
           )}

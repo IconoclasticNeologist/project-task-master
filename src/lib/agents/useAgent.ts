@@ -4,7 +4,8 @@ import { runAgent, type AgentName, type AgentInput } from "./runAgent";
 
 export function useAgent() {
   return useMutation({
-    mutationFn: ({ agent, input }: { agent: AgentName; input: AgentInput }) => runAgent(agent, input),
+    mutationFn: ({ agent, input }: { agent: AgentName; input: AgentInput }) =>
+      runAgent(agent, input),
     onError: () => toast("We couldn't do that just now."),
   });
 }

@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerSW } from "../pwa/registerSW";
 import { InstallPrompt } from "../components/InstallPrompt";
 import { Toaster } from "@/components/ui/sonner";
+import { PRODUCT_NAME } from "@/lib/product";
 
 function NotFoundComponent() {
   return (
@@ -80,9 +81,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "The Advocate" },
+      { title: PRODUCT_NAME },
       { name: "description", content: "A calm, private space — at your own pace." },
-      { property: "og:title", content: "The Advocate" },
+      { property: "og:title", content: PRODUCT_NAME },
       { property: "og:description", content: "A calm, private space — at your own pace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -91,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#FAF7EF" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      { name: "apple-mobile-web-app-title", content: "The Advocate" },
+      { name: "apple-mobile-web-app-title", content: PRODUCT_NAME },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

@@ -89,7 +89,9 @@ export async function listMyClientWorkspaces(): Promise<ClientWorkspace[]> {
   }));
 }
 
-export async function listCourtPlanItemsForWorkspace(workspaceId: string): Promise<CourtPlanItem[]> {
+export async function listCourtPlanItemsForWorkspace(
+  workspaceId: string,
+): Promise<CourtPlanItem[]> {
   const { data, error } = await getSupabase().rpc("list_court_plan_items_for_workspace", {
     p_workspace_id: workspaceId,
   });

@@ -9,7 +9,14 @@
 import { createServerFn } from "@tanstack/react-start";
 
 export const embedAndIndexFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { sourceTable: "statements" | "documents"; sourceId: string; text: string; language: "en" | "es" }) => d)
+  .inputValidator(
+    (d: {
+      sourceTable: "statements" | "documents";
+      sourceId: string;
+      text: string;
+      language: "en" | "es";
+    }) => d,
+  )
   .handler(async ({ data }) => {
     // TODO(cloud-on):
     //   1) chunk(text)

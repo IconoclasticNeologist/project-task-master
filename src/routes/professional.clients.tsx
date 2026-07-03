@@ -9,6 +9,7 @@ import { copy } from "@/lib/copy";
 import { ProfessionalShell } from "@/components/professional/ProfessionalShell";
 import { getProfessionalSession } from "@/lib/auth/professional";
 import { isApprovedProfessional } from "@/lib/data/organizations";
+import { pageTitle } from "@/lib/product";
 import {
   courtPlanCategoryLabels,
   courtPlanStatusLabels,
@@ -21,7 +22,7 @@ import {
 } from "@/lib/data/courtPlan";
 
 export const Route = createFileRoute("/professional/clients")({
-  head: () => ({ meta: [{ title: `${copy.clientPlans.title} — The Advocate` }] }),
+  head: () => ({ meta: [{ title: pageTitle(copy.clientPlans.title) }] }),
   component: ClientPlansScreen,
 });
 
@@ -39,10 +40,18 @@ function ClientPlansScreen() {
   });
 
   if (session.isLoading || approval.isLoading || (approval.data && workspaces.isLoading)) {
-    return <Page><p className="text-sm text-muted-foreground">{copy.professional.loading}</p></Page>;
+    return (
+      <Page>
+        <p className="text-sm text-muted-foreground">{copy.professional.loading}</p>
+      </Page>
+    );
   }
   if (session.data?.kind !== "professional" || !approval.data) {
-    return <Page><Message title={copy.professional.approvalTitle} body={copy.professional.approvalBody} /></Page>;
+    return (
+      <Page>
+        <Message title={copy.professional.approvalTitle} body={copy.professional.approvalBody} />
+      </Page>
+    );
   }
 
   return (
@@ -56,10 +65,16 @@ function ClientPlansScreen() {
           <Message title={copy.clientPlans.title} body={copy.clientPlans.saveFailed} />
         ) : workspaces.data?.length ? (
           <div className="space-y-5">
-            {workspaces.data.map((workspace) => <ClientPlanCard key={workspace.id} workspace={workspace} />)}
+            {workspaces.data.map((workspace) => (
+              <ClientPlanCard key={workspace.id} workspace={workspace} />
+            ))}
           </div>
         ) : (
-          <Card><CardContent className="py-5 text-sm leading-relaxed text-muted-foreground">{copy.clientPlans.empty}</CardContent></Card>
+          <Card>
+            <CardContent className="py-5 text-sm leading-relaxed text-muted-foreground">
+              {copy.clientPlans.empty}
+            </CardContent>
+          </Card>
         )}
       </div>
     </Page>
@@ -71,7 +86,14 @@ function Page({ children }: { children: ReactNode }) {
 }
 
 function Message({ title, body }: { title: string; body: string }) {
-  return <Card><CardContent className="space-y-3 py-6"><h1 className="text-2xl font-normal tracking-tight">{title}</h1><p className="text-sm leading-relaxed text-muted-foreground">{body}</p></CardContent></Card>;
+  return (
+    <Card>
+      <CardContent className="space-y-3 py-6">
+        <h1 className="text-2xl font-normal tracking-tight">{title}</h1>
+        <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+      </CardContent>
+    </Card>
+  );
 }
 
 function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
@@ -82,8 +104,13 @@ function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
   });
   const [open, setOpen] = useState(false);
   const categories = allowedCategories(workspace.scopes);
-  const [form, setForm] = useState({ category: categories[0] ?? "hearing_details", title: "", details: "" });
-  const refresh = () => void queryClient.invalidateQueries({ queryKey: ["client-court-plan", workspace.id] });
+  const [form, setForm] = useState({
+    category: categories[0] ?? "hearing_details",
+    title: "",
+    details: "",
+  });
+  const refresh = () =>
+    void queryClient.invalidateQueries({ queryKey: ["client-court-plan", workspace.id] });
   const create = useMutation({
     mutationFn: createCourtPlanItem,
     onSuccess: () => {
@@ -93,7 +120,8 @@ function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
     },
   });
   const update = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "in_progress" | "done" }) => updateCourtPlanItemStatus(id, status),
+    mutationFn: ({ id, status }: { id: string; status: "in_progress" | "done" }) =>
+      updateCourtPlanItemStatus(id, status),
     onSuccess: refresh,
   });
 
@@ -104,7 +132,11 @@ function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
           <h2 className="text-xl font-normal">{workspace.clientName}</h2>
           <p className="text-xs text-muted-foreground">{workspace.organizationName}</p>
         </div>
-        <button type="button" onClick={() => setOpen((value) => !value)} className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+        >
           {copy.clientPlans.add}
         </button>
         {open && (
@@ -112,30 +144,70 @@ function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
             className="space-y-4 rounded-md border border-border p-3"
             onSubmit={(event) => {
               event.preventDefault();
-              if (form.title.trim()) create.mutate({ workspaceId: workspace.id, ...form, title: form.title.trim(), details: form.details.trim() });
+              if (form.title.trim())
+                create.mutate({
+                  workspaceId: workspace.id,
+                  ...form,
+                  title: form.title.trim(),
+                  details: form.details.trim(),
+                });
             }}
           >
             <div className="space-y-2">
-              <Label htmlFor={`client-plan-category-${workspace.id}`}>{copy.clientPlans.addCategory}</Label>
+              <Label htmlFor={`client-plan-category-${workspace.id}`}>
+                {copy.clientPlans.addCategory}
+              </Label>
               <select
                 id={`client-plan-category-${workspace.id}`}
                 value={form.category}
-                onChange={(event) => setForm((value) => ({ ...value, category: event.target.value as CourtPlanCategory }))}
+                onChange={(event) =>
+                  setForm((value) => ({
+                    ...value,
+                    category: event.target.value as CourtPlanCategory,
+                  }))
+                }
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
               >
-                {categories.map((category) => <option key={category} value={category}>{courtPlanCategoryLabels[category]}</option>)}
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {courtPlanCategoryLabels[category]}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`client-plan-title-${workspace.id}`}>{copy.clientPlans.addTitle}</Label>
-              <Input id={`client-plan-title-${workspace.id}`} value={form.title} onChange={(event) => setForm((value) => ({ ...value, title: event.target.value }))} required />
+              <Label htmlFor={`client-plan-title-${workspace.id}`}>
+                {copy.clientPlans.addTitle}
+              </Label>
+              <Input
+                id={`client-plan-title-${workspace.id}`}
+                value={form.title}
+                onChange={(event) => setForm((value) => ({ ...value, title: event.target.value }))}
+                required
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`client-plan-details-${workspace.id}`}>{copy.clientPlans.addDetails}</Label>
-              <Textarea id={`client-plan-details-${workspace.id}`} value={form.details} onChange={(event) => setForm((value) => ({ ...value, details: event.target.value }))} />
+              <Label htmlFor={`client-plan-details-${workspace.id}`}>
+                {copy.clientPlans.addDetails}
+              </Label>
+              <Textarea
+                id={`client-plan-details-${workspace.id}`}
+                value={form.details}
+                onChange={(event) =>
+                  setForm((value) => ({ ...value, details: event.target.value }))
+                }
+              />
             </div>
-            {create.isError && <p className="text-sm text-destructive">{copy.clientPlans.saveFailed}</p>}
-            <button type="submit" disabled={create.isPending} className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-60">{copy.clientPlans.save}</button>
+            {create.isError && (
+              <p className="text-sm text-destructive">{copy.clientPlans.saveFailed}</p>
+            )}
+            <button
+              type="submit"
+              disabled={create.isPending}
+              className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-60"
+            >
+              {copy.clientPlans.save}
+            </button>
           </form>
         )}
         {items.isLoading ? (
@@ -147,10 +219,34 @@ function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
             {items.data.map((item) => (
               <div key={item.id} className="border-t border-border pt-3">
                 <p className="text-sm text-foreground">{item.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{courtPlanCategoryLabels[item.category]} · {courtPlanStatusLabels[item.status]}</p>
-                {item.details && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.details}</p>}
-                {item.status === "not_started" && <button type="button" disabled={update.isPending} onClick={() => update.mutate({ id: item.id, status: "in_progress" })} className="mt-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60">{copy.plan.start}</button>}
-                {item.status === "in_progress" && <button type="button" disabled={update.isPending} onClick={() => update.mutate({ id: item.id, status: "done" })} className="mt-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60">{copy.plan.done}</button>}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {courtPlanCategoryLabels[item.category]} · {courtPlanStatusLabels[item.status]}
+                </p>
+                {item.details && (
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {item.details}
+                  </p>
+                )}
+                {item.status === "not_started" && (
+                  <button
+                    type="button"
+                    disabled={update.isPending}
+                    onClick={() => update.mutate({ id: item.id, status: "in_progress" })}
+                    className="mt-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
+                  >
+                    {copy.plan.start}
+                  </button>
+                )}
+                {item.status === "in_progress" && (
+                  <button
+                    type="button"
+                    disabled={update.isPending}
+                    onClick={() => update.mutate({ id: item.id, status: "done" })}
+                    className="mt-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
+                  >
+                    {copy.plan.done}
+                  </button>
+                )}
               </div>
             ))}
           </div>

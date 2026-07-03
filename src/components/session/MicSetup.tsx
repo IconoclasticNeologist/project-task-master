@@ -89,8 +89,9 @@ export function MicSetup({ micState, micLevel, onEnable, onMute, onUseTyping }: 
             </p>
           </div>
           <div className="flex items-center gap-3 rounded-md border border-border bg-background/60 px-3 py-2">
-            <span className="relative flex h-7 w-7 items-center justify-center text-base">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(0.85_0.04_150)] opacity-60" />
+            {/* Static ring (no motion anywhere in the app — the global rule
+                would freeze an animation mid-frame anyway). */}
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-[oklch(0.85_0.04_150)]/50 text-base">
               <span className="relative">{guide.icon}</span>
             </span>
             <span className="text-xs text-muted-foreground">↤ this lives in your address bar</span>

@@ -3,11 +3,12 @@ import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
 import { accessMode } from "@/lib/auth/config";
+import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Welcome — The Advocate" },
+      { title: pageTitle("Welcome") },
       { name: "description", content: "A calm, private space — at your own pace." },
     ],
   }),
@@ -19,9 +20,7 @@ function WelcomeScreen() {
     <Shell hideNav>
       <div className="flex flex-1 flex-col justify-between py-6">
         <div className="space-y-8 pt-12">
-          <h1 className="text-3xl font-normal leading-tight tracking-tight">
-            {copy.appName}.
-          </h1>
+          <h1 className="text-3xl font-normal leading-tight tracking-tight">{copy.appName}.</h1>
           <p className="text-base leading-relaxed text-foreground">
             A quiet place. You set the pace. You can stop at any time.
           </p>

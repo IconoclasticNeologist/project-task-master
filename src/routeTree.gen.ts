@@ -19,6 +19,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as EnterRouteImport } from './routes/enter'
+import { Route as DevRouteImport } from './routes/dev'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfessionalKnowledgeRouteImport } from './routes/professional.knowledge'
@@ -74,6 +75,11 @@ const EnterRoute = EnterRouteImport.update({
   path: '/enter',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevRoute = DevRouteImport.update({
+  id: '/dev',
+  path: '/dev',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -98,6 +104,7 @@ const ProfessionalClientsRoute = ProfessionalClientsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
+    | '/dev'
     | '/enter'
     | '/guide'
     | '/home'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/dev'
     | '/enter'
     | '/guide'
     | '/home'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
+    | '/dev'
     | '/enter'
     | '/guide'
     | '/home'
@@ -198,6 +210,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
+  DevRoute: typeof DevRoute
   EnterRoute: typeof EnterRoute
   GuideRoute: typeof GuideRoute
   HomeRoute: typeof HomeRoute
@@ -282,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev': {
+      id: '/dev'
+      path: '/dev'
+      fullPath: '/dev'
+      preLoaderRoute: typeof DevRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account': {
       id: '/account'
       path: '/account'
@@ -330,6 +350,7 @@ const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
+  DevRoute: DevRoute,
   EnterRoute: EnterRoute,
   GuideRoute: GuideRoute,
   HomeRoute: HomeRoute,

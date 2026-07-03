@@ -101,3 +101,37 @@ export async function createClientInvite(input: {
   if (error) throw new Error(error.message);
   return data;
 }
+
+export interface ClientInviteStatusRow {
+  id: string;
+  label: string | null;
+  scopes: AccessScope[];
+  createdAt: string;
+  expiresAt: string | null;
+  redeemed: boolean;
+}
+
+/**
+ * The org's client invites, for the professional overview. RLS
+ * (invites_manager_read) already limits rows to client-managing roles —
+ * everyone else simply sees an empty list.
+ */
+export async function listOrganizationClientInvites(
+  organizationId: string,
+): Promise<ClientInviteStatusRow[]> {
+  const { data, error } = await getSupabase()
+    .from("client_invites")
+    .select("id, label, scopes, created_at, expires_at, redeemed_at")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    label: row.label,
+    scopes: row.scopes,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+    redeemed: Boolean(row.redeemed_at),
+  }));
+}

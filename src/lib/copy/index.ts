@@ -454,6 +454,16 @@ export const copy = {
     chooseOrganization: "Choose an organization",
     openKnowledge: "Open knowledge library",
     openClientPlans: "Open client plans",
+    overviewClients: "Your clients",
+    overviewClientsEmpty:
+      "No client spaces yet. A client space appears when someone accepts your invite and allows access.",
+    overviewClientsNote:
+      "You only ever see what each client marked “okay to share” — they can change or end access any time.",
+    overviewInvites: "Your client invites",
+    overviewInvitesEmpty: "No invites yet. Create one below.",
+    inviteAccepted: "accepted",
+    inviteWaiting: "waiting",
+    inviteExpired: "expired",
     joinTitle: "Join an organization.",
     joinBody:
       "Use the short-lived teammate code from your organization administrator. Your professional account must already be approved.",

@@ -105,7 +105,13 @@ bunx supabase functions deploy advocate-avatar-session
 bunx supabase functions deploy advocate-defense-llm --no-verify-jwt
 ```
 
-**One-time LiveAvatar setup** (needs your API key from app.liveavatar.com → Developers):
+**One-time LiveAvatar setup** — either run the script (one command, one paste):
+
+```bash
+bash scripts/setup-liveavatar.sh   # prompts for your API key, does everything below
+```
+
+…or by hand (needs your API key from app.liveavatar.com → Developers):
 
 ```bash
 export LIVEAVATAR_API_KEY=<your key>

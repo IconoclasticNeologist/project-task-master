@@ -135,23 +135,25 @@ serve(async (req) => {
     }
 
     if (action === "ensure_self_access") {
-      const { data: existing } = await admin
+      // ignoreDuplicates: an existing gatekeeper record (any role/org) is
+      // left exactly as it is — this only fills the gap when there is none.
+      const { error } = await admin
         .from("gatekeepers")
-        .select("id")
-        .eq("auth_user_id", caller.id)
-        .maybeSingle();
-      if (!existing) {
-        const { error } = await admin
-          .from("gatekeepers")
-          .insert({ auth_user_id: caller.id, role: "advocate", org_name: "Developer" });
-        if (error) return json(500, { error: "Could not create gatekeeper record" });
+        .upsert(
+          { auth_user_id: caller.id, role: "advocate", org_name: "Developer" },
+          { onConflict: "auth_user_id", ignoreDuplicates: true },
+        );
+      if (error) {
+        return json(500, { error: `Could not create gatekeeper record: ${error.message}` });
       }
       const { error: approvalError } = await admin.from("professional_approvals").upsert({
         auth_user_id: caller.id,
         organization_creation_allowed: true,
         revoked_at: null,
       });
-      if (approvalError) return json(500, { error: "Could not record approval" });
+      if (approvalError) {
+        return json(500, { error: `Could not record approval: ${approvalError.message}` });
+      }
       return json(200, { ok: true });
     }
 

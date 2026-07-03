@@ -47,6 +47,7 @@ function fmtDay(iso: string | null): string {
 
 function DevScreen() {
   const [gate, setGate] = useState<Gate>({ kind: "checking" });
+  const [setupWarning, setSetupWarning] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [signInError, setSignInError] = useState<string | null>(null);
 
@@ -60,13 +61,24 @@ function DevScreen() {
         setGate({ kind: "signedOut" });
         return;
       }
+      // The allowlist check. Only a failure HERE means "not a developer".
       try {
-        await fetchAdminStatus(); // the allowlist check
-        await ensureSelfAccess(); // idempotent: gatekeeper + approval for the dev
-        if (!cancelled) setGate({ kind: "ok" });
+        await fetchAdminStatus();
       } catch (e) {
         if (!cancelled) {
           setGate({ kind: "denied", message: e instanceof Error ? e.message : "Not allowed" });
+        }
+        return;
+      }
+      if (cancelled) return;
+      setGate({ kind: "ok" });
+      // Post-gate setup (gatekeeper + approval for the dev). A failure is
+      // shown as a banner on the dashboard, never as an access denial.
+      try {
+        await ensureSelfAccess();
+      } catch (e) {
+        if (!cancelled) {
+          setSetupWarning(e instanceof Error ? e.message : "Setup step failed");
         }
       }
     })();
@@ -169,14 +181,14 @@ function DevScreen() {
             </Card>
           )}
 
-          {gate.kind === "ok" && <Dashboard />}
+          {gate.kind === "ok" && <Dashboard setupWarning={setupWarning} />}
         </main>
       </div>
     </div>
   );
 }
 
-function Dashboard() {
+function Dashboard({ setupWarning }: { setupWarning: string | null }) {
   return (
     <div className="space-y-6">
       <header>
@@ -186,6 +198,12 @@ function Dashboard() {
           here — row-level security keeps them out of reach even for this dashboard, by design.
         </p>
       </header>
+      {setupWarning && (
+        <p className="rounded-md border border-destructive/40 px-3 py-2 text-sm leading-relaxed text-foreground">
+          Setup step failed: {setupWarning}. Minting codes may not work until this is fixed — reload
+          after applying the fix.
+        </p>
+      )}
       <ReadinessPanel />
       <MintPanel />
       <CodesPanel />

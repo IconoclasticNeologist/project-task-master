@@ -105,45 +105,29 @@ bunx supabase functions deploy advocate-avatar-session
 bunx supabase functions deploy advocate-defense-llm --no-verify-jwt
 ```
 
-**One-time LiveAvatar setup** — either run the script (one command, one paste):
+**One-time LiveAvatar setup — one paste, no terminal.** Get your API key from
+app.liveavatar.com → Developers, then add these in the **Supabase Dashboard →
+Edge Functions → Secrets**
+(https://supabase.com/dashboard/project/suanbsyewsudlhrrzfks/functions/secrets):
 
-```bash
-bash scripts/setup-liveavatar.sh   # prompts for your API key, does everything below
-```
+| Secret | Value |
+|---|---|
+| `LIVEAVATAR_API_KEY` | your LiveAvatar API key (**required — the only one setup needs**) |
+| `LIVEAVATAR_SANDBOX` | `true` while rehearsing (free, watermarked) — set `false` for the judged run |
+| `LIVEAVATAR_AVATAR_ID` | *(optional)* a courtroom-plausible avatar id from their gallery |
 
-…or by hand (needs your API key from app.liveavatar.com → Developers):
+Everything else self-provisions on the first practice session: the functions
+derive the shim's bearer secret from the API key, register it with LiveAvatar,
+and create the `advocate-defense` LLM configuration automatically
+(`supabase/functions/_shared/liveavatar.ts`). If you ever rotate the API key,
+delete the `advocate-defense` LLM configuration at app.liveavatar.com so it
+re-registers itself.
 
-```bash
-export LIVEAVATAR_API_KEY=<your key>
-
-# 0) Generate the shim's shared secret and give it to Supabase:
-SHIM_KEY=$(openssl rand -hex 24)
-bunx supabase secrets set LIVEAVATAR_SHIM_KEY=$SHIM_KEY
-
-# 1) Store the same secret with LiveAvatar (it authenticates them TO the shim):
-curl -s -X POST https://api.liveavatar.com/v1/secrets \
-  -H "X-API-KEY: $LIVEAVATAR_API_KEY" -H "Content-Type: application/json" \
-  -d "{\"secret_type\":\"LLM_API_KEY\",\"secret_value\":\"$SHIM_KEY\",\"secret_name\":\"advocate-defense-shim\"}"
-# → note data.secret_id
-
-# 2) Register the shim as the practice person's ONLY brain (RAG-lock):
-curl -s -X POST https://api.liveavatar.com/v1/llm_configurations \
-  -H "X-API-KEY: $LIVEAVATAR_API_KEY" -H "Content-Type: application/json" \
-  -d '{"display_name":"advocate-defense","model_name":"practice","secret_id":"<step-1 secret_id>","base_url":"https://suanbsyewsudlhrrzfks.supabase.co/functions/v1/advocate-defense-llm"}'
-# → note data.llm_configuration_id
-
-# 3) Point the session minter at everything:
-bunx supabase secrets set \
-  LIVEAVATAR_API_KEY=$LIVEAVATAR_API_KEY \
-  LIVEAVATAR_LLM_CONFIG_ID=<step-2 id> \
-  LIVEAVATAR_SANDBOX=true      # free watermarked rehearsals; set false / unset for the judged demo
-# Optional: LIVEAVATAR_AVATAR_ID=<a courtroom-plausible avatar from their gallery>
-```
-
-What each does:
+What each function does:
 - **`advocate-avatar-session`** — mints the LiveAvatar FULL-mode session token (API key never
-  reaches the browser). Refuses (503 → voice-only fallback) unless the RAG-lock LLM config is set —
-  the avatar is never allowed to run on LiveAvatar's default general-purpose LLM.
+  reaches the browser) and self-provisions the RAG-lock LLM config. Refuses (503 → voice-only
+  fallback) if that config can't be resolved — the avatar is never allowed to run on LiveAvatar's
+  default general-purpose LLM.
 - **`advocate-defense-llm`** — the OpenAI-compatible shim that IS the practice person's brain:
   our Defense practice prompt + the person's shareable-only statements, Gemini underneath.
 

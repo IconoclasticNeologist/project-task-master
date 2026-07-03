@@ -5,19 +5,22 @@
  *
  * The practice person is OPT-IN, Witness-Stand-only, and consent-gated in the
  * UI. The avatar's "brain" is our own RAG-locked defense shim
- * (advocate-defense-llm) registered with LiveAvatar as a custom LLM
+ * (advocate-defense-llm), registered with LiveAvatar as a custom LLM
  * configuration — the avatar can only ask about what the person already said.
- * Without that configuration id we refuse to mint (503) rather than let
- * LiveAvatar's default general-purpose LLM speak to a survivor; the client
- * then falls back to the voice-only practice path.
+ * The configuration SELF-PROVISIONS on first use (see _shared/liveavatar.ts):
+ * looked up by name, created if missing, cached per instance. If it can't be
+ * resolved we refuse to mint (503) rather than let LiveAvatar's default
+ * general-purpose LLM speak to a survivor; the client then falls back to the
+ * voice-only practice path.
  *
- * Secrets (supabase secrets set):
- *   LIVEAVATAR_API_KEY        required — from app.liveavatar.com → Developers
- *   LIVEAVATAR_LLM_CONFIG_ID  required — see DEPLOY.md one-time setup
- *   LIVEAVATAR_AVATAR_ID      optional — defaults to LiveAvatar's public demo
- *                             avatar; pick a courtroom-plausible one for real
+ * Secrets (Supabase Dashboard → Edge Functions → Secrets):
+ *   LIVEAVATAR_API_KEY        required — from app.liveavatar.com → Developers.
+ *                             The ONLY secret setup needs.
  *   LIVEAVATAR_SANDBOX        optional — "true" mints free sandbox sessions
  *                             (watermarked) for rehearsals
+ *   LIVEAVATAR_AVATAR_ID      optional — defaults to LiveAvatar's public demo
+ *                             avatar; pick a courtroom-plausible one for real
+ *   LIVEAVATAR_LLM_CONFIG_ID  optional override — skips self-provisioning
  *
  * Caps:
  *   - max_session_duration: practice cap + grace, enforced by LiveAvatar
@@ -30,12 +33,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { deriveShimKey, ensureDefenseLlmConfig } from "../_shared/liveavatar.ts";
 
 const LIVEAVATAR_API = "https://api.liveavatar.com";
 // LiveAvatar's public demo interactive avatar (from their quickstart docs).
 const DEFAULT_AVATAR_ID = "65f9e3c9-d48b-4118-b73a-4ae2e3cbb8f0";
 // 8-minute practice cap + grace so the visible client timer always wins.
 const MAX_SESSION_SECONDS = 8 * 60 + 30;
+
+// Resolved once per warm instance; a failed resolution is retried next call.
+let cachedLlmConfigId: string | null = null;
+
+async function resolveLlmConfigId(apiKey: string): Promise<string | null> {
+  const override = Deno.env.get("LIVEAVATAR_LLM_CONFIG_ID");
+  if (override) return override;
+  if (cachedLlmConfigId) return cachedLlmConfigId;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) return null;
+  const shimUrl = `${supabaseUrl}/functions/v1/advocate-defense-llm`;
+  const shimKey = await deriveShimKey(apiKey);
+  cachedLlmConfigId = await ensureDefenseLlmConfig(apiKey, shimUrl, shimKey);
+  return cachedLlmConfigId;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -50,10 +69,15 @@ serve(async (req) => {
 
   try {
     const apiKey = Deno.env.get("LIVEAVATAR_API_KEY");
-    const llmConfigurationId = Deno.env.get("LIVEAVATAR_LLM_CONFIG_ID");
-    if (!apiKey || !llmConfigurationId) {
+    if (!apiKey) {
       // Not configured (or deliberately unconfigured): the client falls back
-      // to the voice-only practice path. Never fall back to a default LLM.
+      // to the voice-only practice path.
+      return json(503, { error: "Practice person is not available" });
+    }
+    const llmConfigurationId = await resolveLlmConfigId(apiKey);
+    if (!llmConfigurationId) {
+      // Self-provisioning failed — refuse rather than let LiveAvatar's
+      // default general-purpose LLM speak to a survivor.
       return json(503, { error: "Practice person is not available" });
     }
     const avatarId = Deno.env.get("LIVEAVATAR_AVATAR_ID") || DEFAULT_AVATAR_ID;

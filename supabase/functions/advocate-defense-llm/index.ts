@@ -10,10 +10,13 @@
  * person already said.
  *
  * Auth: LiveAvatar is configured with a shared secret (its "LLM API key"),
- * which arrives as `Authorization: Bearer <secret>` and must equal
- * LIVEAVATAR_SHIM_KEY. This function is deployed with verify_jwt=false
- * (LiveAvatar's servers cannot carry a Supabase JWT) — the bearer check is
- * the gate. 401 otherwise.
+ * which arrives as `Authorization: Bearer <secret>` and must match either
+ * (a) the key DERIVED from LIVEAVATAR_API_KEY (self-provisioned setup —
+ * advocate-avatar-session registers the same derived value with LiveAvatar;
+ * see _shared/liveavatar.ts), or (b) an explicit LIVEAVATAR_SHIM_KEY
+ * override. This function is deployed with verify_jwt=false (LiveAvatar's
+ * servers cannot carry a Supabase JWT) — the bearer check is the gate.
+ * 401 otherwise.
  *
  * Account context: the client sends the person's SHAREABLE-only statements
  * as the first user message, prefixed with the [[PRACTICE_ACCOUNT]] sentinel.
@@ -31,8 +34,25 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { deriveShimKey } from "../_shared/liveavatar.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
+
+// Accepted bearer values, resolved once per warm instance.
+let acceptedKeysPromise: Promise<string[]> | null = null;
+function acceptedKeys(): Promise<string[]> {
+  if (!acceptedKeysPromise) {
+    acceptedKeysPromise = (async () => {
+      const keys: string[] = [];
+      const override = Deno.env.get("LIVEAVATAR_SHIM_KEY");
+      if (override) keys.push(override);
+      const apiKey = Deno.env.get("LIVEAVATAR_API_KEY");
+      if (apiKey) keys.push(await deriveShimKey(apiKey));
+      return keys;
+    })();
+  }
+  return acceptedKeysPromise;
+}
 const MAX_OUTPUT_TOKENS = 200;
 const MAX_ACCOUNT_CHARS = 4000;
 const ACCOUNT_SENTINEL = "[[PRACTICE_ACCOUNT]]";
@@ -148,12 +168,14 @@ serve(async (req) => {
     });
 
   try {
-    const shimKey = Deno.env.get("LIVEAVATAR_SHIM_KEY");
     const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_AI_API_KEY");
-    if (!shimKey || !geminiKey) return json(503, { error: "Not configured" });
+    const keys = await acceptedKeys();
+    if (keys.length === 0 || !geminiKey) return json(503, { error: "Not configured" });
 
     const auth = req.headers.get("Authorization") ?? "";
-    if (auth !== `Bearer ${shimKey}`) return json(401, { error: "Unauthorized" });
+    if (!keys.some((k) => auth === `Bearer ${k}`)) {
+      return json(401, { error: "Unauthorized" });
+    }
 
     if (req.method !== "POST" || !new URL(req.url).pathname.endsWith("/chat/completions")) {
       return json(404, { error: "Not found" });

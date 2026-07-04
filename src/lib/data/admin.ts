@@ -171,3 +171,5 @@ export const setAgentConfig = (section: "voice" | "caps" | "model" | "avatar", v
 export const listAvatars = () =>
   adminCall<{ avatars: AvatarChoice[]; liveavatarConfigured: boolean }>("list_avatars");
 export const listAgentStats = () => adminCall<{ stats: AgentStatRow[] }>("list_agent_stats");
+export const avatarKeyCheck = () =>
+  adminCall<{ keySet: boolean; valid: boolean; status: number | null }>("avatar_key_check");

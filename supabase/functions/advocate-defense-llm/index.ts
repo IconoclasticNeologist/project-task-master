@@ -101,7 +101,10 @@ function shapeConversation(messages: OpenAIMessage[]): {
     });
   }
   if (contents.length === 0) {
-    contents.push({ parts: [{ text: "The practice is starting. Ask your first easy warm-up question." }], role: "user" });
+    contents.push({
+      parts: [{ text: "The practice is starting. Ask your first easy warm-up question." }],
+      role: "user",
+    });
   }
   return { account, contents };
 }

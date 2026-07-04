@@ -445,6 +445,22 @@ serve(async (req) => {
       return json(200, { avatars, liveavatarConfigured: Boolean(laKey) });
     }
 
+    if (action === "avatar_key_check") {
+      // Is the stored LiveAvatar key actually accepted by their API?
+      // (Common trap: a HeyGen key — LiveAvatar is a separate platform and
+      // needs its own key from app.liveavatar.com → Developers.)
+      const laKey = Deno.env.get("LIVEAVATAR_API_KEY");
+      if (!laKey) return json(200, { keySet: false, valid: false, status: null });
+      const res = await fetch("https://api.liveavatar.com/v1/llm-configurations", {
+        headers: { "X-API-KEY": laKey },
+      }).catch(() => null);
+      return json(200, {
+        keySet: true,
+        valid: Boolean(res?.ok),
+        status: res?.status ?? null,
+      });
+    }
+
     if (action === "list_agent_stats") {
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const { data, error } = await admin

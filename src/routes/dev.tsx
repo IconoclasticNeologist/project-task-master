@@ -19,6 +19,7 @@ import { getSupabase } from "@/lib/supabase/client";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
 import {
   approveProfessional,
+  avatarKeyCheck,
   ensureSelfAccess,
   fetchAdminStatus,
   getAgentConfig,
@@ -225,6 +226,7 @@ function Dashboard({ setupWarning }: { setupWarning: string | null }) {
 
 function ReadinessPanel() {
   const status = useQuery({ queryKey: ["admin-status"], queryFn: fetchAdminStatus });
+  const keyCheck = useQuery({ queryKey: ["avatar-key-check"], queryFn: avatarKeyCheck });
   const s = status.data;
   const flag = (ok: boolean, label: string, detail?: string) => (
     <div className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
@@ -246,13 +248,17 @@ function ReadinessPanel() {
           <>
             {flag(s.config.gemini, "Gemini key (voice, agents, drafts)")}
             {flag(
-              s.config.liveavatar,
+              Boolean(keyCheck.data?.valid),
               "LiveAvatar key (practice person)",
-              s.config.liveavatar
-                ? s.config.liveavatarSandbox
-                  ? "ready · sandbox"
-                  : "ready · LIVE (spends credits)"
-                : "not set — voice-only fallback",
+              !s.config.liveavatar
+                ? "not set — voice-only fallback"
+                : keyCheck.isLoading
+                  ? "checking…"
+                  : keyCheck.data?.valid
+                    ? s.config.liveavatarSandbox
+                      ? "valid · sandbox"
+                      : "valid · LIVE (spends credits)"
+                    : `INVALID (${keyCheck.data?.status ?? "?"}) — needs a key from app.liveavatar.com → Developers (a HeyGen key won't work)`,
             )}
             {flag(
               true,

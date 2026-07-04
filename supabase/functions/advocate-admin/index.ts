@@ -367,13 +367,29 @@ serve(async (req) => {
 
     if (action === "list_avatars") {
       // Public gallery needs no auth; the account's own avatars need the key.
-      const results: Array<{
+      // FEATURED ids are hand-picked stock avatars pinned to the top of the
+      // picker (requested 2026-07-03) — resolved live for name + thumbnail.
+      const FEATURED_IDS = [
+        "513fd1b7-7ef9-466d-9af2-344e51eeb833",
+        "b6c94c07-e4e5-483e-8bec-e838d5910b7d",
+        "65f9e3c9-d48b-4118-b73a-4ae2e3cbb8f0",
+        "40b4f000-f783-4bba-a327-ea58b1a6fdf2",
+        "998e5637-cfca-4700-891e-8a40ce33f562",
+      ];
+      interface AvatarItem {
         id: string;
         name: string;
         previewUrl: string | null;
-        source: "public" | "mine";
-      }> = [];
+        source: "featured" | "public" | "mine";
+      }
       const laKey = Deno.env.get("LIVEAVATAR_API_KEY");
+      const collected: AvatarItem[] = [];
+      const toItem = (a: Record<string, unknown>, source: AvatarItem["source"]): AvatarItem => ({
+        id: String(a.id),
+        name: typeof a.name === "string" && a.name ? a.name : String(a.id).slice(0, 8),
+        previewUrl: typeof a.preview_url === "string" ? a.preview_url : null,
+        source,
+      });
       const pull = async (url: string, source: "public" | "mine", headers: HeadersInit) => {
         const res = await fetch(url, { headers });
         if (!res.ok) return;
@@ -386,12 +402,7 @@ serve(async (req) => {
         for (const a of items) {
           if (typeof a?.id !== "string") continue;
           if (a.status && a.status !== "ACTIVE") continue;
-          results.push({
-            id: a.id,
-            name: typeof a.name === "string" ? a.name : a.id.slice(0, 8),
-            previewUrl: typeof a.preview_url === "string" ? a.preview_url : null,
-            source,
-          });
+          collected.push(toItem(a, source));
         }
       };
       if (laKey) {
@@ -399,12 +410,34 @@ serve(async (req) => {
           "X-API-KEY": laKey,
         }).catch(() => undefined);
       }
-      await pull(
-        `${"https://api.liveavatar.com"}/v1/avatars/public?page_size=100`,
-        "public",
-        {},
-      ).catch(() => undefined);
-      return json(200, { avatars: results, liveavatarConfigured: Boolean(laKey) });
+      // Sweep a few public pages so featured ids resolve to names/previews.
+      for (let page = 1; page <= 5; page++) {
+        const before = collected.length;
+        await pull(
+          `${"https://api.liveavatar.com"}/v1/avatars/public?page_size=100&page=${page}`,
+          "public",
+          {},
+        ).catch(() => undefined);
+        if (collected.length === before) break; // no more pages
+      }
+
+      // Featured first (in the requested order), resolved from whatever we
+      // pulled; unresolved ids still appear (selectable, no preview). Then
+      // "mine", then the rest of the public gallery, deduped.
+      const byId = new Map(collected.map((a) => [a.id, a]));
+      const featured: AvatarItem[] = FEATURED_IDS.map((id) => {
+        const hit = byId.get(id);
+        return hit
+          ? { ...hit, source: "featured" }
+          : { id, name: `Stock avatar ${id.slice(0, 8)}`, previewUrl: null, source: "featured" };
+      });
+      const rest = collected.filter((a) => !FEATURED_IDS.includes(a.id));
+      const avatars = [
+        ...featured,
+        ...rest.filter((a) => a.source === "mine"),
+        ...rest.filter((a) => a.source === "public"),
+      ];
+      return json(200, { avatars, liveavatarConfigured: Boolean(laKey) });
     }
 
     if (action === "list_agent_stats") {

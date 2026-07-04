@@ -898,7 +898,11 @@ function AvatarSection({
                       )}
                       <p className="mt-1 truncate px-1 text-xs">
                         {a.name}
-                        {a.source === "mine" ? " · yours" : ""}
+                        {a.source === "mine"
+                          ? " · yours"
+                          : a.source === "featured"
+                            ? " · featured"
+                            : ""}
                         {selected ? " ✓" : ""}
                       </p>
                     </button>

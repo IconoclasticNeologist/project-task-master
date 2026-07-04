@@ -152,7 +152,7 @@ export interface AvatarChoice {
   id: string;
   name: string;
   previewUrl: string | null;
-  source: "public" | "mine";
+  source: "featured" | "public" | "mine";
 }
 
 export interface AgentStatRow {

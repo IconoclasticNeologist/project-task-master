@@ -116,27 +116,50 @@ serve(async (req) => {
       }
     }
 
-    const mintRes = await fetch(`${LIVEAVATAR_API}/v1/sessions/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-API-KEY": apiKey },
-      body: JSON.stringify({
-        mode: "FULL",
-        avatar_id: avatarId,
-        is_sandbox: sandbox,
-        max_session_duration: maxSessionSeconds,
-        interactivity_type: "CONVERSATIONAL",
-        llm_configuration_id: llmConfigurationId,
-      }),
-    });
+    const mint = (durationSec: number) =>
+      fetch(`${LIVEAVATAR_API}/v1/sessions/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-KEY": apiKey },
+        body: JSON.stringify({
+          mode: "FULL",
+          avatar_id: avatarId,
+          is_sandbox: sandbox,
+          max_session_duration: durationSec,
+          interactivity_type: "CONVERSATIONAL",
+          llm_configuration_id: llmConfigurationId,
+          // FULL mode requires exactly one of avatar_persona | voice_agent.
+          // A minimal persona keeps the avatar's own default voice and leaves
+          // the brain to our RAG-locked llm_configuration above.
+          avatar_persona: { language: "en" },
+        }),
+      });
+
+    let effectiveSeconds = maxSessionSeconds;
+    let mintRes = await mint(effectiveSeconds);
     if (!mintRes.ok) {
-      // Do NOT echo the upstream body — it may contain account details.
-      return json(502, { error: "Could not start the practice person" });
+      // Plan/sandbox tiers cap session duration (the free tier allows 60s).
+      // The rejection names the allowed maximum — adapt once and retry, so
+      // the practice fits whatever the account allows today.
+      const upstream = await mintRes.text().catch(() => "");
+      const allowed = upstream.match(/maximum allowed \((\d+)s\)/);
+      const allowedSec = allowed ? Number(allowed[1]) : NaN;
+      if (Number.isFinite(allowedSec) && allowedSec > 0 && allowedSec < effectiveSeconds) {
+        effectiveSeconds = allowedSec;
+        mintRes = await mint(effectiveSeconds);
+      }
+      if (!mintRes.ok) {
+        // Do NOT echo the upstream body — it may contain account details.
+        return json(502, { error: "Could not start the practice person" });
+      }
     }
     const minted = await mintRes.json();
     const token = minted?.data?.session_token;
     if (typeof token !== "string" || !token) {
       return json(502, { error: "Could not start the practice person" });
     }
+    // The visible timer must beat the hard kill: report a cap a few seconds
+    // inside whatever the account actually allowed.
+    const practiceCapSec = Math.min(ops.caps.practiceSec, Math.max(15, effectiveSeconds - 5));
 
     // Aggregate-only stats; never blocks the session on failure.
     if (admin) {
@@ -146,7 +169,7 @@ serve(async (req) => {
         .catch(() => undefined);
     }
 
-    return json(200, { token, sandbox, practiceCapSec: ops.caps.practiceSec });
+    return json(200, { token, sandbox, practiceCapSec });
   } catch (_error) {
     return json(500, { error: "Internal error" });
   }

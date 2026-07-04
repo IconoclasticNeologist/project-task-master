@@ -45,6 +45,11 @@ interface LlmConfigListItem {
 
 function itemsOf(body: unknown): LlmConfigListItem[] {
   const data = (body as { data?: unknown })?.data;
+  // LiveAvatar lists wrap items as data: {count, next, previous, results}
+  // (verified 2026-07-03). Without this, the find-existing lookup always
+  // missed and every cold start registered a duplicate configuration.
+  const results = (data as { results?: unknown })?.results;
+  if (Array.isArray(results)) return results as LlmConfigListItem[];
   if (Array.isArray(data)) return data as LlmConfigListItem[];
   const items = (data as { items?: unknown })?.items;
   if (Array.isArray(items)) return items as LlmConfigListItem[];

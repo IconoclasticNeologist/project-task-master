@@ -394,11 +394,16 @@ serve(async (req) => {
         const res = await fetch(url, { headers });
         if (!res.ok) return;
         const parsed = await res.json();
-        const items = Array.isArray(parsed?.data)
-          ? parsed.data
-          : Array.isArray(parsed?.data?.items)
-            ? parsed.data.items
-            : [];
+        // LiveAvatar lists wrap items as data: {count, next, previous, results}
+        // (verified 2026-07-03); keep the other shapes as defensive fallbacks.
+        const d = parsed?.data;
+        const items = Array.isArray(d?.results)
+          ? d.results
+          : Array.isArray(d)
+            ? d
+            : Array.isArray(d?.items)
+              ? d.items
+              : [];
         for (const a of items) {
           if (typeof a?.id !== "string") continue;
           if (a.status && a.status !== "ACTIVE") continue;

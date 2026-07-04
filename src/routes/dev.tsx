@@ -1077,6 +1077,9 @@ function TryAgentPanel() {
           )}
           <span className="text-xs text-muted-foreground">avatar {avatar.status}</span>
         </div>
+        {avatar.lastError && (
+          <p className="text-sm leading-relaxed text-destructive">{avatar.lastError}</p>
+        )}
         {avatarLive && (
           <video
             ref={avatar.attachVideo}

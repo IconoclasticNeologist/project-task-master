@@ -75,6 +75,8 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const [micMuted, setMicMuted] = useState(false);
   // Dashboard-configured practice cap, from the session mint (null = unknown).
   const [practiceCapSec, setPracticeCapSec] = useState<number | null>(null);
+  // Why the last connect failed, in plain words (dev surfaces show this).
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const sessionRef = useRef<LiveAvatarSession | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
@@ -138,7 +140,23 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
 
   const connect = useCallback(async (): Promise<AvatarConnectResult> => {
     setStatus("connecting");
+    setLastError(null);
     transcriptTripRef.current.reset();
+
+    // Mic preflight: the SDK requests the microphone during start(), and a
+    // blocked mic surfaces there as an opaque failure. Checking first turns
+    // it into a precise, fixable message. Permission stays granted, so the
+    // SDK's own request is instant afterwards.
+    try {
+      const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+      probe.getTracks().forEach((t) => t.stop());
+    } catch (e) {
+      setLastError(
+        `Microphone unavailable (${e instanceof Error ? e.name : "unknown"}) — allow the mic for this site and try again`,
+      );
+      setStatus("error");
+      return "error";
+    }
 
     const attempt = async (account: string): Promise<AvatarConnectResult> => {
       const tokenResult = await fetchAvatarToken();
@@ -193,8 +211,9 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         tearDown();
         return await attempt(account);
       }
-    } catch {
+    } catch (e) {
       tearDown();
+      setLastError(e instanceof Error ? `${e.name}: ${e.message}` : "Unknown failure");
       setStatus("error");
       return "error";
     }
@@ -235,6 +254,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     avatarSpeaking,
     micMuted,
     practiceCapSec,
+    lastError,
     connect,
     disconnect,
     interrupt,

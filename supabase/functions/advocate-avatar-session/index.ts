@@ -74,6 +74,7 @@ serve(async (req) => {
       return json(503, { error: "Practice person is not available" });
     }
 
+
     const llmConfigurationId = await resolveLlmConfigId(apiKey);
     if (!llmConfigurationId) {
       // Self-provisioning failed — refuse rather than let LiveAvatar's

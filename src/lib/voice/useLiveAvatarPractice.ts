@@ -20,7 +20,12 @@
 //   - No transcript array is kept; fragments flow through the rolling window.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AgentEventsEnum, LiveAvatarSession, SessionEvent } from "@heygen/liveavatar-web-sdk";
+import {
+  AgentEventsEnum,
+  LiveAvatarSession,
+  SessionEvent,
+  SessionState,
+} from "@heygen/liveavatar-web-sdk";
 import { getSupabase } from "@/lib/supabase/client";
 import { listStatements } from "@/lib/data/statements";
 import { makeTranscriptTripwire, type DistressSignal } from "@/lib/agents/safety/distress";
@@ -175,9 +180,20 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
           session.attach(videoElRef.current);
         }
         setStatus("open");
-        // Hand the practice its source material; the shim lifts this out of
-        // the conversation and the avatar opens with a warm-up question.
-        session.message(`${ACCOUNT_SENTINEL}\n${account}`);
+      });
+      // Hand the practice its source material only once the session state
+      // machine is CONNECTED — commands sent at STREAM_READY throw ("Session
+      // needs to be connected") and the throw tears the session down. The
+      // try/catch is belt-and-braces: context delivery may never kill video.
+      let contextSent = false;
+      session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
+        if (state !== SessionState.CONNECTED || contextSent) return;
+        contextSent = true;
+        try {
+          session.message(`${ACCOUNT_SENTINEL}\n${account}`);
+        } catch {
+          /* the shim then sees no context and asks warm-up questions only */
+        }
       });
       session.on(SessionEvent.SESSION_DISCONNECTED, () => {
         if (sessionRef.current !== session) return; // our own teardown
@@ -228,7 +244,11 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       onDistressRef.current?.(sig);
       return; // a stop is a stop — don't also send it to the practice
     }
-    session.message(text);
+    try {
+      session.message(text);
+    } catch {
+      /* not connected yet — dropping a turn beats crashing the session */
+    }
   }, []);
 
   const toggleMic = useCallback(async () => {

@@ -855,6 +855,15 @@ function AvatarSection({
         >
           {browsing ? "Close gallery" : "Choose avatar…"}
         </button>
+        {browsing && (
+          <button
+            type="button"
+            onClick={() => void avatars.refetch()}
+            className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            Refresh gallery
+          </button>
+        )}
       </div>
 
       {browsing && (
@@ -895,11 +904,20 @@ function AvatarSection({
                           src={a.previewUrl}
                           alt={a.name}
                           loading="lazy"
-                          className="aspect-[3/4] w-full rounded object-cover"
+                          className="aspect-[3/4] w-full rounded bg-secondary object-cover"
+                          onError={(e) => {
+                            // A silent blank teaches nothing — say it failed.
+                            const el = e.currentTarget;
+                            const note = document.createElement("div");
+                            note.textContent = "image failed to load";
+                            note.className =
+                              "flex aspect-[3/4] w-full items-center justify-center rounded bg-secondary text-xs text-destructive";
+                            el.replaceWith(note);
+                          }}
                         />
                       ) : (
                         <div className="flex aspect-[3/4] w-full items-center justify-center rounded bg-secondary text-xs text-muted-foreground">
-                          no preview
+                          no preview from API
                         </div>
                       )}
                       <p className="mt-1 truncate px-1 text-xs">

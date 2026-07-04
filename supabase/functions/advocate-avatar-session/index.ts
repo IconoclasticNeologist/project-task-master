@@ -34,12 +34,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { deriveShimKey, ensureDefenseLlmConfig } from "../_shared/liveavatar.ts";
+import { loadOps } from "../_shared/agentConfig.ts";
 
 const LIVEAVATAR_API = "https://api.liveavatar.com";
 // LiveAvatar's public demo interactive avatar (from their quickstart docs).
 const DEFAULT_AVATAR_ID = "65f9e3c9-d48b-4118-b73a-4ae2e3cbb8f0";
-// 8-minute practice cap + grace so the visible client timer always wins.
-const MAX_SESSION_SECONDS = 8 * 60 + 30;
 
 // Resolved once per warm instance; a failed resolution is retried next call.
 let cachedLlmConfigId: string | null = null;
@@ -80,17 +79,29 @@ serve(async (req) => {
       // default general-purpose LLM speak to a survivor.
       return json(503, { error: "Practice person is not available" });
     }
-    const avatarId = Deno.env.get("LIVEAVATAR_AVATAR_ID") || DEFAULT_AVATAR_ID;
-    const sandbox = (Deno.env.get("LIVEAVATAR_SANDBOX") ?? "").toLowerCase() === "true";
 
-    // Shared daily media-session budget (fails closed, same as voice).
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin =
+      supabaseUrl && serviceKey
+        ? createClient(supabaseUrl, serviceKey, {
+            auth: { persistSession: false, autoRefreshToken: false },
+          })
+        : null;
+
+    // Dashboard-configured avatar + sandbox win; env vars remain the fallback
+    // for a fresh database. Practice cap comes from the same config the
+    // client's visible timer uses, plus grace so the timer always fires first.
+    const ops = await loadOps(admin);
+    const avatarId = ops.avatar.id ?? Deno.env.get("LIVEAVATAR_AVATAR_ID") ?? DEFAULT_AVATAR_ID;
+    const sandbox = ops.avatar.id
+      ? ops.avatar.sandbox
+      : (Deno.env.get("LIVEAVATAR_SANDBOX") ?? "").toLowerCase() === "true";
+    const maxSessionSeconds = ops.caps.practiceSec + 30;
+
+    // Shared daily media-session budget (fails closed, same as voice).
     const dailyCap = Number(Deno.env.get("DAILY_VOICE_SESSION_CAP") ?? "200");
-    if (supabaseUrl && serviceKey && Number.isFinite(dailyCap) && dailyCap > 0) {
-      const admin = createClient(supabaseUrl, serviceKey, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      });
+    if (admin && Number.isFinite(dailyCap) && dailyCap > 0) {
       const { error } = await admin.rpc("increment_voice_session_count", {
         _cap: dailyCap,
       });
@@ -111,7 +122,7 @@ serve(async (req) => {
         mode: "FULL",
         avatar_id: avatarId,
         is_sandbox: sandbox,
-        max_session_duration: MAX_SESSION_SECONDS,
+        max_session_duration: maxSessionSeconds,
         interactivity_type: "CONVERSATIONAL",
         llm_configuration_id: llmConfigurationId,
       }),
@@ -126,7 +137,15 @@ serve(async (req) => {
       return json(502, { error: "Could not start the practice person" });
     }
 
-    return json(200, { token, sandbox });
+    // Aggregate-only stats; never blocks the session on failure.
+    if (admin) {
+      await admin
+        .rpc("increment_agent_stat", { _agent: "defense", _medium: "avatar", _field: "started" })
+        .then(() => undefined)
+        .catch(() => undefined);
+    }
+
+    return json(200, { token, sandbox, practiceCapSec: ops.caps.practiceSec });
   } catch (_error) {
     return json(500, { error: "Internal error" });
   }

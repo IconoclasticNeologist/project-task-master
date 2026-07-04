@@ -33,7 +33,7 @@ import {
   type SessionState,
 } from "@/lib/agents/safety/containment";
 import type { DistressSignal } from "@/lib/agents/safety/distress";
-import { ADVOCATE_VOICE_CONFIG } from "@/lib/voice/config";
+import { sendAgentTelemetry, type TelemetryAgent } from "@/lib/agents/telemetry";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { pageTitle } from "@/lib/product";
 
@@ -49,7 +49,6 @@ type HandoffReason = "stopped" | "crisis" | "timer" | "dropped";
 /** What is carrying the live audio/video right now. */
 type Medium = "gemini" | "avatar";
 
-const PRACTICE_CAP_SEC = ADVOCATE_VOICE_CONFIG.caps.witnessStandMaxDurationSec;
 // The person has to have SAID something substantive before a close is owed —
 // a one-word reply to the greeting shouldn't trigger the containment ritual.
 const HARD_MATERIAL_USER_CHARS = 80;
@@ -144,6 +143,7 @@ function SessionScreen() {
     coachSpeaking,
     micLevel,
     activeMode,
+    caps,
     connect,
     disconnect,
     interrupt,
@@ -160,6 +160,17 @@ function SessionScreen() {
   const avatar = useLiveAvatarPractice({
     onUserText: markUserContent,
     onDistress: (sig) => handleDistressRef.current(sig),
+  });
+
+  const activeModeRef = useRef(activeMode);
+  useEffect(() => {
+    activeModeRef.current = activeMode;
+  }, [activeMode]);
+
+  /** Which agent/medium the aggregate telemetry should attribute to, right now. */
+  const telemetryTarget = (): { agent: TelemetryAgent; medium: "voice" | "avatar" } => ({
+    agent: witnessRef.current ? "defense" : (activeModeRef.current as TelemetryAgent),
+    medium: mediumRef.current === "avatar" ? "avatar" : "voice",
   });
 
   /** Silence and close whichever medium is carrying the session. Local-first. */
@@ -180,6 +191,8 @@ function SessionScreen() {
     intentionalStopRef.current = true;
     micWasOnRef.current = micState === "on";
     stopActiveMedia();
+    const t = telemetryTarget();
+    sendAgentTelemetry(t.agent, t.medium, "tripwire_stops");
     setSessionState((s) => ({ ...s, hardMaterialTouched: true }));
     setHandoff({
       reason: sig.kind === "crisis" ? "crisis" : "stopped",
@@ -205,6 +218,8 @@ function SessionScreen() {
       setStage("start");
       return;
     }
+    const t = telemetryTarget();
+    sendAgentTelemetry(t.agent, t.medium, "errors");
     setHandoff({ reason: "dropped", fromPractice: witnessRef.current });
     setStage("handoff");
   }, [status, stage, medium]);
@@ -215,6 +230,7 @@ function SessionScreen() {
     if (stage !== "live" || medium !== "avatar") return;
     if (avatar.status !== "closed" && avatar.status !== "error") return;
     if (intentionalStopRef.current) return;
+    sendAgentTelemetry("defense", "avatar", "errors");
     setHandoff({ reason: "dropped", fromPractice: true });
     setStage("handoff");
   }, [avatar.status, stage, medium]);
@@ -266,7 +282,7 @@ function SessionScreen() {
       if (stageRef.current !== "live") return; // person already stopped/left
       setMedium("gemini");
       setAvatarFellBack(true);
-      void connect("defense", { maxDurationSec: PRACTICE_CAP_SEC + 15 });
+      void connect("defense"); // backstop cap comes from the token payload
     }
   };
 
@@ -287,6 +303,8 @@ function SessionScreen() {
   const finishSession = () => {
     intentionalStopRef.current = true;
     stopActiveMedia();
+    const t = telemetryTarget();
+    sendAgentTelemetry(t.agent, t.medium, "ended_clean");
     if (requiresContainment(sessionState)) {
       setClosing(generateContainmentClose(sessionState));
       setHandoff(null);
@@ -353,6 +371,9 @@ function SessionScreen() {
   const mediumConnecting =
     medium === "avatar" ? avatar.status === "connecting" : status === "connecting";
   const mediumOpen = medium === "avatar" ? avatar.status === "open" : status === "open";
+  // Dashboard-configured practice cap (single source with the server backstop).
+  const practiceTotalSec =
+    medium === "avatar" ? (avatar.practiceCapSec ?? caps.practiceSec) : caps.practiceSec;
 
   const sessionActive = stage === "live" || stage === "handoff" || stage === "paused";
 
@@ -498,7 +519,7 @@ function SessionScreen() {
               )}
               {witnessStand && (
                 <PracticeTimer
-                  totalSec={PRACTICE_CAP_SEC}
+                  totalSec={practiceTotalSec}
                   running={mediumOpen}
                   onElapsed={() => {
                     if (stageRef.current !== "live") return;

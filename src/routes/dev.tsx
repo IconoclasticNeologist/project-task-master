@@ -21,12 +21,19 @@ import {
   approveProfessional,
   ensureSelfAccess,
   fetchAdminStatus,
+  getAgentConfig,
   listAdminCodes,
   listAdminOrganizations,
   listAdminProfessionals,
+  listAgentStats,
+  listAvatars,
   mintSurvivorCode,
   revokeProfessional,
+  setAgentConfig,
+  type AgentOps,
 } from "@/lib/data/admin";
+import { useGeminiLive } from "@/lib/voice/useGeminiLive";
+import { useLiveAvatarPractice } from "@/lib/voice/useLiveAvatarPractice";
 
 export const Route = createFileRoute("/dev")({
   head: () => ({ meta: [{ title: pageTitle("Developer") }] }),
@@ -205,6 +212,9 @@ function Dashboard({ setupWarning }: { setupWarning: string | null }) {
         </p>
       )}
       <ReadinessPanel />
+      <AgentsPanel />
+      <MonitorPanel />
+      <TryAgentPanel />
       <MintPanel />
       <CodesPanel />
       <ProfessionalsPanel />
@@ -578,6 +588,493 @@ function OrganizationsPanel() {
           Workspace names are the labels professionals chose. What a person shares, and with whom,
           is decided by them on their own Team screen — nothing here can change or read it.
         </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Agent operations (MindCrafter /nexus/voice-agents inspired, adapted) ────
+// Operational knobs only. Prompts render READ-ONLY: their content is SME-gated
+// and ships through git review — that is the safety design, not a gap.
+
+const AGENT_LABELS: Record<keyof AgentOps["voice"], string> = {
+  base: "Coach",
+  regulator: "Coach — regulator",
+  interview: "Coach — interviewer",
+  defense: "Practice voice (Defense)",
+};
+
+function AgentsPanel() {
+  const queryClient = useQueryClient();
+  const config = useQuery({ queryKey: ["agent-config"], queryFn: getAgentConfig });
+  const save = useMutation({
+    mutationFn: ({
+      section,
+      value,
+    }: {
+      section: "voice" | "caps" | "model" | "avatar";
+      value: unknown;
+    }) => setAgentConfig(section, value),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["agent-config"] }),
+  });
+  const [capsDraft, setCapsDraft] = useState<{
+    sessionSec: string;
+    practiceSec: string;
+    idleSec: string;
+  } | null>(null);
+  const [openPrompt, setOpenPrompt] = useState<string | null>(null);
+
+  if (config.isLoading) {
+    return (
+      <Card className="paper-shadow">
+        <CardHeader>
+          <CardTitle className="text-base font-normal">Agents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  if (config.isError || !config.data) {
+    return (
+      <Card className="paper-shadow">
+        <CardHeader>
+          <CardTitle className="text-base font-normal">Agents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-destructive">
+            Couldn&apos;t load agent config
+            {config.error instanceof Error ? ` — ${config.error.message}` : ""}. If the agent_config
+            table doesn&apos;t exist yet, run the pending migration SQL.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { ops, allow, prompts } = config.data;
+  const caps = capsDraft ?? {
+    sessionSec: String(ops.caps.sessionSec),
+    practiceSec: String(ops.caps.practiceSec),
+    idleSec: String(ops.caps.idleSec),
+  };
+
+  return (
+    <Card className="paper-shadow">
+      <CardHeader>
+        <CardTitle className="text-base font-normal">Agents</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Voices, time caps, and the practice person are configurable here and apply to new sessions
+          within a minute. Prompt wording is read-only by design: it ships through git and the SME
+          review gate.
+        </p>
+
+        <div>
+          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Voices</h3>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {(Object.keys(AGENT_LABELS) as Array<keyof AgentOps["voice"]>).map((agent) => (
+              <label
+                key={agent}
+                className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2 text-sm"
+              >
+                <span>{AGENT_LABELS[agent]}</span>
+                <select
+                  value={ops.voice[agent]}
+                  disabled={save.isPending}
+                  onChange={(e) =>
+                    save.mutate({
+                      section: "voice",
+                      value: { ...ops.voice, [agent]: e.target.value },
+                    })
+                  }
+                  className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                >
+                  {allow.voices.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+            Time caps (seconds)
+          </h3>
+          <div className="flex flex-wrap items-end gap-3">
+            {(
+              [
+                ["sessionSec", "Session"],
+                ["practiceSec", "Practice"],
+                ["idleSec", "Idle"],
+              ] as const
+            ).map(([field, label]) => (
+              <div key={field} className="space-y-1">
+                <Label htmlFor={`cap-${field}`} className="text-xs text-muted-foreground">
+                  {label} ({allow.capBounds[field][0]}–{allow.capBounds[field][1]})
+                </Label>
+                <Input
+                  id={`cap-${field}`}
+                  className="w-28"
+                  inputMode="numeric"
+                  value={caps[field]}
+                  onChange={(e) => setCapsDraft({ ...caps, [field]: e.target.value })}
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              disabled={save.isPending || !capsDraft}
+              onClick={() => {
+                save.mutate({
+                  section: "caps",
+                  value: {
+                    sessionSec: Number(caps.sessionSec),
+                    practiceSec: Number(caps.practiceSec),
+                    idleSec: Number(caps.idleSec),
+                  },
+                });
+                setCapsDraft(null);
+              }}
+              className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+            >
+              Save caps
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Values outside the bounds are clamped server-side — a typo can&apos;t create an unsafe
+            session.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Model</h3>
+          <p className="text-sm">
+            {ops.model.primary}
+            <span className="text-xs text-muted-foreground">
+              {" "}
+              · fallback: {ops.model.fallback ?? "none"} · allowlist changes ship via git
+            </span>
+          </p>
+        </div>
+
+        <AvatarSection
+          ops={ops}
+          onSave={(value) => save.mutate({ section: "avatar", value })}
+          saving={save.isPending}
+        />
+
+        <div>
+          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+            Prompts (read-only, SME-gated)
+          </h3>
+          <div className="space-y-1">
+            {prompts.map((p) => (
+              <div key={p.agent} className="rounded-md border border-border px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => setOpenPrompt(openPrompt === p.agent ? null : p.agent)}
+                  className="flex w-full items-center justify-between text-left text-sm"
+                >
+                  <span>{p.title}</span>
+                  <span className="text-xs text-muted-foreground">{p.smeStatus}</span>
+                </button>
+                {openPrompt === p.agent && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-muted-foreground">{p.gitPath}</p>
+                    <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded bg-secondary px-2 py-2 text-xs leading-relaxed">
+                      {p.text}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {save.isError && (
+          <p className="text-sm text-destructive">
+            {save.error instanceof Error ? save.error.message : "Could not save"}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AvatarSection({
+  ops,
+  onSave,
+  saving,
+}: {
+  ops: AgentOps;
+  onSave: (value: { id: string | null; name: string | null; sandbox: boolean }) => void;
+  saving: boolean;
+}) {
+  const [browsing, setBrowsing] = useState(false);
+  const avatars = useQuery({
+    queryKey: ["liveavatar-gallery"],
+    queryFn: listAvatars,
+    enabled: browsing,
+  });
+
+  return (
+    <div>
+      <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+        Practice person (avatar)
+      </h3>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="text-sm">
+          {ops.avatar.id ? (ops.avatar.name ?? ops.avatar.id) : "LiveAvatar default demo avatar"}
+        </p>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={ops.avatar.sandbox}
+            disabled={saving}
+            onChange={(e) => onSave({ ...ops.avatar, sandbox: e.target.checked })}
+          />
+          Sandbox mode (free, watermarked — turn off for the judged run)
+        </label>
+        <button
+          type="button"
+          onClick={() => setBrowsing((b) => !b)}
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          {browsing ? "Close gallery" : "Choose avatar…"}
+        </button>
+      </div>
+
+      {browsing && (
+        <div className="mt-3">
+          {avatars.isLoading && <p className="text-sm text-muted-foreground">Loading gallery…</p>}
+          {avatars.isError && (
+            <p className="text-sm text-destructive">
+              Couldn&apos;t load avatars
+              {avatars.error instanceof Error ? ` — ${avatars.error.message}` : ""}.
+            </p>
+          )}
+          {avatars.data && (
+            <>
+              {!avatars.data.liveavatarConfigured && (
+                <p className="mb-2 text-xs text-muted-foreground">
+                  LIVEAVATAR_API_KEY isn&apos;t set — showing the public gallery only.
+                </p>
+              )}
+              <div className="grid max-h-96 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
+                {avatars.data.avatars.map((a) => {
+                  const selected = ops.avatar.id === a.id;
+                  return (
+                    <button
+                      key={`${a.source}-${a.id}`}
+                      type="button"
+                      disabled={saving}
+                      onClick={() =>
+                        onSave({ id: a.id, name: a.name, sandbox: ops.avatar.sandbox })
+                      }
+                      className={
+                        selected
+                          ? "rounded-md border-2 border-primary p-1 text-left"
+                          : "rounded-md border border-border p-1 text-left hover:border-foreground/40"
+                      }
+                    >
+                      {a.previewUrl ? (
+                        <img
+                          src={a.previewUrl}
+                          alt={a.name}
+                          loading="lazy"
+                          className="aspect-[3/4] w-full rounded object-cover"
+                        />
+                      ) : (
+                        <div className="flex aspect-[3/4] w-full items-center justify-center rounded bg-secondary text-xs text-muted-foreground">
+                          no preview
+                        </div>
+                      )}
+                      <p className="mt-1 truncate px-1 text-xs">
+                        {a.name}
+                        {a.source === "mine" ? " · yours" : ""}
+                        {selected ? " ✓" : ""}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                Custom avatars are created at app.liveavatar.com and then appear here under
+                &quot;yours&quot;.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MonitorPanel() {
+  const stats = useQuery({ queryKey: ["agent-stats"], queryFn: listAgentStats });
+  const rows = stats.data?.stats ?? [];
+  const today = new Date().toISOString().slice(0, 10);
+  const sum = (filter: (r: (typeof rows)[number]) => boolean) =>
+    rows.filter(filter).reduce(
+      (acc, r) => ({
+        started: acc.started + r.started,
+        ended: acc.ended + r.ended_clean,
+        stops: acc.stops + r.tripwire_stops,
+        errors: acc.errors + r.errors,
+      }),
+      { started: 0, ended: 0, stops: 0, errors: 0 },
+    );
+  const t = sum((r) => r.day === today);
+  const week = sum(() => true);
+
+  return (
+    <Card className="paper-shadow">
+      <CardHeader>
+        <CardTitle className="text-base font-normal">Monitor (aggregate only)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {stats.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {stats.isError && (
+          <p className="text-sm text-destructive">
+            Couldn&apos;t load stats — run the pending migration SQL if you haven&apos;t.
+          </p>
+        )}
+        {stats.data && (
+          <>
+            <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+              {(
+                [
+                  ["Sessions today", t.started, `${week.started} this week`],
+                  ["Clean closes", t.ended, `${week.ended} this week`],
+                  ["Stop-word stops", t.stops, `${week.stops} this week`],
+                  ["Errors", t.errors, `${week.errors} this week`],
+                ] as const
+              ).map(([label, value, sub]) => (
+                <div key={label} className="rounded-md border border-border px-3 py-2">
+                  <div className="text-xs text-muted-foreground">{label}</div>
+                  <div>{value}</div>
+                  <div className="text-xs text-muted-foreground">{sub}</div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Counts per day, agent, and medium — never content, never identity. A stop-word stop is
+              the safety system working, not a failure.
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Test harness: talk to any agent without walking the survivor flow ───────
+
+function TryAgentPanel() {
+  const [mode, setMode] = useState<"base" | "regulator" | "interview" | "defense">("base");
+  const voice = useGeminiLive({ mode: "base" });
+  const avatar = useLiveAvatarPractice({});
+  const voiceLive = voice.status === "open" || voice.status === "connecting";
+  const avatarLive = avatar.status === "open" || avatar.status === "connecting";
+
+  return (
+    <Card className="paper-shadow">
+      <CardHeader>
+        <CardTitle className="text-base font-normal">Try it (dev test)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Live sessions against the real deployed stack — the pre-demo check. These count toward the
+          daily cap (and avatar credits when sandbox is off).
+        </p>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={mode}
+            disabled={voiceLive}
+            onChange={(e) => setMode(e.target.value as typeof mode)}
+            className="rounded-md border border-input bg-background px-2 py-2 text-sm"
+          >
+            <option value="base">Coach</option>
+            <option value="regulator">Coach — regulator</option>
+            <option value="interview">Coach — interviewer</option>
+            <option value="defense">Practice voice (Defense)</option>
+          </select>
+          {!voiceLive ? (
+            <button
+              type="button"
+              onClick={() => {
+                void voice.connect(mode);
+                void voice.enableMic();
+              }}
+              className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+            >
+              Start voice test
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  voice.interrupt();
+                  voice.disconnect();
+                }}
+                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Stop
+              </button>
+              <span className="text-xs text-muted-foreground" role="status">
+                {voice.status === "connecting"
+                  ? "Connecting…"
+                  : voice.coachSpeaking
+                    ? "Speaking"
+                    : voice.micState === "on"
+                      ? "Listening"
+                      : "Mic off"}
+                {" · "}voice {voice.status}
+              </span>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {!avatarLive ? (
+            <button
+              type="button"
+              onClick={() => void avatar.connect()}
+              className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Start practice-person test
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                avatar.interrupt();
+                avatar.disconnect();
+              }}
+              className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              Stop practice person
+            </button>
+          )}
+          <span className="text-xs text-muted-foreground">avatar {avatar.status}</span>
+        </div>
+        {avatarLive && (
+          <video
+            ref={avatar.attachVideo}
+            autoPlay
+            playsInline
+            className="aspect-[3/4] w-full max-w-56 rounded-lg bg-secondary object-cover"
+          />
+        )}
       </CardContent>
     </Card>
   );

@@ -5,21 +5,23 @@
  * `?access_token=`. The raw GEMINI_API_KEY never leaves this function.
  *
  * The token is locked to:
- *   - the chosen model (allowlisted)
- *   - AUDIO response modality + the per-mode voice (allowlisted; Defense=Charon)
- *   - the mode-specific system instruction (Coach / Defense / Interview /
- *     Regulator) — picked here, never overridable by the client
+ *   - the model (allowlisted; dashboard-configurable primary + optional
+ *     fallback retried once on a failed mint)
+ *   - AUDIO response modality + the per-mode voice (allowlisted; dashboard-
+ *     configurable per agent, Defense defaults to Charon)
+ *   - the mode-specific system instruction — canonical text lives in
+ *     _shared/advocatePrompts.ts (git + SME gate), never overridable by the
+ *     client or the dashboard
  *   - input/output audio transcription, feeding the client-side deterministic
  *     distress tripwire and containment tracking (never retained)
  *
- * Caps:
- *   - expire_time ~15min  → covers the full Gemini Live audio session
- *   - new_session_expire_time ~1min → tight window to START the session
- *   - uses: 1                       → token cannot be re-used to open another
+ * Caps (dashboard-configurable within clamped bounds, _shared/agentConfig.ts):
+ *   - session / practice / idle seconds returned to the client so the visible
+ *     timer and the token share one source of truth
+ *   - expire_time ~15min, new_session_expire_time ~1min, uses: 1
  *
- * Daily cost cap:
- *   - DAILY_VOICE_SESSION_CAP (env, default 200) enforced via
- *     public.increment_voice_session_count(_cap) RPC. Aggregate-only counter.
+ * Daily cost cap: DAILY_VOICE_SESSION_CAP via increment_voice_session_count
+ * (fails closed). Aggregate per-agent stats via increment_agent_stat.
  *
  * NO logging of IP, request body, or user identifiers.
  */
@@ -27,111 +29,67 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { languageLineFor, promptFor, type Mode } from "../_shared/advocatePrompts.ts";
+import { loadOps, VOICE_ALLOWLIST } from "../_shared/agentConfig.ts";
 
-const DEFAULT_MODEL = "gemini-3.1-flash-live-preview";
-const DEFAULT_VOICE = "Aoede";
-const SESSION_SECONDS = 15 * 60; // 15 min — full audio session window
+const SESSION_SECONDS = 15 * 60; // token window — covers the full audio session
 const START_WINDOW_SECONDS = 60; // 1 min to open the WS after minting
-
-type Mode = "base" | "regulator" | "defense" | "interview";
-
-// The client may SUGGEST a model/voice, but only from these lists — otherwise
-// a tampered client could mint tokens for arbitrary (more expensive) models
-// or voices. Unknown values fall back to the server default, never error.
-const MODEL_ALLOWLIST = [DEFAULT_MODEL];
-const VOICE_ALLOWLIST = ["Aoede", "Charon", "Kore", "Leda", "Puck", "Fenrir"];
-
-// Persona distinction is server-owned: the Defense practice voice is Charon
-// (firmer, lower) so the persona change is audible; every Coach-side mode
-// stays Aoede (warm, steady).
-const MODE_DEFAULT_VOICE: Record<Mode, string> = {
-  base: DEFAULT_VOICE,
-  regulator: DEFAULT_VOICE,
-  interview: DEFAULT_VOICE,
-  defense: "Charon",
-};
-
-// ---------------------------------------------------------------------------
-// System instructions
-//
-// These are SME-gated PLACEHOLDERS. This file is the single canonical home
-// for the live voice system prompt — the prompt is server-locked into the
-// ephemeral token, so coach.ts cannot affect runtime behavior anymore.
-//
-// PENDING REVIEW:
-//   - COACH_*           pending trauma-therapist review
-//   - DEFENSE_INSTR     pending attorney review on FRE 412 / state shield laws
-//
-// Update copy here, not in src/lib/agents/coach.ts.
-// ---------------------------------------------------------------------------
-
-const COACH_BASE = [
-  "You are a warm, steady companion, and your one purpose is to help this person get ready for a court hearing. That purpose shapes everything you say. You are NOT a general-purpose chatbot.",
-  "You help with three things, at the person's pace: putting what happened into their own words; understanding what court will be like; and practicing what it feels like to be asked questions. You are not a therapist or a lawyer.",
-  "Speak slowly and plainly. One thing at a time. Silence is okay. If they sound overwhelmed, slow down and offer to pause.",
-  "Use the person's own words. Never use the word 'victim'. Never say 'your abuse', and never put a label on what they lived through. Never tell them whether what happened was or was not a crime — only a lawyer can say that.",
-  "If asked for legal advice, gently say you can't give it, and that their advocate or lawyer can.",
-  "Stay in your purpose. If the conversation drifts, gently and warmly bring it back to getting ready for court. Do not answer off-topic questions the way a generic assistant would.",
-  // PLACEHOLDER opening — demo wording; trauma-therapist to finalize before real survivors.
-  "When the session opens, you speak first: a short, warm hello that makes your purpose clear and offers a gentle choice. Sound like a real person who is glad they came, not a script or a list. A few short sentences.",
-  "Open in this spirit, in your own words: \"Hi — I'm really glad you're here. I'm here to help you get ready for your court hearing, at whatever pace feels right today. We could talk through what happened, so it's in your own words. I can tell you what a hearing is usually like. Or we can practice what it feels like to be asked questions. We can also just talk for a bit first. What would feel most useful right now?\"",
-  "Then stop, and follow their lead. Whatever they choose, keep gently helping them toward feeling ready.",
-  "Language: follow the person. If they speak Spanish, speak Spanish with them — calm and plain, the same as in English. If they switch languages mid-conversation, switch with them, without comment.",
-  "If the first message you receive is only the word BEGIN, that is the cue the session just opened — greet them like that. Never say the word BEGIN out loud.",
-].join("\n");
-
-/** Per-language opening guidance, appended AFTER the mode prompt. */
-function languageLineFor(language: "en" | "es"): string {
-  return language === "es"
-    ? "\nThe person prefers Spanish. Open in Spanish and stay in Spanish unless they switch."
-    : "";
-}
-
-const COACH_REGULATOR = [
-  COACH_BASE,
-  "",
-  "Right now, the person is showing signs of being overwhelmed. Stop asking questions. Slow your pace. Use short sentences. Offer to pause. Name their care plan back to them. Do not push for more content.",
-].join("\n");
-
-const COACH_INTERVIEW = [
-  COACH_BASE,
-  "",
-  "You are gathering the person's account using neutral, non-leading questions. Ask one thing at a time. Do not probe.",
-].join("\n");
-
-// PLACEHOLDER (demo) — practice-cross-examination behavior. Attorney + trauma
-// therapist to review the exact wording before real survivors. The hard rule
-// below — practice composure, never supply answers or coach testimony content —
-// is a safety invariant, not placeholder. See docs/source-material/README.md.
-const COACH_DEFENSE = [
-  COACH_BASE,
-  "",
-  "Right now you are running a gentle PRACTICE of being questioned, the way a witness might be. At the very start, say plainly that this is only practice: none of it is real, nothing here counts, and they can stop any time.",
-  "Your job is to help them get used to the FEELING of being asked questions and to practice staying steady — NOT to rehearse answers. Never tell them what to say, never suggest an answer, and never coach the content of their account.",
-  "Ask one short, plain practice question at a time, in a calm voice. Start very easy (for example, ask them to say their name, or to describe the room they are in) and only gently increase from there. Leave silence for them to answer.",
-  "Coach the process, warmly: remind them it is okay to say 'I don't know' or 'I don't remember', that they can take their time, that they can ask for a question to be repeated, and that they can pause.",
-  "Watch for distress. If they seem overwhelmed, stop the questions right away, slow down, and offer a break.",
-  "Keep the whole practice short. Then close by naming their care plan back to them, and remind them that this was only practice.",
-].join("\n");
-
-function promptFor(mode: Mode): string {
-  switch (mode) {
-    case "regulator":
-      return COACH_REGULATOR;
-    case "interview":
-      return COACH_INTERVIEW;
-    case "defense":
-      return COACH_DEFENSE;
-    default:
-      return COACH_BASE;
-  }
-}
 
 function pickMode(input: unknown): Mode {
   if (typeof input === "string" && ["base", "regulator", "defense", "interview"].includes(input)) {
     return input as Mode;
   }
   return "base";
+}
+
+async function mintToken(
+  apiKey: string,
+  model: string,
+  voice: string,
+  systemText: string,
+): Promise<string | null> {
+  const now = Date.now();
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1alpha/auth_tokens?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        uses: 1,
+        expireTime: new Date(now + SESSION_SECONDS * 1000).toISOString(),
+        newSessionExpireTime: new Date(now + START_WINDOW_SECONDS * 1000).toISOString(),
+        // REST shape for POST /v1alpha/auth_tokens: locked constraints live under
+        // bidiGenerateContentSetup. Locking these into the token is what stops
+        // the client overriding the model, voice, or system prompt.
+        bidiGenerateContentSetup: {
+          model: `models/${model}`,
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+            },
+          },
+          systemInstruction: { parts: [{ text: systemText }] },
+          // Live transcription of BOTH sides — feeds the client-side
+          // deterministic tripwire (spoken stop word) and containment
+          // tracking. Transcripts flow through and are never retained.
+          inputAudioTranscription: {},
+          outputAudioTranscription: {},
+          // Server-side VAD tuned to commit quickly when the person stops.
+          realtimeInputConfig: {
+            automaticActivityDetection: {
+              startOfSpeechSensitivity: "START_SENSITIVITY_HIGH",
+              endOfSpeechSensitivity: "END_SENSITIVITY_HIGH",
+              silenceDurationMs: 700,
+            },
+          },
+        },
+      }),
+    },
+  );
+  if (!res.ok) return null; // never echo upstream bodies — may contain key fragments
+  const minted = await res.json();
+  return typeof minted?.name === "string" ? minted.name : null;
 }
 
 serve(async (req) => {
@@ -149,120 +107,76 @@ serve(async (req) => {
     const apiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_AI_API_KEY");
     if (!apiKey) return json(503, { error: "Voice service not configured" });
 
-    // Parse optional overrides — allowlisted only; unknown values degrade to defaults.
-    let model = DEFAULT_MODEL;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin =
+      supabaseUrl && serviceKey
+        ? createClient(supabaseUrl, serviceKey, {
+            auth: { persistSession: false, autoRefreshToken: false },
+          })
+        : null;
+
+    // Parse the request — allowlisted values only; unknown degrades to config.
     let mode: Mode = "base";
     let language: "en" | "es" = "en";
     let requestedVoice: string | null = null;
     try {
       const body = await req.json().catch(() => null);
       if (body && typeof body === "object") {
-        if (typeof body.model === "string" && MODEL_ALLOWLIST.includes(body.model)) {
-          model = body.model;
-        }
+        mode = pickMode(body.mode);
+        if (body.language === "es") language = "es";
         if (typeof body.voice === "string" && VOICE_ALLOWLIST.includes(body.voice)) {
           requestedVoice = body.voice;
         }
-        if (body.language === "es") language = "es";
-        mode = pickMode(body.mode);
       }
     } catch {
       /* ignore */
     }
-    const voice = requestedVoice ?? MODE_DEFAULT_VOICE[mode];
 
-    // Daily cap check via Supabase RPC (service role).
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // Dashboard-configured operations (voices, caps, model chain) — sanitized
+    // on read, safe defaults when the table is absent or unreadable.
+    const ops = await loadOps(admin);
+    const voice = requestedVoice ?? ops.voice[mode];
+
+    // Daily cap check (fails closed).
     const dailyCap = Number(Deno.env.get("DAILY_VOICE_SESSION_CAP") ?? "200");
-
-    if (supabaseUrl && serviceKey && Number.isFinite(dailyCap) && dailyCap > 0) {
-      const admin = createClient(supabaseUrl, serviceKey, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      });
-      const { error } = await admin.rpc("increment_voice_session_count", {
-        _cap: dailyCap,
-      });
+    if (admin && Number.isFinite(dailyCap) && dailyCap > 0) {
+      const { error } = await admin.rpc("increment_voice_session_count", { _cap: dailyCap });
       if (error) {
         if (error.message?.includes("voice_daily_cap_exceeded")) {
           return json(429, {
             error: "Voice service is at today's limit. Please try again tomorrow.",
           });
         }
-        // Counter failed for an unrelated reason — fail closed.
         return json(503, { error: "Voice service unavailable" });
       }
     }
 
-    // Mint ephemeral auth token via v1alpha auth_tokens endpoint.
-    const now = Date.now();
-    const expireTime = new Date(now + SESSION_SECONDS * 1000).toISOString();
-    const newSessionExpireTime = new Date(now + START_WINDOW_SECONDS * 1000).toISOString();
+    const systemText = promptFor(mode) + languageLineFor(language);
 
-    const mintRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1alpha/auth_tokens?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uses: 1,
-          expireTime,
-          newSessionExpireTime,
-          // REST shape for POST /v1alpha/auth_tokens: the locked constraints live under
-          // bidiGenerateContentSetup (flat: model / generationConfig / systemInstruction),
-          // NOT "live_connect_constraints" (that is the SDK-level config name, which the raw
-          // endpoint rejects as an unknown field). Locking these into the token is what stops
-          // the client overriding the model, voice, or system prompt.
-          bidiGenerateContentSetup: {
-            model: `models/${model}`,
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
-              },
-            },
-            systemInstruction: {
-              parts: [{ text: promptFor(mode) + languageLineFor(language) }],
-            },
-            // Live transcription of BOTH sides, locked into the token:
-            //  - input (the person's speech) feeds the client-side deterministic
-            //    distress tripwire, so a spoken stop word works in voice mode;
-            //  - output (the model's speech) feeds containment tracking.
-            // Transcripts flow through the client and are never retained.
-            inputAudioTranscription: {},
-            outputAudioTranscription: {},
-            // Keep server-side VAD, but make it commit to "the person is done"
-            // quickly so replies don't lag after they stop speaking. (If this still
-            // lags in practice, the escalation is manual turn control: set
-            // automaticActivityDetection.disabled=true here and send activityStart/
-            // activityEnd from the client off the mic level.)
-            realtimeInputConfig: {
-              automaticActivityDetection: {
-                startOfSpeechSensitivity: "START_SENSITIVITY_HIGH",
-                endOfSpeechSensitivity: "END_SENSITIVITY_HIGH",
-                silenceDurationMs: 700,
-              },
-            },
-          },
-        }),
-      },
-    );
-
-    if (!mintRes.ok) {
-      // Do NOT echo upstream body — may contain key fragments in some errors.
-      return json(502, { error: "Could not mint voice token" });
+    // Mint with the primary model; retry ONCE with the fallback if configured.
+    let model = ops.model.primary;
+    let token = await mintToken(apiKey, model, voice, systemText);
+    if (!token && ops.model.fallback && ops.model.fallback !== ops.model.primary) {
+      model = ops.model.fallback;
+      token = await mintToken(apiKey, model, voice, systemText);
     }
+    if (!token) return json(502, { error: "Could not mint voice token" });
 
-    const minted = await mintRes.json();
-    // Response shape: { name: "authTokens/...", ... }
-    const token = typeof minted?.name === "string" ? minted.name : null;
-    if (!token) return json(502, { error: "Voice token malformed" });
+    // Aggregate-only stats; never blocks the session on failure.
+    if (admin) {
+      await admin
+        .rpc("increment_agent_stat", { _agent: mode, _medium: "voice", _field: "started" })
+        .then(() => undefined)
+        .catch(() => undefined);
+    }
 
     return json(200, {
       token,
       voice,
       model,
       expiresIn: SESSION_SECONDS,
+      caps: ops.caps,
     });
   } catch (_error) {
     return json(500, { error: "Internal error" });

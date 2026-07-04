@@ -11,6 +11,7 @@
  * NO logging of IP, request body, or user identifiers.
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
@@ -155,6 +156,35 @@ serve(async (req) => {
     if (!apiKey) return json(503, { error: "Agent service not configured" });
 
     const body = await req.json().catch(() => null);
+
+    // Aggregate-only session telemetry (counts per day/agent/medium — never
+    // content, never identity). JWT-gated at the gateway like every action
+    // here; values are allowlisted again inside the RPC.
+    if (body && typeof body === "object" && body.agent === "telemetry") {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      const input = (body.input ?? {}) as Record<string, unknown>;
+      const agentName = typeof input.agent === "string" ? input.agent : "";
+      const medium = typeof input.medium === "string" ? input.medium : "";
+      const event = typeof input.event === "string" ? input.event : "";
+      if (
+        supabaseUrl &&
+        serviceKey &&
+        ["base", "regulator", "interview", "defense"].includes(agentName) &&
+        ["voice", "avatar", "text"].includes(medium) &&
+        ["ended_clean", "tripwire_stops", "errors"].includes(event)
+      ) {
+        const admin = createClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        await admin
+          .rpc("increment_agent_stat", { _agent: agentName, _medium: medium, _field: event })
+          .then(() => undefined)
+          .catch(() => undefined);
+      }
+      return json(200, { text: "ok" });
+    }
+
     const agent = (body && typeof body === "object" && body.agent) as AgentName;
     if (!ALLOWED.includes(agent)) return json(400, { error: "Unknown agent" });
     const input = (

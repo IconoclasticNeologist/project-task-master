@@ -38,17 +38,19 @@ interface UseLiveAvatarPracticeOptions {
   onDistress?: (sig: DistressSignal) => void;
 }
 
-async function fetchAvatarToken(): Promise<{ token: string } | "unavailable"> {
+async function fetchAvatarToken(): Promise<
+  { token: string; practiceCapSec: number | null } | "unavailable"
+> {
   const supabase = getSupabase();
-  const { data, error } = await supabase.functions.invoke<{ token: string }>(
-    "advocate-avatar-session",
-    { body: {} },
-  );
+  const { data, error } = await supabase.functions.invoke<{
+    token: string;
+    practiceCapSec?: number;
+  }>("advocate-avatar-session", { body: {} });
   if (error || !data?.token) {
     // 503 = deliberately unconfigured → the caller falls back to voice-only.
     return "unavailable";
   }
-  return { token: data.token };
+  return { token: data.token, practiceCapSec: data.practiceCapSec ?? null };
 }
 
 /** Shareable-only statements, oldest first, capped — the practice source material. */
@@ -71,6 +73,8 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const [status, setStatus] = useState<AvatarStatus>("idle");
   const [avatarSpeaking, setAvatarSpeaking] = useState(false);
   const [micMuted, setMicMuted] = useState(false);
+  // Dashboard-configured practice cap, from the session mint (null = unknown).
+  const [practiceCapSec, setPracticeCapSec] = useState<number | null>(null);
 
   const sessionRef = useRef<LiveAvatarSession | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
@@ -135,14 +139,11 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const connect = useCallback(async (): Promise<AvatarConnectResult> => {
     setStatus("connecting");
     transcriptTripRef.current.reset();
-    try {
-      // The account context is fetched by the AUTHENTICATED client (RLS-scoped),
-      // in parallel with the token mint.
-      const [tokenResult, account] = await Promise.all([fetchAvatarToken(), buildAccountContext()]);
-      if (tokenResult === "unavailable") {
-        setStatus("closed");
-        return "unavailable";
-      }
+
+    const attempt = async (account: string): Promise<AvatarConnectResult> => {
+      const tokenResult = await fetchAvatarToken();
+      if (tokenResult === "unavailable") return "unavailable";
+      setPracticeCapSec(tokenResult.practiceCapSec);
 
       const session = new LiveAvatarSession(tokenResult.token, {
         voiceChat: { defaultMuted: false },
@@ -179,6 +180,19 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
 
       await session.start();
       return "open";
+    };
+
+    try {
+      // Account context is fetched by the AUTHENTICATED client (RLS-scoped).
+      const account = await buildAccountContext();
+      try {
+        return await attempt(account);
+      } catch {
+        // One bounded retry: a fresh token + session covers transient start
+        // failures (network blip, expired start window). No retry loops.
+        tearDown();
+        return await attempt(account);
+      }
     } catch {
       tearDown();
       setStatus("error");
@@ -220,6 +234,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     status,
     avatarSpeaking,
     micMuted,
+    practiceCapSec,
     connect,
     disconnect,
     interrupt,

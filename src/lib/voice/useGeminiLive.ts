@@ -55,11 +55,33 @@ interface UseGeminiLiveOptions {
 const GEMINI_WS_BASE =
   "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained";
 
+export interface VoiceCaps {
+  sessionSec: number;
+  practiceSec: number;
+  idleSec: number;
+}
+
+const DEFAULT_CAPS: VoiceCaps = {
+  sessionSec: ADVOCATE_VOICE_CONFIG.caps.maxSessionDurationSec,
+  practiceSec: ADVOCATE_VOICE_CONFIG.caps.witnessStandMaxDurationSec,
+  idleSec: ADVOCATE_VOICE_CONFIG.caps.idleTimeoutSec,
+};
+
 interface VoiceTokenPayload {
   token: string;
   voice: string;
   model: string;
   expiresIn: number;
+  /** Dashboard-configured caps — single source shared with the visible timer. */
+  caps?: Partial<VoiceCaps>;
+}
+
+function capsFrom(payload: VoiceTokenPayload): VoiceCaps {
+  return {
+    sessionSec: payload.caps?.sessionSec ?? DEFAULT_CAPS.sessionSec,
+    practiceSec: payload.caps?.practiceSec ?? DEFAULT_CAPS.practiceSec,
+    idleSec: payload.caps?.idleSec ?? DEFAULT_CAPS.idleSec,
+  };
 }
 
 async function fetchVoiceToken(mode: CoachMode, language: "en" | "es"): Promise<VoiceTokenPayload> {
@@ -91,6 +113,8 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const [micLevel, setMicLevel] = useState(0);
   // The mode of the CURRENT live session (a reconnect can change it).
   const [activeMode, setActiveMode] = useState<CoachMode>(mode);
+  // Caps from the token payload (dashboard-configured); defaults until connect.
+  const [caps, setCaps] = useState<VoiceCaps>(DEFAULT_CAPS);
 
   const wsRef = useRef<WebSocket | null>(null);
   const captureRef = useRef<CaptureHandle | null>(null);
@@ -219,7 +243,10 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
       mutedRef.current = false;
       transcriptTripRef.current.reset();
       try {
-        const { token, model } = await fetchVoiceToken(sessionMode, language);
+        const payload = await fetchVoiceToken(sessionMode, language);
+        const { token, model } = payload;
+        const sessionCaps = capsFrom(payload);
+        setCaps(sessionCaps);
         // v1alpha + ?access_token=<ephemeral>. The token has model, voice,
         // AUDIO modality, and system instruction locked into its constraints,
         // so we MUST NOT resend those in the setup frame.
@@ -241,12 +268,17 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
             }),
           );
 
-          const maxSec = sessionMaxSec ?? ADVOCATE_VOICE_CONFIG.caps.maxSessionDurationSec;
+          // Backstop hard cut: practice gets its cap + grace (the visible
+          // timer fires the graceful handoff first); everything else the
+          // session cap. Explicit overrides still win.
+          const maxSec =
+            sessionMaxSec ??
+            (sessionMode === "defense" ? sessionCaps.practiceSec + 15 : sessionCaps.sessionSec);
           if (maxSec > 0) {
             sessionTimerRef.current = setTimeout(() => disconnect(), maxSec * 1000);
           }
 
-          const idleSec = ADVOCATE_VOICE_CONFIG.caps.idleTimeoutSec;
+          const idleSec = sessionCaps.idleSec;
           if (idleSec > 0) {
             const tick = () => {
               const since = (Date.now() - lastActivityRef.current) / 1000;
@@ -357,6 +389,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     coachSpeaking,
     micLevel,
     activeMode,
+    caps,
     connect,
     disconnect,
     interrupt,

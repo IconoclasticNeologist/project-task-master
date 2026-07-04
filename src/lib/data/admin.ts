@@ -120,3 +120,54 @@ export async function mintSurvivorCode(label: string): Promise<string> {
   if (error) throw new Error(error.message);
   return code;
 }
+
+// ── Agent operations (config, avatars, aggregate stats) ─────────────────────
+
+export interface AgentOps {
+  voice: { base: string; regulator: string; interview: string; defense: string };
+  caps: { sessionSec: number; practiceSec: number; idleSec: number };
+  model: { primary: string; fallback: string | null };
+  avatar: { id: string | null; name: string | null; sandbox: boolean };
+}
+
+export interface AgentPromptInfo {
+  agent: string;
+  title: string;
+  gitPath: string;
+  smeStatus: string;
+  text: string;
+}
+
+export interface AgentConfigBundle {
+  ops: AgentOps;
+  allow: {
+    voices: string[];
+    models: string[];
+    capBounds: Record<"sessionSec" | "practiceSec" | "idleSec", [number, number]>;
+  };
+  prompts: AgentPromptInfo[];
+}
+
+export interface AvatarChoice {
+  id: string;
+  name: string;
+  previewUrl: string | null;
+  source: "public" | "mine";
+}
+
+export interface AgentStatRow {
+  day: string;
+  agent: string;
+  medium: string;
+  started: number;
+  ended_clean: number;
+  tripwire_stops: number;
+  errors: number;
+}
+
+export const getAgentConfig = () => adminCall<AgentConfigBundle>("get_agent_config");
+export const setAgentConfig = (section: "voice" | "caps" | "model" | "avatar", value: unknown) =>
+  adminCall<{ ok: true; value: unknown }>("set_agent_config", { section, value });
+export const listAvatars = () =>
+  adminCall<{ avatars: AvatarChoice[]; liveavatarConfigured: boolean }>("list_avatars");
+export const listAgentStats = () => adminCall<{ stats: AgentStatRow[] }>("list_agent_stats");

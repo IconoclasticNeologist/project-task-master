@@ -35,6 +35,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { PROMPT_CATALOG } from "../_shared/advocatePrompts.ts";
+import {
+  CAP_BOUNDS,
+  MODEL_ALLOWLIST,
+  sanitizeOps,
+  VOICE_ALLOWLIST,
+} from "../_shared/agentConfig.ts";
 
 type Json = Record<string, unknown>;
 
@@ -328,6 +335,87 @@ serve(async (req) => {
             })),
         })),
       });
+    }
+
+    if (action === "get_agent_config") {
+      const { data, error } = await admin.from("agent_config").select("key, value");
+      if (error) return json(500, { error: `Could not read config: ${error.message}` });
+      const rows: Record<string, unknown> = {};
+      for (const row of data ?? []) rows[row.key] = row.value;
+      return json(200, {
+        ops: sanitizeOps(rows),
+        allow: { voices: VOICE_ALLOWLIST, models: MODEL_ALLOWLIST, capBounds: CAP_BOUNDS },
+        prompts: PROMPT_CATALOG,
+      });
+    }
+
+    if (action === "set_agent_config") {
+      // The client sends one section at a time; sanitize the MERGED result so
+      // a bad value can never land — what is stored is what will be applied.
+      const section = typeof body.section === "string" ? body.section : "";
+      if (!["voice", "caps", "model", "avatar"].includes(section)) {
+        return json(400, { error: "Unknown config section" });
+      }
+      const clean = sanitizeOps({ [section]: body.value ?? {} });
+      const value = clean[section as "voice" | "caps" | "model" | "avatar"];
+      const { error } = await admin
+        .from("agent_config")
+        .upsert({ key: section, value, updated_at: new Date().toISOString() });
+      if (error) return json(500, { error: `Could not save: ${error.message}` });
+      return json(200, { ok: true, value });
+    }
+
+    if (action === "list_avatars") {
+      // Public gallery needs no auth; the account's own avatars need the key.
+      const results: Array<{
+        id: string;
+        name: string;
+        previewUrl: string | null;
+        source: "public" | "mine";
+      }> = [];
+      const laKey = Deno.env.get("LIVEAVATAR_API_KEY");
+      const pull = async (url: string, source: "public" | "mine", headers: HeadersInit) => {
+        const res = await fetch(url, { headers });
+        if (!res.ok) return;
+        const parsed = await res.json();
+        const items = Array.isArray(parsed?.data)
+          ? parsed.data
+          : Array.isArray(parsed?.data?.items)
+            ? parsed.data.items
+            : [];
+        for (const a of items) {
+          if (typeof a?.id !== "string") continue;
+          if (a.status && a.status !== "ACTIVE") continue;
+          results.push({
+            id: a.id,
+            name: typeof a.name === "string" ? a.name : a.id.slice(0, 8),
+            previewUrl: typeof a.preview_url === "string" ? a.preview_url : null,
+            source,
+          });
+        }
+      };
+      if (laKey) {
+        await pull(`${"https://api.liveavatar.com"}/v1/avatars?page_size=100`, "mine", {
+          "X-API-KEY": laKey,
+        }).catch(() => undefined);
+      }
+      await pull(
+        `${"https://api.liveavatar.com"}/v1/avatars/public?page_size=100`,
+        "public",
+        {},
+      ).catch(() => undefined);
+      return json(200, { avatars: results, liveavatarConfigured: Boolean(laKey) });
+    }
+
+    if (action === "list_agent_stats") {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const { data, error } = await admin
+        .from("agent_daily_stats")
+        .select("day, agent, medium, started, ended_clean, tripwire_stops, errors")
+        .gte("day", since)
+        .order("day", { ascending: false });
+      if (error) return json(500, { error: `Could not read stats: ${error.message}` });
+      return json(200, { stats: data ?? [] });
     }
 
     return json(400, { error: "Unknown action" });

@@ -66,7 +66,7 @@ async function fetchAvatarToken(): Promise<
   return {
     token: data.token,
     practiceCapSec: data.practiceCapSec ?? null,
-    interactivity: data.interactivity === "CONVERSATIONAL" ? "CONVERSATIONAL" : "PUSH_TO_TALK",
+    interactivity: data.interactivity === "PUSH_TO_TALK" ? "PUSH_TO_TALK" : "CONVERSATIONAL",
   };
 }
 
@@ -94,8 +94,10 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const [practiceCapSec, setPracticeCapSec] = useState<number | null>(null);
   // Why the last connect failed, in plain words (dev surfaces show this).
   const [lastError, setLastError] = useState<string | null>(null);
-  // PUSH_TO_TALK: the mic transmits only while the person holds "answer".
-  const [pushToTalk, setPushToTalk] = useState(true);
+  // The answer gate: the mic transmits ONLY while the person is answering,
+  // in both underlying modes (muted-conversational or push-to-talk).
+  const pushToTalk = true; // the answer button is always the interaction
+  const pttRef = useRef(false); // which underlying mechanism the session uses
   const [isAnswering, setIsAnswering] = useState(false);
   // Safari can refuse un-muted playback outside a tap; when that happens the
   // UI shows an explicit "turn sound on" affordance instead of silent video.
@@ -193,11 +195,14 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       if (tokenResult === "unavailable") return "unavailable";
       setPracticeCapSec(tokenResult.practiceCapSec);
       const ptt = tokenResult.interactivity === "PUSH_TO_TALK";
-      setPushToTalk(ptt);
+      pttRef.current = ptt;
       setIsAnswering(false);
 
+      // CONVERSATIONAL + muted-by-default: the working turn pipeline, with
+      // the mic gated by the answer button (unmute → speak → mute). PTT mode
+      // remains available via config for when their PTT pipeline works.
       const session = new LiveAvatarSession(tokenResult.token, {
-        voiceChat: ptt ? { mode: SessionInteractivityMode.PUSH_TO_TALK } : { defaultMuted: false },
+        voiceChat: ptt ? { mode: SessionInteractivityMode.PUSH_TO_TALK } : { defaultMuted: true },
       });
       sessionRef.current = session;
 
@@ -265,7 +270,9 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       // the safety net when a pipeline emits only one of the two.
       session.on(AgentEventsEnum.USER_TRANSCRIPTION_CHUNK, (e) => pushTranscript(e.text));
       session.on(AgentEventsEnum.USER_TRANSCRIPTION, (e) => {
-        logEvent(`heard you (${e.text.length} chars)`);
+        if (!e.text.startsWith(ACCOUNT_SENTINEL)) {
+          logEvent(`heard you (${e.text.length} chars)`);
+        }
         pushTranscript(e.text);
       });
 
@@ -324,17 +331,22 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     }
   }, []);
 
-  /** PUSH_TO_TALK: open the mic while the person answers. */
+  /** Open the mic while the person answers (unmute, or PTT start). */
   const startAnswer = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
     try {
       if (session.voiceChat.state !== VoiceChatState.ACTIVE) {
-        // PTT voice chat may not auto-start; make the tap start it.
-        await session.voiceChat.start({ mode: SessionInteractivityMode.PUSH_TO_TALK });
+        await session.voiceChat.start(
+          pttRef.current ? { mode: SessionInteractivityMode.PUSH_TO_TALK } : { defaultMuted: true },
+        );
         logEvent("voice chat started");
       }
-      await session.voiceChat.startPushToTalk();
+      if (pttRef.current) {
+        await session.voiceChat.startPushToTalk();
+      } else {
+        await session.voiceChat.unmute();
+      }
       setIsAnswering(true);
       logEvent("answer mic OPEN");
     } catch (e) {
@@ -344,12 +356,16 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     }
   }, [logEvent]);
 
-  /** PUSH_TO_TALK: close the mic; their side finalizes the utterance. */
+  /** Close the mic; their side finalizes the utterance. */
   const endAnswer = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
     try {
-      await session.voiceChat.stopPushToTalk();
+      if (pttRef.current) {
+        await session.voiceChat.stopPushToTalk();
+      } else {
+        await session.voiceChat.mute();
+      }
       logEvent("answer mic closed");
     } catch {
       /* already closed */

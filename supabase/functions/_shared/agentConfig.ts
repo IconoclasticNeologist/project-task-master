@@ -34,9 +34,11 @@ export interface AgentOpsConfig {
     id: string | null;
     name: string | null;
     sandbox: boolean;
-    /** PUSH_TO_TALK (default): the mic opens only while answering, so the
-     *  avatar can never be barged-in mid-sentence by ambient sound — and the
-     *  person explicitly controls when they are heard. */
+    /** CONVERSATIONAL (default) with a muted-by-default mic the client
+     *  unmutes only while answering — interruption-proof AND on the turn
+     *  pipeline that verifiably calls the custom LLM. Their PUSH_TO_TALK
+     *  pipeline never fired an LLM turn in testing (2026-07-05); the knob
+     *  stays for when that changes. */
     interactivity: "PUSH_TO_TALK" | "CONVERSATIONAL";
   };
 }
@@ -45,7 +47,7 @@ export const DEFAULT_OPS: AgentOpsConfig = {
   voice: { ...MODE_DEFAULT_VOICE },
   caps: { sessionSec: 45 * 60, practiceSec: 8 * 60, idleSec: 3 * 60 },
   model: { primary: MODEL_ALLOWLIST[0], fallback: null },
-  avatar: { id: null, name: null, sandbox: true, interactivity: "PUSH_TO_TALK" },
+  avatar: { id: null, name: null, sandbox: true, interactivity: "CONVERSATIONAL" },
 };
 
 // Caps are clamped, never trusted: a typo in the dashboard cannot create a
@@ -99,7 +101,7 @@ export function sanitizeOps(rows: Record<string, unknown>): AgentOpsConfig {
       id: typeof avatar.id === "string" && avatar.id ? avatar.id : null,
       name: typeof avatar.name === "string" && avatar.name ? avatar.name : null,
       sandbox: avatar.sandbox !== false, // safe default: sandbox ON
-      interactivity: avatar.interactivity === "CONVERSATIONAL" ? "CONVERSATIONAL" : "PUSH_TO_TALK",
+      interactivity: avatar.interactivity === "PUSH_TO_TALK" ? "PUSH_TO_TALK" : "CONVERSATIONAL",
     },
   };
 }

@@ -135,7 +135,13 @@ function shapeConversation(messages: OpenAIMessage[]): {
   }
   if (contents.length === 0) {
     contents.push({
-      parts: [{ text: "The practice is starting. Ask your first easy warm-up question." }],
+      parts: [
+        {
+          // Deterministic opener: the model sometimes skipped the intro when
+          // only told to ask a question (a 24-char "opener" shipped once).
+          text: "The practice is starting. First introduce yourself in one or two sentences — you are the practice questioner, this is only practice, nothing here is real or counts, and they can say stop at any time. Then ask your first easy warm-up question.",
+        },
+      ],
       role: "user",
     });
   }

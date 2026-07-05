@@ -15,6 +15,7 @@ import { registerSW } from "../pwa/registerSW";
 import { InstallPrompt } from "../components/InstallPrompt";
 import { Toaster } from "@/components/ui/sonner";
 import { PRODUCT_NAME } from "@/lib/product";
+import { MOTION_HEAD_SCRIPT } from "@/lib/motion";
 
 function NotFoundComponent() {
   return (
@@ -111,6 +112,8 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Apply the Stillness preference before first paint (no flash). */}
+        <script dangerouslySetInnerHTML={{ __html: MOTION_HEAD_SCRIPT }} />
       </head>
       <body>
         {children}

@@ -5,9 +5,11 @@ import { Shell } from "@/components/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { copy } from "@/lib/copy";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import type { SurvivorSettings } from "@/lib/data/settings";
+import { getMotionPref, setMotionPref } from "@/lib/motion";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/settings")({
@@ -25,10 +27,17 @@ function SettingsScreen() {
     supportPerson: "",
   });
   const [saved, setSaved] = useState(false);
+  // Motion is a per-device preference (localStorage), not server-saved settings,
+  // so it applies before sign-in and for self-serve users too.
+  const [motionOn, setMotionOn] = useState(true);
 
   useEffect(() => {
     if (query.data) setForm(query.data);
   }, [query.data]);
+
+  useEffect(() => {
+    setMotionOn(getMotionPref() === "on");
+  }, []);
 
   const onSave = () => {
     setSaved(false);
@@ -107,6 +116,32 @@ function SettingsScreen() {
                     </button>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-normal">
+                  {copy.settings.motionSection}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between gap-4">
+                  <Label htmlFor="motion" className="text-sm font-normal">
+                    {copy.settings.motionLabel}
+                  </Label>
+                  <Switch
+                    id="motion"
+                    checked={motionOn}
+                    onCheckedChange={(v) => {
+                      setMotionOn(v);
+                      setMotionPref(v ? "on" : "off");
+                    }}
+                  />
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {copy.settings.motionNote}
+                </p>
               </CardContent>
             </Card>
 

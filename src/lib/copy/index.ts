@@ -657,6 +657,10 @@ export const copy = {
     sharingSection: "What I share by default",
     defaultPrivate: "Keep new things private",
     defaultShare: "Mark new things okay to share",
+    motionSection: "Movement",
+    motionLabel: "Gentle movement",
+    motionNote:
+      "Small fades and a little feedback when you tap, so things feel answered. You can turn it off for a completely still screen — some people find that calmer. Your device’s own reduce-motion setting is always respected.",
     save: "Save",
   },
 

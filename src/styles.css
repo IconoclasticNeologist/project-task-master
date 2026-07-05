@@ -79,9 +79,31 @@
 @layer base {
   * {
     border-color: var(--color-border);
-    /* No motion: disable transitions and animations by default. */
-    transition: none !important;
-    animation: none !important;
+  }
+
+  /* Motion is narrow and calming: brief, user-initiated feedback only.
+     Interactive elements ease their color / opacity / shadow so a tap or hover
+     clearly registers. Nothing moves on its own — no autonomous, looping, or
+     decorative animation anywhere in the app (enforced by review, not CSS). */
+  a,
+  button,
+  [role="button"],
+  label,
+  summary,
+  input,
+  textarea,
+  select {
+    transition:
+      color 150ms ease,
+      background-color 150ms ease,
+      border-color 150ms ease,
+      opacity 150ms ease,
+      box-shadow 150ms ease;
+  }
+  /* Momentary press feedback — instantaneous, needs no animation. */
+  button:active,
+  [role="button"]:active {
+    opacity: 0.9;
   }
 
   html {
@@ -128,6 +150,31 @@
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Stillness. Either the OS "reduce motion" setting OR the in-app toggle
+   (Settings → Movement, which sets html[data-motion="off"]) removes ALL
+   motion. Near-zero durations rather than `none` keep any transitionend /
+   animationend JS from stalling.
+   ────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+html[data-motion="off"] *,
+html[data-motion="off"] *::before,
+html[data-motion="off"] *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
 }
 
 /* ──────────────────────────────────────────────────────────────────────

@@ -133,9 +133,11 @@ serve(async (req) => {
           interactivity_type: ops.avatar.interactivity,
           llm_configuration_id: llmConfigurationId,
           // FULL mode requires exactly one of avatar_persona | voice_agent.
-          // A minimal persona keeps the avatar's own default voice and leaves
-          // the brain to our RAG-locked llm_configuration above.
-          avatar_persona: { language: "en" },
+          // Persona keeps the brain on our RAG-locked llm_configuration; an
+          // optional dashboard voice_id overrides the avatar's default voice.
+          avatar_persona: ops.avatar.voiceId
+            ? { language: "en", voice_id: ops.avatar.voiceId }
+            : { language: "en" },
         }),
       });
 

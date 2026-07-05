@@ -127,11 +127,13 @@ export interface AgentOps {
   voice: { base: string; regulator: string; interview: string; defense: string };
   caps: { sessionSec: number; practiceSec: number; idleSec: number };
   model: { primary: string; fallback: string | null };
+  scriptwriter: "auto" | "claude" | "gemini";
   avatar: {
     id: string | null;
     name: string | null;
     sandbox: boolean;
     interactivity: "PUSH_TO_TALK" | "CONVERSATIONAL";
+    voiceId: string | null;
   };
 }
 
@@ -173,8 +175,10 @@ export interface AgentStatRow {
 }
 
 export const getAgentConfig = () => adminCall<AgentConfigBundle>("get_agent_config");
-export const setAgentConfig = (section: "voice" | "caps" | "model" | "avatar", value: unknown) =>
-  adminCall<{ ok: true; value: unknown }>("set_agent_config", { section, value });
+export const setAgentConfig = (
+  section: "voice" | "caps" | "model" | "avatar" | "scriptwriter",
+  value: unknown,
+) => adminCall<{ ok: true; value: unknown }>("set_agent_config", { section, value });
 export const listAvatars = () =>
   adminCall<{ avatars: AvatarChoice[]; liveavatarConfigured: boolean }>("list_avatars");
 export const listAgentStats = () => adminCall<{ stats: AgentStatRow[] }>("list_agent_stats");

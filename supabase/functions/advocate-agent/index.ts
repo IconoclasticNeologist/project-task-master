@@ -15,6 +15,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
+import { loadOps } from "../_shared/agentConfig.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 1024;
@@ -87,9 +88,13 @@ async function generateReply(
   systemText: string,
   contents: Array<{ role: "user" | "model"; parts: [{ text: string }] }>,
   maxTokens: number,
+  prefer: "auto" | "claude" | "gemini" = "auto",
 ): Promise<string | null> {
   const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? Deno.env.get("CLAUDE_API_KEY");
-  if (anthropicKey) {
+  // "claude" forces Claude (falls back to Gemini only if no key); "gemini"
+  // forces Gemini; "auto" uses Claude when a key is present.
+  const useClaude = anthropicKey && prefer !== "gemini";
+  if (useClaude) {
     const model = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5";
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -222,9 +227,10 @@ serve(async (req) => {
       }
 
       const admin = adminClient();
-      const [defensePrompt, knowledge] = await Promise.all([
+      const [defensePrompt, knowledge, ops] = await Promise.all([
         resolvePrompt(admin, "defense.practice"),
         buildKnowledgeBlock(admin, "defense.practice"),
+        loadOps(admin),
       ]);
       const systemText = [
         defensePrompt,
@@ -234,7 +240,7 @@ serve(async (req) => {
         account || "(none provided — warm-up questions only)",
       ].join("\n");
 
-      const reply = await generateReply(apiKey, systemText, merged, 200);
+      const reply = await generateReply(apiKey, systemText, merged, 200, ops.scriptwriter);
       if (!reply) return json(502, { error: "Practice reply failed" });
       return json(200, { text: reply });
     }

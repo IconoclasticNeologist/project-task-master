@@ -38,6 +38,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { deriveShimKey } from "../_shared/liveavatar.ts";
 import { resolvePrompt } from "../_shared/promptRegistry.ts";
 import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
+import { loadOps } from "../_shared/agentConfig.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 
@@ -252,9 +253,10 @@ serve(async (req) => {
 
     const { account, contents } = shapeConversation(messages);
     const admin = adminClientForReads();
-    const [defensePrompt, knowledge] = await Promise.all([
+    const [defensePrompt, knowledge, ops] = await Promise.all([
       resolvePrompt(admin, "defense.practice"),
       buildKnowledgeBlock(admin, "defense.practice"),
+      loadOps(admin),
     ]);
     const systemText = [
       defensePrompt,
@@ -264,11 +266,12 @@ serve(async (req) => {
       account || "(none provided — warm-up questions only)",
     ].join("\n");
 
-    // Scriptwriter: Claude (claude-sonnet-5) when ANTHROPIC_API_KEY is set,
-    // Gemini otherwise. Same prompt, same hard rules either way.
+    // Scriptwriter: dashboard-configurable (auto/claude/gemini). "auto" uses
+    // Claude when ANTHROPIC_API_KEY is set. Same prompt/hard-rules either way.
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? Deno.env.get("CLAUDE_API_KEY");
+    const useClaude = anthropicKey && ops.scriptwriter !== "gemini";
     let text: string | undefined;
-    if (anthropicKey) {
+    if (useClaude) {
       const model = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5";
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",

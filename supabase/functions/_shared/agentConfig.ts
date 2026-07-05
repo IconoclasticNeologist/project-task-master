@@ -26,10 +26,15 @@ export interface AgentCaps {
   idleSec: number;
 }
 
+/** Which model writes the text-agent + practice-person lines. */
+export type Scriptwriter = "auto" | "claude" | "gemini";
+
 export interface AgentOpsConfig {
   voice: Record<Mode, string>;
   caps: AgentCaps;
   model: { primary: string; fallback: string | null };
+  /** auto = Claude when ANTHROPIC_API_KEY is set, else Gemini (default). */
+  scriptwriter: Scriptwriter;
   avatar: {
     id: string | null;
     name: string | null;
@@ -40,6 +45,8 @@ export interface AgentOpsConfig {
      *  pipeline never fired an LLM turn in testing (2026-07-05); the knob
      *  stays for when that changes. */
     interactivity: "PUSH_TO_TALK" | "CONVERSATIONAL";
+    /** LiveAvatar voice id; null = the avatar's own default voice. */
+    voiceId: string | null;
   };
 }
 
@@ -47,7 +54,14 @@ export const DEFAULT_OPS: AgentOpsConfig = {
   voice: { ...MODE_DEFAULT_VOICE },
   caps: { sessionSec: 45 * 60, practiceSec: 8 * 60, idleSec: 3 * 60 },
   model: { primary: MODEL_ALLOWLIST[0], fallback: null },
-  avatar: { id: null, name: null, sandbox: true, interactivity: "CONVERSATIONAL" },
+  scriptwriter: "auto",
+  avatar: {
+    id: null,
+    name: null,
+    sandbox: true,
+    interactivity: "CONVERSATIONAL",
+    voiceId: null,
+  },
 };
 
 // Caps are clamped, never trusted: a typo in the dashboard cannot create a
@@ -75,6 +89,7 @@ export function sanitizeOps(rows: Record<string, unknown>): AgentOpsConfig {
   const caps = (rows.caps ?? {}) as Record<string, unknown>;
   const model = (rows.model ?? {}) as Record<string, unknown>;
   const avatar = (rows.avatar ?? {}) as Record<string, unknown>;
+  const scriptwriter = rows.scriptwriter;
   return {
     voice: {
       base: pickVoice(voice.base, MODE_DEFAULT_VOICE.base),
@@ -97,11 +112,14 @@ export function sanitizeOps(rows: Record<string, unknown>): AgentOpsConfig {
           ? model.fallback
           : null,
     },
+    scriptwriter:
+      scriptwriter === "claude" || scriptwriter === "gemini" ? scriptwriter : "auto",
     avatar: {
       id: typeof avatar.id === "string" && avatar.id ? avatar.id : null,
       name: typeof avatar.name === "string" && avatar.name ? avatar.name : null,
       sandbox: avatar.sandbox !== false, // safe default: sandbox ON
       interactivity: avatar.interactivity === "PUSH_TO_TALK" ? "PUSH_TO_TALK" : "CONVERSATIONAL",
+      voiceId: typeof avatar.voiceId === "string" && avatar.voiceId ? avatar.voiceId : null,
     },
   };
 }

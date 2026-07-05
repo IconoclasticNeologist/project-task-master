@@ -672,7 +672,7 @@ function AgentsPanel() {
       section,
       value,
     }: {
-      section: "voice" | "caps" | "model" | "avatar";
+      section: "voice" | "caps" | "model" | "avatar" | "scriptwriter";
       value: unknown;
     }) => setAgentConfig(section, value),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["agent-config"] }),
@@ -813,13 +813,41 @@ function AgentsPanel() {
         </div>
 
         <div>
-          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">Model</h3>
+          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+            Voice model (Gemini Live)
+          </h3>
           <p className="text-sm">
             {ops.model.primary}
             <span className="text-xs text-muted-foreground">
               {" "}
               · fallback: {ops.model.fallback ?? "none"} · allowlist changes ship via git
             </span>
+          </p>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+            Scriptwriter (practice person &amp; text agents)
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {(["auto", "claude", "gemini"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                disabled={save.isPending}
+                onClick={() => save.mutate({ section: "scriptwriter", value: s })}
+                className={
+                  ops.scriptwriter === s
+                    ? "rounded-md border border-primary bg-primary/10 px-3 py-1.5 text-sm"
+                    : "rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground"
+                }
+              >
+                {s === "auto" ? "Auto" : s === "claude" ? "Claude (Sonnet 5)" : "Gemini"}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Auto uses Claude when ANTHROPIC_API_KEY is set, else Gemini. Claude needs that secret.
           </p>
         </div>
 
@@ -892,6 +920,23 @@ function AvatarSection({
           />
           Push to talk (recommended — an open mic lets ambient sound cut the avatar off)
         </label>
+        <div className="w-full space-y-1">
+          <p className="text-xs text-muted-foreground">
+            Spoken voice (advanced) — a LiveAvatar voice id. Leave blank for the avatar&apos;s own
+            default voice.
+          </p>
+          <div className="flex gap-2">
+            <input
+              defaultValue={ops.avatar.voiceId ?? ""}
+              placeholder="voice_id (optional)"
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== (ops.avatar.voiceId ?? null)) onSave({ ...ops.avatar, voiceId: v });
+              }}
+              className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
         <button
           type="button"
           onClick={() => setBrowsing((b) => !b)}

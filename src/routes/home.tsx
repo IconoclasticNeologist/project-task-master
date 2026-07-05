@@ -61,6 +61,11 @@ function HomeScreen() {
         <div className="grid grid-cols-1 gap-4">
           <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
           <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
+          <Tile
+            to="/notebooks"
+            label={copy.guide.moreGuidesLabel}
+            hint={copy.guide.moreGuidesHint}
+          />
           <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
           <Tile
             to="/account"

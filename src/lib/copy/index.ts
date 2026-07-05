@@ -211,6 +211,21 @@ export const copy = {
     ],
     sourceNote:
       "General information, drawn from public court-preparation guidance for witnesses. Courts vary — your advocate or lawyer knows your situation.",
+    moreGuidesLabel: "Guides you can open",
+    moreGuidesHint: "Short reads, one topic at a time.",
+  },
+
+  // The mini-guide "notebooks" shelf. Notebook content lives in ./notebooks.ts.
+  notebooks: {
+    title: "Guides you can open",
+    intro:
+      "Each one is a short read on a single topic. Open the ones that help, and leave the rest for another day. There is no order you have to follow.",
+    openLabel: "Open",
+    backToShelf: "All guides",
+    askLabel: "You could ask your advocate",
+    onThisPage: "Inside this guide",
+    prevLabel: "Previous",
+    nextLabel: "Next",
   },
 
   session: {

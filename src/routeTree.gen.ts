@@ -17,6 +17,7 @@ import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as ProfessionalRouteImport } from './routes/professional'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotebooksRouteImport } from './routes/notebooks'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as ExpertRouteImport } from './routes/expert'
@@ -26,6 +27,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfessionalKnowledgeRouteImport } from './routes/professional.knowledge'
 import { Route as ProfessionalClientsRouteImport } from './routes/professional.clients'
+import { Route as NotebooksSlugRouteImport } from './routes/notebooks.$slug'
 
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
@@ -65,6 +67,11 @@ const PlanRoute = PlanRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotebooksRoute = NotebooksRouteImport.update({
+  id: '/notebooks',
+  path: '/notebooks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomeRoute = HomeRouteImport.update({
@@ -112,6 +119,11 @@ const ProfessionalClientsRoute = ProfessionalClientsRouteImport.update({
   path: '/clients',
   getParentRoute: () => ProfessionalRoute,
 } as any)
+const NotebooksSlugRoute = NotebooksSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => NotebooksRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -121,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
+  '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
   '/professional': typeof ProfessionalRouteWithChildren
@@ -129,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
+  '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
 }
@@ -140,6 +154,7 @@ export interface FileRoutesByTo {
   '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
+  '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
   '/professional': typeof ProfessionalRouteWithChildren
@@ -148,6 +163,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
+  '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
 }
@@ -160,6 +176,7 @@ export interface FileRoutesById {
   '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
+  '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
   '/professional': typeof ProfessionalRouteWithChildren
@@ -168,6 +185,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
+  '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
 }
@@ -181,6 +199,7 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guide'
     | '/home'
+    | '/notebooks'
     | '/onboarding'
     | '/plan'
     | '/professional'
@@ -189,6 +208,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/team'
+    | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
   fileRoutesByTo: FileRoutesByTo
@@ -200,6 +220,7 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guide'
     | '/home'
+    | '/notebooks'
     | '/onboarding'
     | '/plan'
     | '/professional'
@@ -208,6 +229,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/team'
+    | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
   id:
@@ -219,6 +241,7 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guide'
     | '/home'
+    | '/notebooks'
     | '/onboarding'
     | '/plan'
     | '/professional'
@@ -227,6 +250,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/team'
+    | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
   fileRoutesById: FileRoutesById
@@ -239,6 +263,7 @@ export interface RootRouteChildren {
   ExpertRoute: typeof ExpertRoute
   GuideRoute: typeof GuideRoute
   HomeRoute: typeof HomeRoute
+  NotebooksRoute: typeof NotebooksRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PlanRoute: typeof PlanRoute
   ProfessionalRoute: typeof ProfessionalRouteWithChildren
@@ -307,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notebooks': {
+      id: '/notebooks'
+      path: '/notebooks'
+      fullPath: '/notebooks'
+      preLoaderRoute: typeof NotebooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/home': {
       id: '/home'
       path: '/home'
@@ -370,8 +402,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfessionalClientsRouteImport
       parentRoute: typeof ProfessionalRoute
     }
+    '/notebooks/$slug': {
+      id: '/notebooks/$slug'
+      path: '/$slug'
+      fullPath: '/notebooks/$slug'
+      preLoaderRoute: typeof NotebooksSlugRouteImport
+      parentRoute: typeof NotebooksRoute
+    }
   }
 }
+
+interface NotebooksRouteChildren {
+  NotebooksSlugRoute: typeof NotebooksSlugRoute
+}
+
+const NotebooksRouteChildren: NotebooksRouteChildren = {
+  NotebooksSlugRoute: NotebooksSlugRoute,
+}
+
+const NotebooksRouteWithChildren = NotebooksRoute._addFileChildren(
+  NotebooksRouteChildren,
+)
 
 interface ProfessionalRouteChildren {
   ProfessionalClientsRoute: typeof ProfessionalClientsRoute
@@ -395,6 +446,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExpertRoute: ExpertRoute,
   GuideRoute: GuideRoute,
   HomeRoute: HomeRoute,
+  NotebooksRoute: NotebooksRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PlanRoute: PlanRoute,
   ProfessionalRoute: ProfessionalRouteWithChildren,

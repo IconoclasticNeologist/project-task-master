@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Landmark,
   Users,
@@ -93,6 +93,20 @@ function GuideScreen() {
             </dl>
           </CardContent>
         </Card>
+
+        <Link to="/notebooks">
+          <Card className="paper-shadow">
+            <CardContent className="flex items-center justify-between py-5">
+              <div>
+                <div className="text-base font-normal text-foreground">
+                  {copy.guide.moreGuidesLabel}
+                </div>
+                <div className="text-xs text-muted-foreground">{copy.guide.moreGuidesHint}</div>
+              </div>
+              <span className="text-muted-foreground">→</span>
+            </CardContent>
+          </Card>
+        </Link>
 
         <p className="text-xs leading-relaxed text-muted-foreground">{copy.guide.sourceNote}</p>
       </div>

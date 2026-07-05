@@ -534,7 +534,31 @@ function SessionScreen() {
             </div>
 
             {medium === "avatar" ? (
-              screenMode === "voice" && (
+              screenMode === "voice" &&
+              (avatar.pushToTalk ? (
+                <div className="mx-auto w-full max-w-xs space-y-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void (avatar.isAnswering ? avatar.endAnswer() : avatar.startAnswer())
+                    }
+                    className={
+                      avatar.isAnswering
+                        ? "w-full rounded-md bg-primary px-4 py-4 text-sm font-medium text-primary-foreground"
+                        : "w-full rounded-md border border-border px-4 py-4 text-sm text-foreground"
+                    }
+                  >
+                    {avatar.isAnswering
+                      ? copy.session.witness.answerDone
+                      : copy.session.witness.answer}
+                  </button>
+                  <p className="text-xs leading-relaxed text-muted-foreground" aria-live="polite">
+                    {avatar.isAnswering
+                      ? copy.session.witness.answering
+                      : copy.session.witness.answerHint}
+                  </p>
+                </div>
+              ) : (
                 <button
                   type="button"
                   onClick={() => void avatar.toggleMic()}
@@ -542,7 +566,7 @@ function SessionScreen() {
                 >
                   {avatar.micMuted ? copy.session.mic.unmute : copy.session.mic.mute}
                 </button>
-              )
+              ))
             ) : screenMode === "voice" ? (
               <MicSetup
                 micState={micState}

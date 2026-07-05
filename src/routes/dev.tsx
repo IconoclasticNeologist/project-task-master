@@ -820,7 +820,7 @@ function AvatarSection({
   saving,
 }: {
   ops: AgentOps;
-  onSave: (value: { id: string | null; name: string | null; sandbox: boolean }) => void;
+  onSave: (value: AgentOps["avatar"]) => void;
   saving: boolean;
 }) {
   const [browsing, setBrowsing] = useState(false);
@@ -847,6 +847,20 @@ function AvatarSection({
             onChange={(e) => onSave({ ...ops.avatar, sandbox: e.target.checked })}
           />
           Sandbox mode (free, watermarked — turn off for the judged run)
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={ops.avatar.interactivity === "PUSH_TO_TALK"}
+            disabled={saving}
+            onChange={(e) =>
+              onSave({
+                ...ops.avatar,
+                interactivity: e.target.checked ? "PUSH_TO_TALK" : "CONVERSATIONAL",
+              })
+            }
+          />
+          Push to talk (recommended — an open mic lets ambient sound cut the avatar off)
         </label>
         <button
           type="button"
@@ -890,9 +904,7 @@ function AvatarSection({
                       key={`${a.source}-${a.id}`}
                       type="button"
                       disabled={saving}
-                      onClick={() =>
-                        onSave({ id: a.id, name: a.name, sandbox: ops.avatar.sandbox })
-                      }
+                      onClick={() => onSave({ ...ops.avatar, id: a.id, name: a.name })}
                       className={
                         selected
                           ? "rounded-md border-2 border-primary p-1 text-left"
@@ -1094,6 +1106,19 @@ function TryAgentPanel() {
             </button>
           )}
           <span className="text-xs text-muted-foreground">avatar {avatar.status}</span>
+          {avatarLive && avatar.pushToTalk && (
+            <button
+              type="button"
+              onClick={() => void (avatar.isAnswering ? avatar.endAnswer() : avatar.startAnswer())}
+              className={
+                avatar.isAnswering
+                  ? "rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                  : "rounded-md border border-border px-3 py-2 text-sm text-foreground"
+              }
+            >
+              {avatar.isAnswering ? "Done answering" : "Tap to answer"}
+            </button>
+          )}
         </div>
         {avatar.lastError && (
           <p className="text-sm leading-relaxed text-destructive">{avatar.lastError}</p>

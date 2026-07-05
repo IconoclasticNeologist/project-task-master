@@ -30,14 +30,22 @@ export interface AgentOpsConfig {
   voice: Record<Mode, string>;
   caps: AgentCaps;
   model: { primary: string; fallback: string | null };
-  avatar: { id: string | null; name: string | null; sandbox: boolean };
+  avatar: {
+    id: string | null;
+    name: string | null;
+    sandbox: boolean;
+    /** PUSH_TO_TALK (default): the mic opens only while answering, so the
+     *  avatar can never be barged-in mid-sentence by ambient sound — and the
+     *  person explicitly controls when they are heard. */
+    interactivity: "PUSH_TO_TALK" | "CONVERSATIONAL";
+  };
 }
 
 export const DEFAULT_OPS: AgentOpsConfig = {
   voice: { ...MODE_DEFAULT_VOICE },
   caps: { sessionSec: 45 * 60, practiceSec: 8 * 60, idleSec: 3 * 60 },
   model: { primary: MODEL_ALLOWLIST[0], fallback: null },
-  avatar: { id: null, name: null, sandbox: true },
+  avatar: { id: null, name: null, sandbox: true, interactivity: "PUSH_TO_TALK" },
 };
 
 // Caps are clamped, never trusted: a typo in the dashboard cannot create a
@@ -91,6 +99,7 @@ export function sanitizeOps(rows: Record<string, unknown>): AgentOpsConfig {
       id: typeof avatar.id === "string" && avatar.id ? avatar.id : null,
       name: typeof avatar.name === "string" && avatar.name ? avatar.name : null,
       sandbox: avatar.sandbox !== false, // safe default: sandbox ON
+      interactivity: avatar.interactivity === "CONVERSATIONAL" ? "CONVERSATIONAL" : "PUSH_TO_TALK",
     },
   };
 }

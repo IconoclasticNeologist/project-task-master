@@ -127,7 +127,12 @@ export interface AgentOps {
   voice: { base: string; regulator: string; interview: string; defense: string };
   caps: { sessionSec: number; practiceSec: number; idleSec: number };
   model: { primary: string; fallback: string | null };
-  avatar: { id: string | null; name: string | null; sandbox: boolean };
+  avatar: {
+    id: string | null;
+    name: string | null;
+    sandbox: boolean;
+    interactivity: "PUSH_TO_TALK" | "CONVERSATIONAL";
+  };
 }
 
 export interface AgentPromptInfo {

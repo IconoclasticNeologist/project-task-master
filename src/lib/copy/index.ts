@@ -247,6 +247,11 @@ export const copy = {
       avatarNote: "This is a practice person — a computer picture. It is not a real person.",
       voiceFallback:
         "The practice person is not available right now. You will hear the practice voice instead.",
+      // Push-to-talk: the person decides when they are heard.
+      answer: "Tap to answer",
+      answerDone: "I’m done answering",
+      answerHint: "Your microphone is only on while you answer.",
+      answering: "I can hear you. Tap again when you finish.",
     },
     permissionNeeded: "I need permission to use your microphone to listen.",
     permissionDenied:

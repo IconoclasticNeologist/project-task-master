@@ -24,6 +24,7 @@ import {
   AgentEventsEnum,
   LiveAvatarSession,
   SessionEvent,
+  SessionInteractivityMode,
   SessionState,
 } from "@heygen/liveavatar-web-sdk";
 import { getSupabase } from "@/lib/supabase/client";
@@ -44,18 +45,28 @@ interface UseLiveAvatarPracticeOptions {
 }
 
 async function fetchAvatarToken(): Promise<
-  { token: string; practiceCapSec: number | null } | "unavailable"
+  | {
+      token: string;
+      practiceCapSec: number | null;
+      interactivity: "PUSH_TO_TALK" | "CONVERSATIONAL";
+    }
+  | "unavailable"
 > {
   const supabase = getSupabase();
   const { data, error } = await supabase.functions.invoke<{
     token: string;
     practiceCapSec?: number;
+    interactivity?: string;
   }>("advocate-avatar-session", { body: {} });
   if (error || !data?.token) {
     // 503 = deliberately unconfigured → the caller falls back to voice-only.
     return "unavailable";
   }
-  return { token: data.token, practiceCapSec: data.practiceCapSec ?? null };
+  return {
+    token: data.token,
+    practiceCapSec: data.practiceCapSec ?? null,
+    interactivity: data.interactivity === "CONVERSATIONAL" ? "CONVERSATIONAL" : "PUSH_TO_TALK",
+  };
 }
 
 /** Shareable-only statements, oldest first, capped — the practice source material. */
@@ -82,6 +93,9 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const [practiceCapSec, setPracticeCapSec] = useState<number | null>(null);
   // Why the last connect failed, in plain words (dev surfaces show this).
   const [lastError, setLastError] = useState<string | null>(null);
+  // PUSH_TO_TALK: the mic transmits only while the person holds "answer".
+  const [pushToTalk, setPushToTalk] = useState(true);
+  const [isAnswering, setIsAnswering] = useState(false);
 
   const sessionRef = useRef<LiveAvatarSession | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
@@ -109,6 +123,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     streamReadyRef.current = false;
     setAvatarSpeaking(false);
     setMicMuted(false);
+    setIsAnswering(false);
     if (session) {
       session.removeAllListeners();
       void session.stop().catch(() => {
@@ -167,9 +182,12 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       const tokenResult = await fetchAvatarToken();
       if (tokenResult === "unavailable") return "unavailable";
       setPracticeCapSec(tokenResult.practiceCapSec);
+      const ptt = tokenResult.interactivity === "PUSH_TO_TALK";
+      setPushToTalk(ptt);
+      setIsAnswering(false);
 
       const session = new LiveAvatarSession(tokenResult.token, {
-        voiceChat: { defaultMuted: false },
+        voiceChat: ptt ? { mode: SessionInteractivityMode.PUSH_TO_TALK } : { defaultMuted: false },
       });
       sessionRef.current = session;
 
@@ -267,6 +285,30 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     }
   }, []);
 
+  /** PUSH_TO_TALK: open the mic while the person answers. */
+  const startAnswer = useCallback(async () => {
+    const session = sessionRef.current;
+    if (!session) return;
+    try {
+      await session.voiceChat.startPushToTalk();
+      setIsAnswering(true);
+    } catch {
+      /* stays closed — the person can try again */
+    }
+  }, []);
+
+  /** PUSH_TO_TALK: close the mic; their side finalizes the utterance. */
+  const endAnswer = useCallback(async () => {
+    const session = sessionRef.current;
+    if (!session) return;
+    try {
+      await session.voiceChat.stopPushToTalk();
+    } catch {
+      /* already closed */
+    }
+    setIsAnswering(false);
+  }, []);
+
   useEffect(() => () => tearDown(), [tearDown]);
 
   return {
@@ -275,11 +317,15 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     micMuted,
     practiceCapSec,
     lastError,
+    pushToTalk,
+    isAnswering,
     connect,
     disconnect,
     interrupt,
     attachVideo,
     sendText,
     toggleMic,
+    startAnswer,
+    endAnswer,
   };
 }

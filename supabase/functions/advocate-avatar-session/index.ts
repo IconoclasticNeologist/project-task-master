@@ -128,7 +128,9 @@ serve(async (req) => {
           avatar_id: avatarId,
           is_sandbox: sandbox,
           max_session_duration: durationSec,
-          interactivity_type: "CONVERSATIONAL",
+          // PUSH_TO_TALK by default: an always-open mic let ambient sound
+          // barge-in and cut the avatar off mid-sentence, endlessly.
+          interactivity_type: ops.avatar.interactivity,
           llm_configuration_id: llmConfigurationId,
           // FULL mode requires exactly one of avatar_persona | voice_agent.
           // A minimal persona keeps the avatar's own default voice and leaves
@@ -172,7 +174,12 @@ serve(async (req) => {
         .catch(() => undefined);
     }
 
-    return json(200, { token, sandbox, practiceCapSec });
+    return json(200, {
+      token,
+      sandbox,
+      practiceCapSec,
+      interactivity: ops.avatar.interactivity,
+    });
   } catch (_error) {
     return json(500, { error: "Internal error" });
   }

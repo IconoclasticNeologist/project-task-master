@@ -502,6 +502,15 @@ function SessionScreen() {
                     playsInline
                     className="paper-shadow-lg aspect-[3/4] w-full rounded-lg bg-secondary object-cover"
                   />
+                  {avatar.needsSoundTap && (
+                    <button
+                      type="button"
+                      onClick={avatar.enableSound}
+                      className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                    >
+                      {copy.session.witness.soundOn}
+                    </button>
+                  )}
                   <p className="text-center text-xs leading-relaxed text-muted-foreground">
                     {copy.session.witness.avatarNote}
                   </p>

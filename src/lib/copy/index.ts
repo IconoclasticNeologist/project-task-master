@@ -252,6 +252,7 @@ export const copy = {
       answerDone: "I’m done answering",
       answerHint: "Your microphone is only on while you answer.",
       answering: "I can hear you. Tap again when you finish.",
+      soundOn: "Tap to turn the sound on",
     },
     permissionNeeded: "I need permission to use your microphone to listen.",
     permissionDenied:

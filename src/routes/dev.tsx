@@ -1124,12 +1124,28 @@ function TryAgentPanel() {
           <p className="text-sm leading-relaxed text-destructive">{avatar.lastError}</p>
         )}
         {avatarLive && (
-          <video
-            ref={avatar.attachVideo}
-            autoPlay
-            playsInline
-            className="aspect-[3/4] w-full max-w-56 rounded-lg bg-secondary object-cover"
-          />
+          <>
+            <video
+              ref={avatar.attachVideo}
+              autoPlay
+              playsInline
+              className="aspect-[3/4] w-full max-w-56 rounded-lg bg-secondary object-cover"
+            />
+            {avatar.needsSoundTap && (
+              <button
+                type="button"
+                onClick={avatar.enableSound}
+                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+              >
+                Tap to turn the sound on
+              </button>
+            )}
+          </>
+        )}
+        {avatar.events.length > 0 && (
+          <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded bg-secondary px-2 py-2 text-xs leading-relaxed">
+            {avatar.events.join("\n")}
+          </pre>
         )}
       </CardContent>
     </Card>

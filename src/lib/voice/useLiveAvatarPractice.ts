@@ -26,6 +26,7 @@ import {
   SessionEvent,
   SessionInteractivityMode,
   SessionState,
+  VoiceChatState,
 } from "@heygen/liveavatar-web-sdk";
 import { getSupabase } from "@/lib/supabase/client";
 import { listStatements } from "@/lib/data/statements";
@@ -96,6 +97,15 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   // PUSH_TO_TALK: the mic transmits only while the person holds "answer".
   const [pushToTalk, setPushToTalk] = useState(true);
   const [isAnswering, setIsAnswering] = useState(false);
+  // Safari can refuse un-muted playback outside a tap; when that happens the
+  // UI shows an explicit "turn sound on" affordance instead of silent video.
+  const [needsSoundTap, setNeedsSoundTap] = useState(false);
+  // Content-free event trail (event names + outcomes only) for dev surfaces.
+  const [events, setEvents] = useState<string[]>([]);
+  const logEvent = useCallback((line: string) => {
+    const stamp = new Date().toISOString().slice(11, 19);
+    setEvents((prev) => [...prev.slice(-14), `${stamp} ${line}`]);
+  }, []);
 
   const sessionRef = useRef<LiveAvatarSession | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
@@ -193,9 +203,29 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
 
       session.on(SessionEvent.SESSION_STREAM_READY, () => {
         streamReadyRef.current = true;
-        if (videoElRef.current) {
-          videoElRef.current.muted = false;
-          session.attach(videoElRef.current);
+        logEvent("stream ready");
+        const el = videoElRef.current;
+        if (el) {
+          session.attach(el);
+          el.muted = false;
+          void el.play().then(
+            () => {
+              if (el.muted) {
+                setNeedsSoundTap(true);
+                logEvent("audio blocked (muted) — needs sound tap");
+              } else {
+                logEvent("playing with sound");
+              }
+            },
+            () => {
+              // Autoplay-with-sound refused: fall back to muted playback and
+              // ask for one tap. Silent video is worse than an honest button.
+              el.muted = true;
+              void el.play().catch(() => undefined);
+              setNeedsSoundTap(true);
+              logEvent("audio blocked (autoplay) — needs sound tap");
+            },
+          );
         }
         setStatus("open");
       });
@@ -223,12 +253,21 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         tearDown();
         setStatus("closed");
       });
-      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setAvatarSpeaking(true));
-      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => setAvatarSpeaking(false));
+      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
+        setAvatarSpeaking(true);
+        logEvent("avatar speaking");
+      });
+      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
+        setAvatarSpeaking(false);
+        logEvent("avatar finished");
+      });
       // Chunks give the stop word its lowest latency; full transcriptions are
       // the safety net when a pipeline emits only one of the two.
       session.on(AgentEventsEnum.USER_TRANSCRIPTION_CHUNK, (e) => pushTranscript(e.text));
-      session.on(AgentEventsEnum.USER_TRANSCRIPTION, (e) => pushTranscript(e.text));
+      session.on(AgentEventsEnum.USER_TRANSCRIPTION, (e) => {
+        logEvent(`heard you (${e.text.length} chars)`);
+        pushTranscript(e.text);
+      });
 
       await session.start();
       return "open";
@@ -290,12 +329,20 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     const session = sessionRef.current;
     if (!session) return;
     try {
+      if (session.voiceChat.state !== VoiceChatState.ACTIVE) {
+        // PTT voice chat may not auto-start; make the tap start it.
+        await session.voiceChat.start({ mode: SessionInteractivityMode.PUSH_TO_TALK });
+        logEvent("voice chat started");
+      }
       await session.voiceChat.startPushToTalk();
       setIsAnswering(true);
-    } catch {
-      /* stays closed — the person can try again */
+      logEvent("answer mic OPEN");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "could not open the mic";
+      setLastError(`Answer failed: ${msg}`);
+      logEvent(`answer FAILED: ${msg.slice(0, 60)}`);
     }
-  }, []);
+  }, [logEvent]);
 
   /** PUSH_TO_TALK: close the mic; their side finalizes the utterance. */
   const endAnswer = useCallback(async () => {
@@ -303,11 +350,22 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     if (!session) return;
     try {
       await session.voiceChat.stopPushToTalk();
+      logEvent("answer mic closed");
     } catch {
       /* already closed */
     }
     setIsAnswering(false);
-  }, []);
+  }, [logEvent]);
+
+  /** One tap turns sound on when the browser refused autoplay with audio. */
+  const enableSound = useCallback(() => {
+    const el = videoElRef.current;
+    if (!el) return;
+    el.muted = false;
+    void el.play().catch(() => undefined);
+    setNeedsSoundTap(false);
+    logEvent("sound enabled by tap");
+  }, [logEvent]);
 
   useEffect(() => () => tearDown(), [tearDown]);
 
@@ -319,6 +377,8 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     lastError,
     pushToTalk,
     isAnswering,
+    needsSoundTap,
+    events,
     connect,
     disconnect,
     interrupt,
@@ -327,5 +387,6 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     toggleMic,
     startAnswer,
     endAnswer,
+    enableSound,
   };
 }

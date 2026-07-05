@@ -33,11 +33,44 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { deriveShimKey } from "../_shared/liveavatar.ts";
 import { DEFENSE_PRACTICE_PROMPT } from "../_shared/advocatePrompts.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
+
+/**
+ * Content-free invocation health record: the last 8 calls (timestamp, auth
+ * result, turn count, upstream status, error snippet) in agent_config under
+ * "shim_recent". NEVER conversation text. This exists because the caller is
+ * LiveAvatar's servers — when the avatar goes silent, this is the only
+ * first-party record of why. Best-effort; never blocks or throws.
+ */
+function recordInvocation(entry: Record<string, unknown>): void {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return;
+    const admin = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    void (async () => {
+      const { data } = await admin
+        .from("agent_config")
+        .select("value")
+        .eq("key", "shim_recent")
+        .maybeSingle();
+      const arr = Array.isArray(data?.value) ? (data.value as unknown[]) : [];
+      arr.unshift({ t: new Date().toISOString(), ...entry });
+      await admin
+        .from("agent_config")
+        .upsert({ key: "shim_recent", value: arr.slice(0, 8) });
+    })().catch(() => undefined);
+  } catch {
+    /* observability must never break the brain */
+  }
+}
 
 // Accepted bearer values, resolved once per warm instance.
 let acceptedKeysPromise: Promise<string[]> | null = null;
@@ -187,10 +220,12 @@ serve(async (req) => {
 
     const auth = req.headers.get("Authorization") ?? "";
     if (!keys.some((k) => auth === `Bearer ${k}`)) {
+      recordInvocation({ status: 401, authHeaderPresent: auth.startsWith("Bearer ") });
       return json(401, { error: "Unauthorized" });
     }
 
     if (req.method !== "POST" || !new URL(req.url).pathname.endsWith("/chat/completions")) {
+      recordInvocation({ status: 404, path: new URL(req.url).pathname.slice(-48) });
       return json(404, { error: "Not found" });
     }
 
@@ -231,7 +266,13 @@ serve(async (req) => {
           })),
         }),
       });
-      if (!res.ok) return json(502, { error: "Upstream error" });
+      if (!res.ok) {
+        recordInvocation({
+          status: 502, provider: "anthropic", up: res.status,
+          err: (await res.text().catch(() => "")).slice(0, 160),
+        });
+        return json(502, { error: "Upstream error" });
+      }
       const out = await res.json();
       const block = Array.isArray(out?.content)
         ? out.content.find((b: { type?: string }) => b?.type === "text")
@@ -252,11 +293,24 @@ serve(async (req) => {
           }),
         },
       );
-      if (!res.ok) return json(502, { error: "Upstream error" });
+      if (!res.ok) {
+        recordInvocation({
+          status: 502, provider: "gemini", up: res.status,
+          err: (await res.text().catch(() => "")).slice(0, 160),
+        });
+        return json(502, { error: "Upstream error" });
+      }
       const out = await res.json();
       text = out?.candidates?.[0]?.content?.parts?.[0]?.text;
     }
-    if (typeof text !== "string" || !text.trim()) return json(502, { error: "Malformed reply" });
+    if (typeof text !== "string" || !text.trim()) {
+      recordInvocation({ status: 502, err: "malformed reply", provider: anthropicKey ? "anthropic" : "gemini" });
+      return json(502, { error: "Malformed reply" });
+    }
+    recordInvocation({
+      status: 200, turns: contents.length, stream,
+      provider: anthropicKey ? "anthropic" : "gemini", chars: text.length,
+    });
 
     if (stream) {
       return new Response(sseStream(requestedModel, text.trim()), {

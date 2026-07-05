@@ -317,7 +317,13 @@ serve(async (req) => {
           body: JSON.stringify({
             system_instruction: { parts: [{ text: systemText }] },
             contents,
-            generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.4 },
+            generationConfig: {
+              maxOutputTokens: MAX_OUTPUT_TOKENS,
+              temperature: 0.4,
+              // Gemini 2.5 thinking tokens count against the budget; disable so
+              // a short turn isn't truncated to "Hello. I'm".
+              thinkingConfig: { thinkingBudget: 0 },
+            },
           }),
         },
       );

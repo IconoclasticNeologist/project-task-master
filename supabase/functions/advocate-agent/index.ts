@@ -132,7 +132,15 @@ async function generateReply(
       body: JSON.stringify({
         system_instruction: { parts: [{ text: systemText }] },
         contents,
-        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.4 },
+        // Gemini 2.5 is a THINKING model — thinking tokens count against
+        // maxOutputTokens, so a small budget can be eaten by thinking and
+        // leave a truncated reply ("Hello. I'm"). These are short
+        // conversational turns; disable thinking for reliable, fast output.
+        generationConfig: {
+          maxOutputTokens: maxTokens,
+          temperature: 0.4,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
     },
   );
@@ -275,7 +283,11 @@ serve(async (req) => {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemPrompt + guardBlock + knowledge }] },
           contents: [{ role: "user", parts: [{ text: userText }] }],
-          generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.3 },
+          generationConfig: {
+            maxOutputTokens: MAX_OUTPUT_TOKENS,
+            temperature: 0.3,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       },
     );

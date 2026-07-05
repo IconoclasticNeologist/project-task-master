@@ -18,6 +18,7 @@ import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as ExpertRouteImport } from './routes/expert'
 import { Route as EnterRouteImport } from './routes/enter'
 import { Route as DevRouteImport } from './routes/dev'
 import { Route as AccountRouteImport } from './routes/account'
@@ -70,6 +71,11 @@ const GuideRoute = GuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExpertRoute = ExpertRouteImport.update({
+  id: '/expert',
+  path: '/expert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnterRoute = EnterRouteImport.update({
   id: '/enter',
   path: '/enter',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
+  '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
+  '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
+  '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dev'
     | '/enter'
+    | '/expert'
     | '/guide'
     | '/home'
     | '/onboarding'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dev'
     | '/enter'
+    | '/expert'
     | '/guide'
     | '/home'
     | '/onboarding'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/dev'
     | '/enter'
+    | '/expert'
     | '/guide'
     | '/home'
     | '/onboarding'
@@ -212,6 +224,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   DevRoute: typeof DevRoute
   EnterRoute: typeof EnterRoute
+  ExpertRoute: typeof ExpertRoute
   GuideRoute: typeof GuideRoute
   HomeRoute: typeof HomeRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -288,6 +301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/expert': {
+      id: '/expert'
+      path: '/expert'
+      fullPath: '/expert'
+      preLoaderRoute: typeof ExpertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enter': {
       id: '/enter'
       path: '/enter'
@@ -352,6 +372,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   DevRoute: DevRoute,
   EnterRoute: EnterRoute,
+  ExpertRoute: ExpertRoute,
   GuideRoute: GuideRoute,
   HomeRoute: HomeRoute,
   OnboardingRoute: OnboardingRoute,

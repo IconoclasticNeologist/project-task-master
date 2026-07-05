@@ -16,6 +16,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
 import { loadOps } from "../_shared/agentConfig.ts";
+import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 1024;
@@ -227,13 +228,15 @@ serve(async (req) => {
       }
 
       const admin = adminClient();
-      const [defensePrompt, knowledge, ops] = await Promise.all([
+      const [defensePrompt, knowledge, ops, guardrails] = await Promise.all([
         resolvePrompt(admin, "defense.practice"),
         buildKnowledgeBlock(admin, "defense.practice"),
         loadOps(admin),
+        loadGuardrails(admin),
       ]);
       const systemText = [
         defensePrompt,
+        buildGuardrailsBlock(guardrails, "defense.practice"),
         knowledge,
         "",
         "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",
@@ -257,10 +260,12 @@ serve(async (req) => {
     if (!userText) return json(400, { error: "Empty input" });
 
     const admin = adminClient();
-    const [systemPrompt, knowledge] = await Promise.all([
+    const [systemPrompt, knowledge, guardrails] = await Promise.all([
       resolvePrompt(admin, agent as PromptKey),
       buildKnowledgeBlock(admin, agent),
+      loadGuardrails(admin),
     ]);
+    const guardBlock = buildGuardrailsBlock(guardrails, agent);
     const model = Deno.env.get("GEMINI_TEXT_MODEL") ?? DEFAULT_MODEL;
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -268,7 +273,7 @@ serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt + knowledge }] },
+          system_instruction: { parts: [{ text: systemPrompt + guardBlock + knowledge }] },
           contents: [{ role: "user", parts: [{ text: userText }] }],
           generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.3 },
         }),

@@ -47,6 +47,11 @@ import {
   sanitizeOps,
   VOICE_ALLOWLIST,
 } from "../_shared/agentConfig.ts";
+import {
+  EMPTY_GUARDRAILS,
+  invalidateGuardrailsCache,
+  sanitizeGuardrails,
+} from "../_shared/guardrails.ts";
 
 type Json = Record<string, unknown>;
 
@@ -379,6 +384,25 @@ serve(async (req) => {
       await admin.from("agent_prompt_revisions").insert({ key, content, source, updated_by: callerEmail });
       invalidatePromptCache();
       return json(200, { ok: true });
+    }
+
+    if (action === "get_guardrails") {
+      const { data } = await admin
+        .from("agent_config")
+        .select("value")
+        .eq("key", "guardrails")
+        .maybeSingle();
+      return json(200, { guardrails: data?.value ? sanitizeGuardrails(data.value) : EMPTY_GUARDRAILS });
+    }
+
+    if (action === "set_guardrails") {
+      const clean = sanitizeGuardrails(body.value);
+      const { error } = await admin
+        .from("agent_config")
+        .upsert({ key: "guardrails", value: clean, updated_at: new Date().toISOString() });
+      if (error) return json(500, { error: `Could not save: ${error.message}` });
+      invalidateGuardrailsCache();
+      return json(200, { ok: true, guardrails: clean });
     }
 
     if (action === "reset_prompt") {

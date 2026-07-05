@@ -32,6 +32,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { languageLineFor, promptKeyForMode, type Mode } from "../_shared/advocatePrompts.ts";
 import { loadOps, VOICE_ALLOWLIST } from "../_shared/agentConfig.ts";
 import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
+import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
 
 const SESSION_SECONDS = 15 * 60; // token window — covers the full audio session
 const START_WINDOW_SECONDS = 60; // 1 min to open the WS after minting
@@ -153,8 +154,13 @@ serve(async (req) => {
       }
     }
 
-    const basePrompt = await resolvePrompt(admin, promptKeyForMode(mode) as PromptKey);
-    const systemText = basePrompt + languageLineFor(language);
+    const modeKey = promptKeyForMode(mode);
+    const [basePrompt, guardrails] = await Promise.all([
+      resolvePrompt(admin, modeKey as PromptKey),
+      loadGuardrails(admin),
+    ]);
+    const systemText =
+      basePrompt + buildGuardrailsBlock(guardrails, modeKey) + languageLineFor(language);
 
     // Mint with the primary model; retry ONCE with the fallback if configured.
     let model = ops.model.primary;

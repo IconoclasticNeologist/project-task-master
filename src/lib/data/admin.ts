@@ -226,6 +226,15 @@ export interface KnowledgeRow {
   status: "draft" | "published" | "retired";
   updatedAt: string;
 }
+// ── Guardrails (hard rules layered under every agent's prompt) ──────────────
+export interface Guardrails {
+  global: string[];
+  byAgent: Record<string, string[]>;
+}
+export const getGuardrails = () => adminCall<{ guardrails: Guardrails }>("get_guardrails");
+export const setGuardrails = (value: Guardrails) =>
+  adminCall<{ ok: true; guardrails: Guardrails }>("set_guardrails", { value });
+
 export const listKnowledge = () => adminCall<{ items: KnowledgeRow[] }>("list_knowledge");
 export const saveKnowledge = (item: {
   id?: string;

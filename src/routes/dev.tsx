@@ -24,6 +24,7 @@ import {
   ensureSelfAccess,
   fetchAdminStatus,
   getAgentConfig,
+  getGuardrails,
   improvePrompt,
   listAdminCodes,
   listAdminOrganizations,
@@ -36,9 +37,11 @@ import {
   revokeProfessional,
   saveKnowledge,
   setAgentConfig,
+  setGuardrails,
   setPrompt,
   type AgentOps,
   type AgentPromptInfo,
+  type Guardrails,
   type ImproveResult,
   type KnowledgeRow,
 } from "@/lib/data/admin";
@@ -210,6 +213,7 @@ type DevSection =
   | "overview"
   | "agents"
   | "prompts"
+  | "guardrails"
   | "knowledge"
   | "monitor"
   | "try"
@@ -220,6 +224,7 @@ const DEV_SECTIONS: Array<{ id: DevSection; label: string }> = [
   { id: "overview", label: "Overview" },
   { id: "agents", label: "Agents" },
   { id: "prompts", label: "Prompts" },
+  { id: "guardrails", label: "Guardrails" },
   { id: "knowledge", label: "Knowledge" },
   { id: "monitor", label: "Monitor" },
   { id: "try", label: "Try it" },
@@ -262,6 +267,7 @@ function Dashboard({ setupWarning }: { setupWarning: string | null }) {
         {section === "overview" && <ReadinessPanel />}
         {section === "agents" && <AgentsPanel />}
         {section === "prompts" && <PromptsPanel />}
+        {section === "guardrails" && <GuardrailsPanel />}
         {section === "knowledge" && <KnowledgePanel />}
         {section === "monitor" && <MonitorPanel />}
         {section === "try" && <TryAgentPanel />}
@@ -1597,6 +1603,175 @@ function KnowledgePanel() {
             </CardContent>
           </Card>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Guardrails: hard rules layered under every agent's prompt ───────────────
+
+const GUARDRAIL_AGENTS: Array<{ key: string; label: string }> = [
+  { key: "coach.base", label: "Coach" },
+  { key: "coach.regulator", label: "Coach — regulator" },
+  { key: "coach.interview", label: "Coach — interviewer" },
+  { key: "coach.defense", label: "Practice voice" },
+  { key: "defense.practice", label: "Practice person" },
+  { key: "translator", label: "Translator" },
+  { key: "organizer", label: "Organizer" },
+  { key: "reframer", label: "Reframer" },
+  { key: "recognition", label: "Recognition" },
+  { key: "interviewer", label: "Interviewer (text)" },
+];
+
+function RuleList({
+  rules,
+  onChange,
+  placeholder,
+}: {
+  rules: string[];
+  onChange: (next: string[]) => void;
+  placeholder: string;
+}) {
+  const [draft, setDraft] = useState("");
+  return (
+    <div className="space-y-2">
+      {rules.length === 0 && <p className="text-xs text-muted-foreground">No rules yet.</p>}
+      {rules.map((r, i) => (
+        <div key={i} className="flex items-start gap-2">
+          <span aria-hidden className="pt-2 text-xs text-muted-foreground">
+            •
+          </span>
+          <textarea
+            value={r}
+            onChange={(e) => onChange(rules.map((x, j) => (j === i ? e.target.value : x)))}
+            className="min-h-9 flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => onChange(rules.filter((_, j) => j !== i))}
+            className="pt-1.5 text-xs text-muted-foreground hover:text-destructive"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder={placeholder}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && draft.trim()) {
+              onChange([...rules, draft.trim()]);
+              setDraft("");
+            }
+          }}
+          className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+        <button
+          type="button"
+          disabled={!draft.trim()}
+          onClick={() => {
+            onChange([...rules, draft.trim()]);
+            setDraft("");
+          }}
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function GuardrailsPanel() {
+  const queryClient = useQueryClient();
+  const query = useQuery({ queryKey: ["guardrails"], queryFn: getGuardrails });
+  const [draft, setDraft] = useState<Guardrails | null>(null);
+  const [agentKey, setAgentKey] = useState<string>("coach.base");
+  const g = draft ?? query.data?.guardrails ?? { global: [], byAgent: {} };
+  const save = useMutation({
+    mutationFn: setGuardrails,
+    onSuccess: () => {
+      setDraft(null);
+      void queryClient.invalidateQueries({ queryKey: ["guardrails"] });
+    },
+  });
+  const dirty = draft !== null;
+
+  if (query.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (query.isError) {
+    return (
+      <p className="text-sm text-destructive">
+        Couldn&apos;t load guardrails — apply the pending migration SQL if you haven&apos;t.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <header>
+        <h2 className="text-xl font-normal tracking-tight">Guardrails</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          Hard rules layered UNDER every agent&apos;s own prompt and told to override anything
+          later. Global rules apply to all agents at once; per-agent rules add to them. This is the
+          one-place safety layer — you don&apos;t have to paste the same rule into ten prompts.
+        </p>
+      </header>
+
+      <Card className="paper-shadow">
+        <CardHeader>
+          <CardTitle className="text-base font-normal">Global rules (every agent)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RuleList
+            rules={g.global}
+            onChange={(next) => setDraft({ ...g, global: next })}
+            placeholder="e.g. Never ask about anyone's immigration status."
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="paper-shadow">
+        <CardHeader>
+          <CardTitle className="text-base font-normal">Per-agent rules</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <select
+            value={agentKey}
+            onChange={(e) => setAgentKey(e.target.value)}
+            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            {GUARDRAIL_AGENTS.map((a) => (
+              <option key={a.key} value={a.key}>
+                {a.label}
+                {(g.byAgent[a.key]?.length ?? 0) > 0 ? ` (${g.byAgent[a.key].length})` : ""}
+              </option>
+            ))}
+          </select>
+          <RuleList
+            rules={g.byAgent[agentKey] ?? []}
+            onChange={(next) => setDraft({ ...g, byAgent: { ...g.byAgent, [agentKey]: next } })}
+            placeholder="A rule just for this agent."
+          />
+        </CardContent>
+      </Card>
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          disabled={save.isPending || !dirty}
+          onClick={() => save.mutate(g)}
+          className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-40"
+        >
+          {save.isPending ? "Saving…" : "Save guardrails"}
+        </button>
+        {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
+        {save.isError && (
+          <span className="text-sm text-destructive">
+            {save.error instanceof Error ? save.error.message : "Save failed"}
+          </span>
+        )}
       </div>
     </div>
   );

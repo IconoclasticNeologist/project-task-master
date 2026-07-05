@@ -39,6 +39,7 @@ import { deriveShimKey } from "../_shared/liveavatar.ts";
 import { resolvePrompt } from "../_shared/promptRegistry.ts";
 import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
 import { loadOps } from "../_shared/agentConfig.ts";
+import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 
@@ -253,13 +254,15 @@ serve(async (req) => {
 
     const { account, contents } = shapeConversation(messages);
     const admin = adminClientForReads();
-    const [defensePrompt, knowledge, ops] = await Promise.all([
+    const [defensePrompt, knowledge, ops, guardrails] = await Promise.all([
       resolvePrompt(admin, "defense.practice"),
       buildKnowledgeBlock(admin, "defense.practice"),
       loadOps(admin),
+      loadGuardrails(admin),
     ]);
     const systemText = [
       defensePrompt,
+      buildGuardrailsBlock(guardrails, "defense.practice"),
       knowledge,
       "",
       "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",

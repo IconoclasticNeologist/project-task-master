@@ -20,19 +20,29 @@ import { pageTitle, PRODUCT_NAME } from "@/lib/product";
 import {
   approveProfessional,
   avatarKeyCheck,
+  deleteKnowledge,
   ensureSelfAccess,
   fetchAdminStatus,
   getAgentConfig,
+  improvePrompt,
   listAdminCodes,
   listAdminOrganizations,
   listAdminProfessionals,
   listAgentStats,
   listAvatars,
+  listKnowledge,
   mintSurvivorCode,
+  resetPrompt,
   revokeProfessional,
+  saveKnowledge,
   setAgentConfig,
+  setPrompt,
   type AgentOps,
+  type AgentPromptInfo,
+  type ImproveResult,
+  type KnowledgeRow,
 } from "@/lib/data/admin";
+import { Textarea } from "@/components/ui/textarea";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
 import { useLiveAvatarPractice } from "@/lib/voice/useLiveAvatarPractice";
 
@@ -122,7 +132,7 @@ function DevScreen() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border">
           <span className="text-sm text-muted-foreground">{PRODUCT_NAME} — developer</span>
           {(gate.kind === "ok" || gate.kind === "denied") && (
@@ -196,30 +206,74 @@ function DevScreen() {
   );
 }
 
+type DevSection =
+  | "overview"
+  | "agents"
+  | "prompts"
+  | "knowledge"
+  | "monitor"
+  | "try"
+  | "access"
+  | "orgs";
+
+const DEV_SECTIONS: Array<{ id: DevSection; label: string }> = [
+  { id: "overview", label: "Overview" },
+  { id: "agents", label: "Agents" },
+  { id: "prompts", label: "Prompts" },
+  { id: "knowledge", label: "Knowledge" },
+  { id: "monitor", label: "Monitor" },
+  { id: "try", label: "Try it" },
+  { id: "access", label: "Access & codes" },
+  { id: "orgs", label: "Organizations" },
+];
+
 function Dashboard({ setupWarning }: { setupWarning: string | null }) {
+  const [section, setSection] = useState<DevSection>("overview");
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-normal tracking-tight">Developer dashboard</h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          System health, codes, professionals, and organizations. Survivor words are never visible
-          here — row-level security keeps them out of reach even for this dashboard, by design.
-        </p>
-      </header>
-      {setupWarning && (
-        <p className="rounded-md border border-destructive/40 px-3 py-2 text-sm leading-relaxed text-foreground">
-          Setup step failed: {setupWarning}. Minting codes may not work until this is fixed — reload
-          after applying the fix.
-        </p>
-      )}
-      <ReadinessPanel />
-      <AgentsPanel />
-      <MonitorPanel />
-      <TryAgentPanel />
-      <MintPanel />
-      <CodesPanel />
-      <ProfessionalsPanel />
-      <OrganizationsPanel />
+    <div className="flex flex-col gap-6 md:flex-row">
+      {/* Left nav (top-scrolling row on mobile, sidebar on desktop). */}
+      <nav className="md:w-44 md:shrink-0">
+        <ul className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
+          {DEV_SECTIONS.map((s) => (
+            <li key={s.id} className="shrink-0">
+              <button
+                type="button"
+                onClick={() => setSection(s.id)}
+                className={
+                  section === s.id
+                    ? "w-full whitespace-nowrap rounded-md bg-foreground/10 px-3 py-2 text-left text-sm text-foreground"
+                    : "w-full whitespace-nowrap rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:text-foreground"
+                }
+              >
+                {s.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div className="min-w-0 flex-1 space-y-6">
+        {setupWarning && (
+          <p className="rounded-md border border-destructive/40 px-3 py-2 text-sm leading-relaxed text-foreground">
+            Setup step failed: {setupWarning}. Some actions may not work until this is fixed —
+            reload after applying the fix.
+          </p>
+        )}
+        {section === "overview" && <ReadinessPanel />}
+        {section === "agents" && <AgentsPanel />}
+        {section === "prompts" && <PromptsPanel />}
+        {section === "knowledge" && <KnowledgePanel />}
+        {section === "monitor" && <MonitorPanel />}
+        {section === "try" && <TryAgentPanel />}
+        {section === "access" && (
+          <>
+            <MintPanel />
+            <CodesPanel />
+            <ProfessionalsPanel />
+          </>
+        )}
+        {section === "orgs" && <OrganizationsPanel />}
+      </div>
     </div>
   );
 }
@@ -628,7 +682,6 @@ function AgentsPanel() {
     practiceSec: string;
     idleSec: string;
   } | null>(null);
-  const [openPrompt, setOpenPrompt] = useState<string | null>(null);
 
   if (config.isLoading) {
     return (
@@ -659,7 +712,7 @@ function AgentsPanel() {
     );
   }
 
-  const { ops, allow, prompts } = config.data;
+  const { ops, allow } = config.data;
   const caps = capsDraft ?? {
     sessionSec: String(ops.caps.sessionSec),
     practiceSec: String(ops.caps.practiceSec),
@@ -776,33 +829,10 @@ function AgentsPanel() {
           saving={save.isPending}
         />
 
-        <div>
-          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-            Prompts (read-only, SME-gated)
-          </h3>
-          <div className="space-y-1">
-            {prompts.map((p) => (
-              <div key={p.agent} className="rounded-md border border-border px-3 py-2">
-                <button
-                  type="button"
-                  onClick={() => setOpenPrompt(openPrompt === p.agent ? null : p.agent)}
-                  className="flex w-full items-center justify-between text-left text-sm"
-                >
-                  <span>{p.title}</span>
-                  <span className="text-xs text-muted-foreground">{p.smeStatus}</span>
-                </button>
-                {openPrompt === p.agent && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-muted-foreground">{p.gitPath}</p>
-                    <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded bg-secondary px-2 py-2 text-xs leading-relaxed">
-                      {p.text}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Prompts moved to their own <span className="text-foreground">Prompts</span> tab — every
+          one is editable there, with Improve-with-AI.
+        </p>
 
         {save.isError && (
           <p className="text-sm text-destructive">
@@ -1149,5 +1179,380 @@ function TryAgentPanel() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ── Prompts: every runtime prompt, editable, with Improve-with-AI ───────────
+
+function PromptsPanel() {
+  const config = useQuery({ queryKey: ["agent-config"], queryFn: getAgentConfig });
+  if (config.isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading prompts…</p>;
+  }
+  if (config.isError || !config.data) {
+    return (
+      <p className="text-sm text-destructive">
+        Couldn&apos;t load prompts
+        {config.error instanceof Error ? ` — ${config.error.message}` : ""}.
+      </p>
+    );
+  }
+  const groups = new Map<string, AgentPromptInfo[]>();
+  for (const p of config.data.prompts) {
+    const arr = groups.get(p.group) ?? [];
+    arr.push(p);
+    groups.set(p.group, arr);
+  }
+  return (
+    <div className="space-y-4">
+      <header>
+        <h2 className="text-xl font-normal tracking-tight">Prompts</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          Every AI brain&apos;s instructions. Edit any of them — your version wins over the built-in
+          default, which is always one click away to restore. &quot;Improve with AI&quot; drafts a
+          better version with Sonnet 5 and shows you before/after; nothing changes until you accept
+          and save.
+        </p>
+      </header>
+      {[...groups.entries()].map(([group, prompts]) => (
+        <div key={group} className="space-y-2">
+          <h3 className="text-xs uppercase tracking-wide text-muted-foreground">{group}</h3>
+          {prompts.map((p) => (
+            <PromptEditor key={p.key} prompt={p} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PromptEditor({ prompt }: { prompt: AgentPromptInfo }) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(prompt.effective);
+  const [improve, setImprove] = useState<ImproveResult | null>(null);
+  const [instruction, setInstruction] = useState("");
+  const refresh = () => void queryClient.invalidateQueries({ queryKey: ["agent-config"] });
+
+  const save = useMutation({
+    mutationFn: (source: "manual" | "ai") => setPrompt(prompt.key, draft, source),
+    onSuccess: () => {
+      setImprove(null);
+      refresh();
+    },
+  });
+  const reset = useMutation({
+    mutationFn: () => resetPrompt(prompt.key),
+    onSuccess: () => {
+      setDraft(prompt.default);
+      setImprove(null);
+      refresh();
+    },
+  });
+  const ai = useMutation({
+    mutationFn: () =>
+      improvePrompt({ current: draft, title: prompt.title, note: prompt.note, instruction }),
+    onSuccess: (r) => setImprove(r),
+  });
+
+  const dirty = draft !== prompt.effective;
+  const edited = prompt.override !== null;
+
+  return (
+    <Card className="paper-shadow">
+      <CardContent className="space-y-3 py-4">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex w-full items-center justify-between text-left"
+        >
+          <span className="text-sm text-foreground">
+            {prompt.title}
+            {edited && <span className="ml-2 text-xs text-muted-foreground">· edited</span>}
+          </span>
+          <span aria-hidden className="text-muted-foreground">
+            {open ? "–" : "+"}
+          </span>
+        </button>
+        {open && (
+          <div className="space-y-3">
+            <p className="text-xs leading-relaxed text-muted-foreground">{prompt.note}</p>
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              className="min-h-48 font-mono text-xs leading-relaxed"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={save.isPending || !dirty}
+                onClick={() => save.mutate("manual")}
+                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-40"
+              >
+                {save.isPending ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                disabled={ai.isPending}
+                onClick={() => ai.mutate()}
+                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                {ai.isPending ? "Improving…" : "✦ Improve with AI"}
+              </button>
+              {edited && (
+                <button
+                  type="button"
+                  disabled={reset.isPending}
+                  onClick={() => reset.mutate()}
+                  className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+                >
+                  Restore default
+                </button>
+              )}
+            </div>
+            <input
+              value={instruction}
+              onChange={(e) => setInstruction(e.target.value)}
+              placeholder="Optional: tell the AI what to focus on (e.g. 'be firmer', 'shorter')"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
+            />
+            {ai.isError && (
+              <p className="text-sm text-destructive">
+                {ai.error instanceof Error ? ai.error.message : "Improve failed"}
+              </p>
+            )}
+            {save.isError && (
+              <p className="text-sm text-destructive">
+                {save.error instanceof Error ? save.error.message : "Save failed"}
+              </p>
+            )}
+            {improve && (
+              <div className="space-y-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-3">
+                <p className="text-xs font-medium text-foreground">
+                  Proposed by {improve.model} · {improve.latencyMs}ms
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {improve.explanation}
+                </p>
+                {improve.keyChanges.length > 0 && (
+                  <ul className="list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
+                    {improve.keyChanges.map((c, i) => (
+                      <li key={i}>{c}</li>
+                    ))}
+                  </ul>
+                )}
+                <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded bg-card px-2 py-2 text-xs leading-relaxed text-foreground">
+                  {improve.improved}
+                </pre>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft(improve.improved);
+                      setImprove(null);
+                    }}
+                    className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                  >
+                    Use this
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImprove(null)}
+                    className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground"
+                  >
+                    Discard
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Project knowledge: what the AI brains know (dev + expert curated) ────────
+
+const KNOWLEDGE_AGENT_OPTIONS: Array<{ key: string; label: string }> = [
+  { key: "coach.base", label: "Coach" },
+  { key: "coach.defense", label: "Practice voice" },
+  { key: "defense.practice", label: "Practice person" },
+  { key: "translator", label: "Translator" },
+  { key: "reframer", label: "Reframer" },
+  { key: "recognition", label: "Recognition" },
+  { key: "interviewer", label: "Interviewer" },
+];
+
+function KnowledgePanel() {
+  const queryClient = useQueryClient();
+  const list = useQuery({ queryKey: ["project-knowledge"], queryFn: listKnowledge });
+  const [editing, setEditing] = useState<Partial<KnowledgeRow> | null>(null);
+  const refresh = () => void queryClient.invalidateQueries({ queryKey: ["project-knowledge"] });
+  const save = useMutation({
+    mutationFn: saveKnowledge,
+    onSuccess: () => {
+      setEditing(null);
+      refresh();
+    },
+  });
+  const remove = useMutation({ mutationFn: deleteKnowledge, onSuccess: refresh });
+
+  return (
+    <div className="space-y-4">
+      <header>
+        <h2 className="text-xl font-normal tracking-tight">Project knowledge</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          Background the AI brains draw on — court facts, definitions, guidance. Only{" "}
+          <span className="text-foreground">published</span> items reach the agents, and only the
+          agents you target. This is exactly what an expert (attorney, therapist) curates from their
+          own limited dashboard; you have the same control here.
+        </p>
+      </header>
+
+      {!editing && (
+        <button
+          type="button"
+          onClick={() => setEditing({ title: "", body: "", agentKeys: [], status: "draft" })}
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          Add knowledge
+        </button>
+      )}
+
+      {editing && (
+        <Card className="paper-shadow">
+          <CardContent className="space-y-3 py-4">
+            <input
+              value={editing.title ?? ""}
+              onChange={(e) => setEditing((v) => ({ ...v, title: e.target.value }))}
+              placeholder="Title (e.g. 'What a continuance means')"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            <Textarea
+              value={editing.body ?? ""}
+              onChange={(e) => setEditing((v) => ({ ...v, body: e.target.value }))}
+              placeholder="The knowledge itself, in plain words."
+              className="min-h-32 text-sm"
+            />
+            <div>
+              <p className="mb-1 text-xs text-muted-foreground">
+                Which agents may use this? (none selected = all agents)
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {KNOWLEDGE_AGENT_OPTIONS.map((o) => {
+                  const on = (editing.agentKeys ?? []).includes(o.key);
+                  return (
+                    <button
+                      key={o.key}
+                      type="button"
+                      onClick={() =>
+                        setEditing((v) => {
+                          const keys = new Set(v?.agentKeys ?? []);
+                          if (keys.has(o.key)) keys.delete(o.key);
+                          else keys.add(o.key);
+                          return { ...v, agentKeys: [...keys] };
+                        })
+                      }
+                      className={
+                        on
+                          ? "rounded-md border border-primary bg-primary/10 px-2 py-1 text-xs"
+                          : "rounded-md border border-border px-2 py-1 text-xs text-muted-foreground"
+                      }
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={editing.status ?? "draft"}
+                onChange={(e) =>
+                  setEditing((v) => ({ ...v, status: e.target.value as KnowledgeRow["status"] }))
+                }
+                className="rounded-md border border-input bg-background px-2 py-2 text-sm"
+              >
+                <option value="draft">Draft (not used by AI)</option>
+                <option value="published">Published (AI uses it)</option>
+                <option value="retired">Retired</option>
+              </select>
+              <button
+                type="button"
+                disabled={save.isPending || !editing.title?.trim() || !editing.body?.trim()}
+                onClick={() =>
+                  save.mutate({
+                    id: editing.id,
+                    title: editing.title ?? "",
+                    body: editing.body ?? "",
+                    agentKeys: editing.agentKeys ?? [],
+                    status: (editing.status as KnowledgeRow["status"]) ?? "draft",
+                  })
+                }
+                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-40"
+              >
+                {save.isPending ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+            {save.isError && (
+              <p className="text-sm text-destructive">
+                {save.error instanceof Error ? save.error.message : "Save failed"}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {list.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {list.isError && (
+        <p className="text-sm text-destructive">
+          Couldn&apos;t load knowledge — apply the pending migration SQL if you haven&apos;t.
+        </p>
+      )}
+      {list.data && list.data.items.length === 0 && !editing && (
+        <p className="text-sm text-muted-foreground">No knowledge yet.</p>
+      )}
+      <div className="space-y-2">
+        {list.data?.items.map((k) => (
+          <Card key={k.id} className="paper-shadow">
+            <CardContent className="space-y-1 py-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">{k.title}</span>
+                <span className="text-xs text-muted-foreground">
+                  {k.status}
+                  {k.agentKeys.length > 0 ? ` · ${k.agentKeys.length} agent(s)` : " · all agents"}
+                </span>
+              </div>
+              <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{k.body}</p>
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setEditing(k)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  disabled={remove.isPending}
+                  onClick={() => remove.mutate(k.id)}
+                  className="text-xs text-muted-foreground hover:text-destructive"
+                >
+                  Delete
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }

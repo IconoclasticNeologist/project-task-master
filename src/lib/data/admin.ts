@@ -136,11 +136,13 @@ export interface AgentOps {
 }
 
 export interface AgentPromptInfo {
-  agent: string;
+  key: string;
   title: string;
-  gitPath: string;
-  smeStatus: string;
-  text: string;
+  group: string;
+  note: string;
+  default: string;
+  override: string | null;
+  effective: string;
 }
 
 export interface AgentConfigBundle {
@@ -178,3 +180,54 @@ export const listAvatars = () =>
 export const listAgentStats = () => adminCall<{ stats: AgentStatRow[] }>("list_agent_stats");
 export const avatarKeyCheck = () =>
   adminCall<{ keySet: boolean; valid: boolean; status: number | null }>("avatar_key_check");
+
+// ── Prompts (dev-editable, git default always restorable) ───────────────────
+export const setPrompt = (key: string, content: string, source: "manual" | "ai" = "manual") =>
+  adminCall<{ ok: true }>("set_prompt", { key, content, source });
+export const resetPrompt = (key: string) => adminCall<{ ok: true }>("reset_prompt", { key });
+
+export interface ImproveResult {
+  improved: string;
+  explanation: string;
+  keyChanges: string[];
+  model: string;
+  latencyMs: number;
+}
+export async function improvePrompt(input: {
+  current: string;
+  title: string;
+  note: string;
+  instruction?: string;
+}): Promise<ImproveResult> {
+  const { data, error } = await getSupabase().functions.invoke("advocate-improve-prompt", {
+    body: input,
+  });
+  if (error) {
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === "function") {
+      const body = await ctx.json().catch(() => null);
+      if (body?.error) throw new Error(String(body.error));
+    }
+    throw new Error(error.message);
+  }
+  return data as ImproveResult;
+}
+
+// ── Project knowledge (expert-curated; feeds the AI brains) ─────────────────
+export interface KnowledgeRow {
+  id: string;
+  title: string;
+  body: string;
+  agentKeys: string[];
+  status: "draft" | "published" | "retired";
+  updatedAt: string;
+}
+export const listKnowledge = () => adminCall<{ items: KnowledgeRow[] }>("list_knowledge");
+export const saveKnowledge = (item: {
+  id?: string;
+  title: string;
+  body: string;
+  agentKeys: string[];
+  status: "draft" | "published" | "retired";
+}) => adminCall<{ ok: true; id: string }>("save_knowledge", { item });
+export const deleteKnowledge = (id: string) => adminCall<{ ok: true }>("delete_knowledge", { id });

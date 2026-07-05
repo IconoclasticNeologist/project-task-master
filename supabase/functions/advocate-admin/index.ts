@@ -504,6 +504,64 @@ serve(async (req) => {
       });
     }
 
+    if (action === "list_knowledge") {
+      const { data, error } = await admin
+        .from("project_knowledge")
+        .select("id, title, body, agent_keys, status, updated_at")
+        .order("updated_at", { ascending: false });
+      if (error) return json(500, { error: `Could not read knowledge: ${error.message}` });
+      return json(200, {
+        items: (data ?? []).map((r) => ({
+          id: r.id,
+          title: r.title,
+          body: r.body,
+          agentKeys: r.agent_keys ?? [],
+          status: r.status,
+          updatedAt: r.updated_at,
+        })),
+      });
+    }
+
+    if (action === "save_knowledge") {
+      const item = (body.item ?? {}) as Record<string, unknown>;
+      const title = typeof item.title === "string" ? item.title.trim() : "";
+      const knowledgeBody = typeof item.body === "string" ? item.body.trim() : "";
+      const agentKeys = Array.isArray(item.agentKeys)
+        ? (item.agentKeys.filter((k) => typeof k === "string") as string[])
+        : [];
+      const status = ["draft", "published", "retired"].includes(String(item.status))
+        ? (item.status as string)
+        : "draft";
+      if (!title || !knowledgeBody) return json(400, { error: "Title and body are required" });
+      const row = {
+        title,
+        body: knowledgeBody,
+        agent_keys: agentKeys,
+        status,
+        updated_at: new Date().toISOString(),
+      };
+      if (typeof item.id === "string" && item.id) {
+        const { error } = await admin.from("project_knowledge").update(row).eq("id", item.id);
+        if (error) return json(500, { error: `Could not save: ${error.message}` });
+        return json(200, { ok: true, id: item.id });
+      }
+      const { data, error } = await admin
+        .from("project_knowledge")
+        .insert({ ...row, created_by: callerEmail })
+        .select("id")
+        .single();
+      if (error) return json(500, { error: `Could not save: ${error.message}` });
+      return json(200, { ok: true, id: data.id });
+    }
+
+    if (action === "delete_knowledge") {
+      const id = typeof body.id === "string" ? body.id : "";
+      if (!id) return json(400, { error: "Missing id" });
+      const { error } = await admin.from("project_knowledge").delete().eq("id", id);
+      if (error) return json(500, { error: `Could not delete: ${error.message}` });
+      return json(200, { ok: true });
+    }
+
     if (action === "list_agent_stats") {
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const { data, error } = await admin

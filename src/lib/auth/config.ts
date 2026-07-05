@@ -14,5 +14,13 @@ export type AccessMode = "gated" | "open";
 
 export const accessMode: AccessMode = "gated";
 
+// Self-serve is an ADDITIONAL door alongside gated codes (accessMode stays
+// "gated" for the primary coded flow). A person with no advocate can enter on
+// their own: the advocate's individualized tech-safety planning is replaced by
+// an in-app safety check (src/routes/begin.tsx) shown BEFORE any identity is
+// created, and a self-serve survivor is bound to no gatekeeper (NULL) via the
+// create_self_serve_survivor() RPC. Set false to hide the solo door entirely.
+export const selfServeEnabled = true;
+
 // OPEN-MODE ONLY (dormant; not seeded in the gated build).
 export const SELF_SERVE_GATEKEEPER_ID = "00000000-0000-0000-0000-0000000000bb";

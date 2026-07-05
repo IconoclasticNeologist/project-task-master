@@ -55,6 +55,36 @@ export async function redeemCode(code: string): Promise<RedeemResult> {
 }
 
 /**
+ * Self-serve entry: no code. Establish an anonymous identity, then create a
+ * survivor bound to no gatekeeper (create_self_serve_survivor is idempotent, so
+ * a retry returns the same survivor). If creation fails after sign-in, sign back
+ * out ONLY if THIS flow created the session, so a pre-existing session is never
+ * evicted — mirrors redeemCode's contract.
+ */
+export async function createSelfServeSurvivor(): Promise<RedeemResult> {
+  const supabase = getSupabase();
+
+  let createdSession = false;
+  try {
+    createdSession = await ensureAnonymous();
+  } catch {
+    return { ok: false };
+  }
+
+  // create_self_serve_survivor isn't in the generated types until the migration
+  // is applied + types regenerated; type this one call locally.
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+  ) => Promise<{ data: string | null; error: { message: string } | null }>;
+  const created = await rpc("create_self_serve_survivor");
+  if (created.error || !created.data) {
+    if (createdSession) await supabase.auth.signOut(); // only undo a session WE created
+    return { ok: false };
+  }
+  return { ok: true, survivorId: created.data };
+}
+
+/**
  * The current survivor row. Returns null ONLY when there is genuinely no usable
  * identity (no session, or a valid session with no survivor row). THROWS on a real
  * query error so the route guard can tell "no identity → redirect to welcome" apart

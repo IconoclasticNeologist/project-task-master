@@ -37,6 +37,25 @@ export const copy = {
     profileSaveFailed: "We could not save that just now. You can set it later in Settings.",
   },
 
+  // Self-serve entry — for a person who has no code and no advocate. The safety
+  // check does, in the app, what an advocate's tech-safety planning would do.
+  begin: {
+    onOwnLink: "I don’t have a code",
+    safetyTitle: "Before we start.",
+    safetyBody:
+      "You don’t need a code or a helper to use this. First, a few small things to help keep you safe.",
+    safetyPoints: [
+      "Try to use a device that is yours — one other people don’t check.",
+      "If someone might see your screen, “Leave now” at the top leaves this page fast.",
+      "You can use this without giving your name. Nothing is recorded.",
+      "A trained advocate can help too, if you ever want one. The Support page has free, private numbers, any time.",
+    ],
+    safetyCta: "I understand — begin",
+    notNow: "Not now",
+    creating: "Setting up your space…",
+    failed: "We couldn’t set that up just now. You can try again in a moment.",
+  },
+
   shell: {
     leaveNow: "Leave now",
     iNeedABreak: "I need a break",

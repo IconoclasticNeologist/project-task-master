@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
-import { accessMode } from "@/lib/auth/config";
+import { accessMode, selfServeEnabled } from "@/lib/auth/config";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/")({
@@ -39,6 +39,14 @@ function WelcomeScreen() {
           >
             Begin
           </Link>
+          {selfServeEnabled && accessMode === "gated" && (
+            <Link
+              to="/begin"
+              className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
+            >
+              {copy.begin.onOwnLink}
+            </Link>
+          )}
           <Link
             to="/home"
             className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"

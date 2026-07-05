@@ -23,6 +23,7 @@ import { Route as GuideRouteImport } from './routes/guide'
 import { Route as ExpertRouteImport } from './routes/expert'
 import { Route as EnterRouteImport } from './routes/enter'
 import { Route as DevRouteImport } from './routes/dev'
+import { Route as BeginRouteImport } from './routes/begin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfessionalKnowledgeRouteImport } from './routes/professional.knowledge'
@@ -99,6 +100,11 @@ const DevRoute = DevRouteImport.update({
   path: '/dev',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BeginRoute = BeginRouteImport.update({
+  id: '/begin',
+  path: '/begin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -128,6 +134,7 @@ const NotebooksSlugRoute = NotebooksSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/begin': typeof BeginRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/expert': typeof ExpertRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/begin': typeof BeginRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/expert': typeof ExpertRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/begin': typeof BeginRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/expert': typeof ExpertRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
+    | '/begin'
     | '/dev'
     | '/enter'
     | '/expert'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/begin'
     | '/dev'
     | '/enter'
     | '/expert'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
+    | '/begin'
     | '/dev'
     | '/enter'
     | '/expert'
@@ -258,6 +270,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
+  BeginRoute: typeof BeginRoute
   DevRoute: typeof DevRoute
   EnterRoute: typeof EnterRoute
   ExpertRoute: typeof ExpertRoute
@@ -374,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/begin': {
+      id: '/begin'
+      path: '/begin'
+      fullPath: '/begin'
+      preLoaderRoute: typeof BeginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account': {
       id: '/account'
       path: '/account'
@@ -441,6 +461,7 @@ const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
+  BeginRoute: BeginRoute,
   DevRoute: DevRoute,
   EnterRoute: EnterRoute,
   ExpertRoute: ExpertRoute,

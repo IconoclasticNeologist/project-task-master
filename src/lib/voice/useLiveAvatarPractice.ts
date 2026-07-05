@@ -1,14 +1,15 @@
 // HeyGen LiveAvatar client hook for the Witness Stand practice person.
 //
-// PATTERN: mirrors useGeminiLive's surface (status / connect / disconnect /
-// interrupt) so the session screen choreographs both media the same way.
-//
-// The avatar is OPT-IN and Witness-Stand-only. Its only brain is our
-// RAG-locked shim (advocate-defense-llm) — registered server-side with
-// LiveAvatar, selected by advocate-avatar-session when the token is minted.
-// The person's SHAREABLE-only statements ride into the session as a
-// sentinel-prefixed first message, which the shim lifts into source
-// material; the avatar can only ask about what the person already said.
+// OWNED CONVERSATION LOOP (why the avatar is just a face here):
+//   LiveAvatar's browser auto-voice loop reliably GENERATES a reply to the
+//   person's speech but never VOICES it (verified over many tests + the shim
+//   health record). So we own the loop end to end:
+//     input  → their ASR (accurate) → user.transcription, captured per answer
+//     brain  → WE generate the line via advocate-agent `defense_turn`
+//              (JWT-gated, RAG-locked to the person's shareable-only account)
+//     output → session.repeat(text) = avatar.speak_text = speak VERBATIM,
+//              the one command proven reliable (2/2 headless, no generation)
+//   The avatar never generates; it only speaks text we hand it.
 //
 // SAFETY INVARIANTS:
 //   - No LiveAvatar API key in the browser — only a session-scoped token.
@@ -17,7 +18,8 @@
 //     mid-word without waiting on anything.
 //   - The deterministic tripwire runs on the person's live transcription
 //     (chunk events for low latency, full events as the safety net).
-//   - No transcript array is kept; fragments flow through the rolling window.
+//   - Conversation history is module-local (in-memory ref), cleared on
+//     teardown; nothing persisted.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -110,12 +112,13 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   }, []);
 
   const sessionRef = useRef<LiveAvatarSession | null>(null);
-  // Delayed-mute timer (see endAnswer): trailing silence lets the agent
-  // commit the person's turn and voice its reply.
-  const muteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The person's spoken answer, accumulated from live transcription between
-  // "Tap to answer" and "I'm done" — so we can EXPLICITLY drive the reply.
+  // "Tap to answer" and "I'm done" — the input to our own reply generation.
   const answerBufRef = useRef("");
+  // OWNED CONVERSATION LOOP: we generate every line and the avatar speaks it
+  // VERBATIM (their auto-voice loop never speaks user-triggered replies).
+  const accountRef = useRef("");
+  const historyRef = useRef<Array<{ role: "user" | "avatar"; text: string }>>([]);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const streamReadyRef = useRef(false);
   const transcriptTripRef = useRef(makeTranscriptTripwire());
@@ -139,10 +142,6 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     const session = sessionRef.current;
     sessionRef.current = null;
     streamReadyRef.current = false;
-    if (muteTimerRef.current) {
-      clearTimeout(muteTimerRef.current);
-      muteTimerRef.current = null;
-    }
     setAvatarSpeaking(false);
     setMicMuted(false);
     setIsAnswering(false);
@@ -181,6 +180,53 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     if (sig) onDistressRef.current?.(sig);
   }, []);
 
+  /**
+   * The owned conversation loop: WE generate the line (JWT-gated
+   * advocate-agent defense_turn — RAG-locked to the person's shareable-only
+   * account), and the avatar speaks it VERBATIM via speak_text. Never routed
+   * through their auto-voice loop, which generates but never voices a
+   * user-triggered reply.
+   */
+  const generateAndSpeak = useCallback(
+    async (opening: boolean) => {
+      const session = sessionRef.current;
+      if (!session) return;
+      logEvent(opening ? "generating opener…" : "generating reply…");
+      try {
+        const { data, error } = await getSupabase().functions.invoke<{ text?: string }>(
+          "advocate-agent",
+          {
+            body: {
+              agent: "defense_turn",
+              input: {
+                account: accountRef.current,
+                turns: historyRef.current,
+                opening,
+              },
+            },
+          },
+        );
+        const text = data?.text?.trim();
+        if (error || !text) {
+          logEvent("generate FAILED");
+          setLastError("The practice questioner couldn’t think of a line just now.");
+          return;
+        }
+        if (sessionRef.current !== session) return; // stopped while generating
+        historyRef.current.push({ role: "avatar", text });
+        session.repeat(text); // avatar.speak_text — VERBATIM, proven reliable
+        logEvent(`speaking (${text.length} chars)`);
+      } catch (e) {
+        logEvent(`generate error: ${e instanceof Error ? e.message.slice(0, 40) : "err"}`);
+      }
+    },
+    [logEvent],
+  );
+  const generateAndSpeakRef = useRef(generateAndSpeak);
+  useEffect(() => {
+    generateAndSpeakRef.current = generateAndSpeak;
+  }, [generateAndSpeak]);
+
   const connect = useCallback(async (): Promise<AvatarConnectResult> => {
     setStatus("connecting");
     setLastError(null);
@@ -208,6 +254,9 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       const ptt = tokenResult.interactivity === "PUSH_TO_TALK";
       pttRef.current = ptt;
       setIsAnswering(false);
+      accountRef.current = account;
+      historyRef.current = [];
+      answerBufRef.current = "";
 
       // CONVERSATIONAL + muted-by-default: the working turn pipeline, with
       // the mic gated by the answer button (unmute → speak → mute). PTT mode
@@ -245,19 +294,15 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         }
         setStatus("open");
       });
-      // Hand the practice its source material only once the session state
-      // machine is CONNECTED — commands sent at STREAM_READY throw ("Session
-      // needs to be connected") and the throw tears the session down. The
-      // try/catch is belt-and-braces: context delivery may never kill video.
-      let contextSent = false;
+      // OWNED LOOP: once CONNECTED, WE generate the opener and the avatar
+      // speaks it verbatim. We never hand a turn to their auto-voice loop
+      // (it generates but never speaks user-triggered replies). Commands sent
+      // before CONNECTED throw and tear the session down, so we wait for it.
+      let openerDriven = false;
       session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
-        if (state !== SessionState.CONNECTED || contextSent) return;
-        contextSent = true;
-        try {
-          session.message(`${ACCOUNT_SENTINEL}\n${account}`);
-        } catch {
-          /* the shim then sees no context and asks warm-up questions only */
-        }
+        if (state !== SessionState.CONNECTED || openerDriven) return;
+        openerDriven = true;
+        void generateAndSpeakRef.current(true);
       });
       session.on(SessionEvent.SESSION_DISCONNECTED, () => {
         if (sessionRef.current !== session) return; // our own teardown
@@ -346,10 +391,6 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const startAnswer = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
-    if (muteTimerRef.current) {
-      clearTimeout(muteTimerRef.current);
-      muteTimerRef.current = null;
-    }
     try {
       if (session.voiceChat.state !== VoiceChatState.ACTIVE) {
         await session.voiceChat.start(
@@ -383,38 +424,27 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         await session.voiceChat.stopPushToTalk();
         logEvent("answer mic closed");
       } else {
-        // Close the floor and mute immediately — we no longer wait for their
-        // auto-voice loop (it generates a reply but never speaks it).
+        // Close the floor and mute so their ASR stops. Then WE generate the
+        // reply and the avatar speaks it verbatim.
         session.stopListening();
         await session.voiceChat.mute();
         logEvent("answer mic closed");
-        // EXPLICIT DRIVE: their ASR→auto-LLM→auto-speak loop reliably
-        // GENERATES but never VOICES the reply in the browser. speak_response
-        // (session.message) both generates via our RAG-locked LLM AND speaks —
-        // proven reliable. Give the final transcription a beat to arrive, then
-        // drive the reply from the person's captured answer.
-        muteTimerRef.current = setTimeout(() => {
-          muteTimerRef.current = null;
-          const s = sessionRef.current;
-          const answer = answerBufRef.current.trim();
-          answerBufRef.current = "";
-          if (!s || !answer) {
-            logEvent("no answer captured");
-            return;
-          }
-          try {
-            s.message(answer);
-            logEvent(`drove reply from answer (${answer.length} chars)`);
-          } catch (e) {
-            logEvent(`drive failed: ${e instanceof Error ? e.message.slice(0, 50) : "err"}`);
-          }
-        }, 1200);
+        const answer = answerBufRef.current.trim();
+        answerBufRef.current = "";
+        if (!answer) {
+          logEvent("no answer captured");
+        } else {
+          historyRef.current.push({ role: "user", text: answer });
+          logEvent(`your answer (${answer.length} chars)`);
+          void generateAndSpeak(false);
+        }
       }
     } catch {
       /* already closed */
     }
     setIsAnswering(false);
-  }, [logEvent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logEvent, generateAndSpeak]);
 
   /** One tap turns sound on when the browser refused autoplay with audio. */
   const enableSound = useCallback(() => {

@@ -13,6 +13,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { DEFENSE_PRACTICE_PROMPT } from "../_shared/advocatePrompts.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 1024;
@@ -143,6 +144,64 @@ function userTextFor(agent: AgentName, input: Record<string, unknown>): string |
 
 const ALLOWED = ["translator", "reframer", "recognition", "interviewer", "organizer"];
 
+/**
+ * Multi-turn reply generator — Claude (claude-sonnet-5) when ANTHROPIC_API_KEY
+ * is set, Gemini otherwise. Returns trimmed text or null on any failure.
+ */
+async function generateReply(
+  geminiKey: string,
+  systemText: string,
+  contents: Array<{ role: "user" | "model"; parts: [{ text: string }] }>,
+  maxTokens: number,
+): Promise<string | null> {
+  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? Deno.env.get("CLAUDE_API_KEY");
+  if (anthropicKey) {
+    const model = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5";
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": anthropicKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        temperature: 0.4,
+        system: systemText,
+        messages: contents.map((c) => ({
+          role: c.role === "model" ? "assistant" : "user",
+          content: c.parts[0].text,
+        })),
+      }),
+    });
+    if (!res.ok) return null;
+    const out = await res.json();
+    const block = Array.isArray(out?.content)
+      ? out.content.find((b: { type?: string }) => b?.type === "text")
+      : null;
+    const text = block?.text;
+    return typeof text === "string" && text.trim() ? text.trim() : null;
+  }
+  const model = Deno.env.get("GEMINI_TEXT_MODEL") ?? DEFAULT_MODEL;
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemText }] },
+        contents,
+        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.4 },
+      }),
+    },
+  );
+  if (!res.ok) return null;
+  const out = await res.json();
+  const text = out?.candidates?.[0]?.content?.parts?.[0]?.text;
+  return typeof text === "string" && text.trim() ? text.trim() : null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const json = (status: number, body: unknown) =>
@@ -183,6 +242,61 @@ serve(async (req) => {
           .catch(() => undefined);
       }
       return json(200, { text: "ok" });
+    }
+
+    // Witness Stand practice turn — the browser drives the avatar's script
+    // itself (their auto-voice loop generates but never speaks user-triggered
+    // replies). We generate here, JWT-gated, under the RAG-locked defense
+    // prompt + the person's shareable-only account, and the client speaks the
+    // returned text VERBATIM via avatar.speak_text.
+    //
+    // input: { account: string, turns: [{ role: "user"|"avatar", text }],
+    //          opening?: boolean }
+    if (body && typeof body === "object" && body.agent === "defense_turn") {
+      const input = (body.input ?? {}) as Record<string, unknown>;
+      const account = typeof input.account === "string" ? input.account.slice(0, 4000) : "";
+      const rawTurns = Array.isArray(input.turns) ? input.turns : [];
+      const contents = rawTurns
+        .map((t) => {
+          const turn = t as { role?: unknown; text?: unknown };
+          const text = typeof turn.text === "string" ? turn.text.trim() : "";
+          if (!text) return null;
+          return { role: turn.role === "avatar" ? "model" : "user", parts: [{ text }] };
+        })
+        .filter(Boolean) as Array<{ role: "user" | "model"; parts: [{ text: string }] }>;
+
+      if (input.opening === true || contents.length === 0) {
+        contents.length = 0;
+        contents.push({
+          role: "user",
+          parts: [
+            {
+              text: "The practice is starting. First introduce yourself in one or two sentences — you are the practice questioner, this is only practice, nothing here is real or counts, and they can say stop at any time. Then ask your first easy warm-up question.",
+            },
+          ],
+        });
+      }
+      // Model contract: must start user-first; merge consecutive same-role.
+      if (contents[0].role === "model") {
+        contents.unshift({ role: "user", parts: [{ text: "(The practice has begun.)" }] });
+      }
+      const merged: typeof contents = [];
+      for (const turn of contents) {
+        const last = merged[merged.length - 1];
+        if (last && last.role === turn.role) last.parts[0].text += `\n${turn.parts[0].text}`;
+        else merged.push(turn);
+      }
+
+      const systemText = [
+        DEFENSE_PRACTICE_PROMPT,
+        "",
+        "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",
+        account || "(none provided — warm-up questions only)",
+      ].join("\n");
+
+      const reply = await generateReply(apiKey, systemText, merged, 200);
+      if (!reply) return json(502, { error: "Practice reply failed" });
+      return json(200, { text: reply });
     }
 
     const agent = (body && typeof body === "object" && body.agent) as AgentName;

@@ -113,6 +113,9 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   // Delayed-mute timer (see endAnswer): trailing silence lets the agent
   // commit the person's turn and voice its reply.
   const muteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The person's spoken answer, accumulated from live transcription between
+  // "Tap to answer" and "I'm done" — so we can EXPLICITLY drive the reply.
+  const answerBufRef = useRef("");
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const streamReadyRef = useRef(false);
   const transcriptTripRef = useRef(makeTranscriptTripwire());
@@ -172,6 +175,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
 
   const pushTranscript = useCallback((text: string) => {
     if (!text || text.startsWith(ACCOUNT_SENTINEL)) return; // never tripwire our own context
+    answerBufRef.current += (answerBufRef.current ? " " : "") + text;
     onUserTextRef.current?.(text);
     const sig = transcriptTripRef.current.push(text);
     if (sig) onDistressRef.current?.(sig);
@@ -353,6 +357,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         );
         logEvent("voice chat started");
       }
+      answerBufRef.current = ""; // fresh capture for this answer
       if (pttRef.current) {
         await session.voiceChat.startPushToTalk();
       } else {
@@ -378,19 +383,32 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         await session.voiceChat.stopPushToTalk();
         logEvent("answer mic closed");
       } else {
-        // stop-listening is what lets the agent take its turn and speak.
+        // Close the floor and mute immediately — we no longer wait for their
+        // auto-voice loop (it generates a reply but never speaks it).
         session.stopListening();
-        logEvent("answer turn ended (mic muting in 1.5s)");
-        if (muteTimerRef.current) clearTimeout(muteTimerRef.current);
+        await session.voiceChat.mute();
+        logEvent("answer mic closed");
+        // EXPLICIT DRIVE: their ASR→auto-LLM→auto-speak loop reliably
+        // GENERATES but never VOICES the reply in the browser. speak_response
+        // (session.message) both generates via our RAG-locked LLM AND speaks —
+        // proven reliable. Give the final transcription a beat to arrive, then
+        // drive the reply from the person's captured answer.
         muteTimerRef.current = setTimeout(() => {
           muteTimerRef.current = null;
           const s = sessionRef.current;
-          if (!s) return;
-          void s.voiceChat.mute().then(
-            () => logEvent("answer mic closed"),
-            () => undefined,
-          );
-        }, 1500);
+          const answer = answerBufRef.current.trim();
+          answerBufRef.current = "";
+          if (!s || !answer) {
+            logEvent("no answer captured");
+            return;
+          }
+          try {
+            s.message(answer);
+            logEvent(`drove reply from answer (${answer.length} chars)`);
+          } catch (e) {
+            logEvent(`drive failed: ${e instanceof Error ? e.message.slice(0, 50) : "err"}`);
+          }
+        }, 1200);
       }
     } catch {
       /* already closed */

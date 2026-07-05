@@ -443,7 +443,6 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       /* already closed */
     }
     setIsAnswering(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logEvent, generateAndSpeak]);
 
   /** One tap turns sound on when the browser refused autoplay with audio. */

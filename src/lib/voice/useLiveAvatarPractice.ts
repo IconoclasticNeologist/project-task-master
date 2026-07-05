@@ -110,6 +110,9 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   }, []);
 
   const sessionRef = useRef<LiveAvatarSession | null>(null);
+  // Delayed-mute timer (see endAnswer): trailing silence lets the agent
+  // commit the person's turn and voice its reply.
+  const muteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const streamReadyRef = useRef(false);
   const transcriptTripRef = useRef(makeTranscriptTripwire());
@@ -133,6 +136,10 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     const session = sessionRef.current;
     sessionRef.current = null;
     streamReadyRef.current = false;
+    if (muteTimerRef.current) {
+      clearTimeout(muteTimerRef.current);
+      muteTimerRef.current = null;
+    }
     setAvatarSpeaking(false);
     setMicMuted(false);
     setIsAnswering(false);
@@ -335,6 +342,10 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const startAnswer = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
+    if (muteTimerRef.current) {
+      clearTimeout(muteTimerRef.current);
+      muteTimerRef.current = null;
+    }
     try {
       if (session.voiceChat.state !== VoiceChatState.ACTIVE) {
         await session.voiceChat.start(
@@ -346,6 +357,8 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         await session.voiceChat.startPushToTalk();
       } else {
         await session.voiceChat.unmute();
+        // Explicit turn-bracketing: tell the agent the user has the floor.
+        session.startListening();
       }
       setIsAnswering(true);
       logEvent("answer mic OPEN");
@@ -356,17 +369,29 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     }
   }, [logEvent]);
 
-  /** Close the mic; their side finalizes the utterance. */
+  /** End the answer: release the floor, then mute after a grace period. */
   const endAnswer = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
     try {
       if (pttRef.current) {
         await session.voiceChat.stopPushToTalk();
+        logEvent("answer mic closed");
       } else {
-        await session.voiceChat.mute();
+        // stop-listening is what lets the agent take its turn and speak.
+        session.stopListening();
+        logEvent("answer turn ended (mic muting in 1.5s)");
+        if (muteTimerRef.current) clearTimeout(muteTimerRef.current);
+        muteTimerRef.current = setTimeout(() => {
+          muteTimerRef.current = null;
+          const s = sessionRef.current;
+          if (!s) return;
+          void s.voiceChat.mute().then(
+            () => logEvent("answer mic closed"),
+            () => undefined,
+          );
+        }, 1500);
       }
-      logEvent("answer mic closed");
     } catch {
       /* already closed */
     }

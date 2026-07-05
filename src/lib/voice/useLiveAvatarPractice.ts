@@ -290,7 +290,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       setStatus("error");
       return "error";
     }
-  }, [pushTranscript, tearDown]);
+  }, [pushTranscript, tearDown, logEvent]);
 
   /** Typed practice answers — text-or-voice everywhere. */
   const sendText = useCallback((text: string) => {

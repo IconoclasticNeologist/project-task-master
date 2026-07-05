@@ -106,7 +106,24 @@ function shapeConversation(messages: OpenAIMessage[]): {
       role: "user",
     });
   }
-  return { account, contents };
+  // Model-contract normalization (Gemini AND Anthropic): the conversation
+  // must START with a user turn, and consecutive same-role turns must be
+  // merged. Without this, every call after the avatar's opening line fails —
+  // the history then leads with an assistant turn — and the avatar goes
+  // silent while still hearing everything.
+  if (contents[0].role === "model") {
+    contents.unshift({ role: "user", parts: [{ text: "(The practice has begun.)" }] });
+  }
+  const merged: typeof contents = [];
+  for (const turn of contents) {
+    const last = merged[merged.length - 1];
+    if (last && last.role === turn.role) {
+      last.parts[0].text += `\n${turn.parts[0].text}`;
+    } else {
+      merged.push(turn);
+    }
+  }
+  return { account, contents: merged };
 }
 
 function openAiCompletion(model: string, text: string) {

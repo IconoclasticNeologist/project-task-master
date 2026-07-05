@@ -22,7 +22,10 @@
 
 const LIVEAVATAR_API = "https://api.liveavatar.com";
 const SHIM_CONTEXT = "advocate-defense-shim-v1";
-export const DEFENSE_CONFIG_NAME = "advocate-defense";
+// v2: re-registered 2026-07-04 with the explicit LIVEAVATAR_SHIM_KEY when
+// present (deterministic on both ends) after a silent-agent incident where
+// zero LLM replies came back under the original binding.
+export const DEFENSE_CONFIG_NAME = "advocate-defense-v2";
 
 /** Deterministic shim bearer secret — an HMAC, never the API key itself. */
 export async function deriveShimKey(apiKey: string): Promise<string> {

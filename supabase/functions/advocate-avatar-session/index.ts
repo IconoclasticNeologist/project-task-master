@@ -50,7 +50,9 @@ async function resolveLlmConfigId(apiKey: string): Promise<string | null> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   if (!supabaseUrl) return null;
   const shimUrl = `${supabaseUrl}/functions/v1/advocate-defense-llm`;
-  const shimKey = await deriveShimKey(apiKey);
+  // Prefer the explicit shim secret when set — deterministic on both ends
+  // (the shim accepts it directly); the HMAC derivation is the fallback.
+  const shimKey = Deno.env.get("LIVEAVATAR_SHIM_KEY") ?? (await deriveShimKey(apiKey));
   cachedLlmConfigId = await ensureDefenseLlmConfig(apiKey, shimUrl, shimKey);
   return cachedLlmConfigId;
 }

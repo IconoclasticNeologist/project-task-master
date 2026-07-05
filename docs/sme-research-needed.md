@@ -115,6 +115,11 @@ Trauma therapist **and** attorney.
 - **Third-party data surface**: practice audio and account-derived questions transit HeyGen
   LiveAvatar (STT: Deepgram/AssemblyAI; TTS: ElevenLabs). Confirm this is acceptable for real
   survivors or demo-only.
+- **LiveAvatar retains session transcripts server-side** (verified 2026-07-04 via their
+  `GET /v1/sessions/{id}/transcript` — user utterances stored with timestamps). This conflicts
+  with the product's no-retention rule for the voice path. Before any real survivor uses the
+  practice person: obtain their retention policy / deletion guarantees (enterprise controls),
+  or treat the avatar as demo-only.
 
 ---
 

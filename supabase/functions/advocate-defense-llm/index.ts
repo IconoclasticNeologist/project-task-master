@@ -160,8 +160,13 @@ serve(async (req) => {
 
   try {
     const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_AI_API_KEY");
+    const anthropicConfigured = Boolean(
+      Deno.env.get("ANTHROPIC_API_KEY") ?? Deno.env.get("CLAUDE_API_KEY"),
+    );
     const keys = await acceptedKeys();
-    if (keys.length === 0 || !geminiKey) return json(503, { error: "Not configured" });
+    if (keys.length === 0 || (!geminiKey && !anthropicConfigured)) {
+      return json(503, { error: "Not configured" });
+    }
 
     const auth = req.headers.get("Authorization") ?? "";
     if (!keys.some((k) => auth === `Bearer ${k}`)) {
@@ -185,22 +190,55 @@ serve(async (req) => {
       account || "(none provided — warm-up questions only)",
     ].join("\n");
 
-    const model = Deno.env.get("GEMINI_TEXT_MODEL") ?? DEFAULT_MODEL;
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`,
-      {
+    // Scriptwriter: Claude (claude-sonnet-5) when ANTHROPIC_API_KEY is set,
+    // Gemini otherwise. Same prompt, same hard rules either way.
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? Deno.env.get("CLAUDE_API_KEY");
+    let text: string | undefined;
+    if (anthropicKey) {
+      const model = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5";
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemText }] },
-          contents,
-          generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.4 },
+          model,
+          max_tokens: MAX_OUTPUT_TOKENS,
+          temperature: 0.4,
+          system: systemText,
+          messages: contents.map((c) => ({
+            role: c.role === "model" ? "assistant" : "user",
+            content: c.parts[0].text,
+          })),
         }),
-      },
-    );
-    if (!res.ok) return json(502, { error: "Upstream error" });
-    const out = await res.json();
-    const text = out?.candidates?.[0]?.content?.parts?.[0]?.text;
+      });
+      if (!res.ok) return json(502, { error: "Upstream error" });
+      const out = await res.json();
+      const block = Array.isArray(out?.content)
+        ? out.content.find((b: { type?: string }) => b?.type === "text")
+        : null;
+      text = block?.text;
+    } else {
+      if (!geminiKey) return json(503, { error: "Not configured" });
+      const model = Deno.env.get("GEMINI_TEXT_MODEL") ?? DEFAULT_MODEL;
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemText }] },
+            contents,
+            generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.4 },
+          }),
+        },
+      );
+      if (!res.ok) return json(502, { error: "Upstream error" });
+      const out = await res.json();
+      text = out?.candidates?.[0]?.content?.parts?.[0]?.text;
+    }
     if (typeof text !== "string" || !text.trim()) return json(502, { error: "Malformed reply" });
 
     if (stream) {

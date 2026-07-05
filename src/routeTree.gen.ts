@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SessionRouteImport } from './routes/session'
 import { Route as ResourcesRouteImport } from './routes/resources'
@@ -29,6 +30,11 @@ import { Route as ProfessionalClientsRouteImport } from './routes/professional.c
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SourcesRoute = SourcesRouteImport.update({
+  id: '/sources',
+  path: '/sources',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
+  '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/session'
     | '/settings'
+    | '/sources'
     | '/team'
     | '/professional/clients'
     | '/professional/knowledge'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/session'
     | '/settings'
+    | '/sources'
     | '/team'
     | '/professional/clients'
     | '/professional/knowledge'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/session'
     | '/settings'
+    | '/sources'
     | '/team'
     | '/professional/clients'
     | '/professional/knowledge'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   ResourcesRoute: typeof ResourcesRoute
   SessionRoute: typeof SessionRoute
   SettingsRoute: typeof SettingsRoute
+  SourcesRoute: typeof SourcesRoute
   TeamRoute: typeof TeamRoute
 }
 
@@ -243,6 +256,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sources': {
+      id: '/sources'
+      path: '/sources'
+      fullPath: '/sources'
+      preLoaderRoute: typeof SourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -381,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesRoute: ResourcesRoute,
   SessionRoute: SessionRoute,
   SettingsRoute: SettingsRoute,
+  SourcesRoute: SourcesRoute,
   TeamRoute: TeamRoute,
 }
 export const routeTree = rootRouteImport

@@ -235,6 +235,29 @@ export const getGuardrails = () => adminCall<{ guardrails: Guardrails }>("get_gu
 export const setGuardrails = (value: Guardrails) =>
   adminCall<{ ok: true; guardrails: Guardrails }>("set_guardrails", { value });
 
+// ── Acknowledgements (public SME page, dev-editable) ────────────────────────
+export interface AckRow {
+  id: string;
+  name: string;
+  role: string | null;
+  bio: string | null;
+  image: string | null;
+  sort_order: number;
+}
+export const listAcknowledgements = () =>
+  adminCall<{ items: AckRow[] }>("list_acknowledgements");
+export const saveAcknowledgement = (item: {
+  id?: string;
+  name: string;
+  role: string;
+  bio: string;
+  image?: string | null;
+  clearImage?: boolean;
+  sortOrder: number;
+}) => adminCall<{ ok: true; id: string }>("save_acknowledgement", { item });
+export const deleteAcknowledgement = (id: string) =>
+  adminCall<{ ok: true }>("delete_acknowledgement", { id });
+
 export const listKnowledge = () => adminCall<{ items: KnowledgeRow[] }>("list_knowledge");
 export const saveKnowledge = (item: {
   id?: string;

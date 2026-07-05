@@ -586,6 +586,56 @@ serve(async (req) => {
       return json(200, { ok: true });
     }
 
+    if (action === "list_acknowledgements") {
+      const { data, error } = await admin
+        .from("acknowledgements")
+        .select("id, name, role, bio, image, sort_order")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (error) return json(500, { error: `Could not read: ${error.message}` });
+      return json(200, { items: data ?? [] });
+    }
+
+    if (action === "save_acknowledgement") {
+      const item = (body.item ?? {}) as Record<string, unknown>;
+      const name = typeof item.name === "string" ? item.name.trim() : "";
+      if (!name) return json(400, { error: "Name is required" });
+      const image = typeof item.image === "string" ? item.image : null;
+      // Guard against oversized data URIs (≈700KB base64 ≈ 500KB image).
+      if (image && image.length > 950_000) {
+        return json(400, { error: "Image is too large — please use one under 500 KB." });
+      }
+      const row: Record<string, unknown> = {
+        name,
+        role: typeof item.role === "string" ? item.role : null,
+        bio: typeof item.bio === "string" ? item.bio : null,
+        sort_order: typeof item.sortOrder === "number" ? item.sortOrder : 0,
+        updated_at: new Date().toISOString(),
+      };
+      // Only overwrite the image when one is provided (undefined = keep existing).
+      if (image !== null || item.clearImage === true) row.image = item.clearImage ? null : image;
+      if (typeof item.id === "string" && item.id) {
+        const { error } = await admin.from("acknowledgements").update(row).eq("id", item.id);
+        if (error) return json(500, { error: `Could not save: ${error.message}` });
+        return json(200, { ok: true, id: item.id });
+      }
+      const { data, error } = await admin
+        .from("acknowledgements")
+        .insert(row)
+        .select("id")
+        .single();
+      if (error) return json(500, { error: `Could not save: ${error.message}` });
+      return json(200, { ok: true, id: data.id });
+    }
+
+    if (action === "delete_acknowledgement") {
+      const id = typeof body.id === "string" ? body.id : "";
+      if (!id) return json(400, { error: "Missing id" });
+      const { error } = await admin.from("acknowledgements").delete().eq("id", id);
+      if (error) return json(500, { error: `Could not delete: ${error.message}` });
+      return json(200, { ok: true });
+    }
+
     if (action === "list_agent_stats") {
       const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const { data, error } = await admin

@@ -20,6 +20,7 @@ import { pageTitle, PRODUCT_NAME } from "@/lib/product";
 import {
   approveProfessional,
   avatarKeyCheck,
+  deleteAcknowledgement,
   deleteKnowledge,
   ensureSelfAccess,
   fetchAdminStatus,
@@ -29,16 +30,19 @@ import {
   listAdminCodes,
   listAdminOrganizations,
   listAdminProfessionals,
+  listAcknowledgements,
   listAgentStats,
   listAvatars,
   listKnowledge,
   mintSurvivorCode,
   resetPrompt,
   revokeProfessional,
+  saveAcknowledgement,
   saveKnowledge,
   setAgentConfig,
   setGuardrails,
   setPrompt,
+  type AckRow,
   type AgentOps,
   type AgentPromptInfo,
   type Guardrails,
@@ -217,6 +221,7 @@ type DevSection =
   | "knowledge"
   | "monitor"
   | "try"
+  | "acknowledgements"
   | "access"
   | "orgs";
 
@@ -228,6 +233,7 @@ const DEV_SECTIONS: Array<{ id: DevSection; label: string }> = [
   { id: "knowledge", label: "Knowledge" },
   { id: "monitor", label: "Monitor" },
   { id: "try", label: "Try it" },
+  { id: "acknowledgements", label: "Acknowledgements" },
   { id: "access", label: "Access & codes" },
   { id: "orgs", label: "Organizations" },
 ];
@@ -271,6 +277,7 @@ function Dashboard({ setupWarning }: { setupWarning: string | null }) {
         {section === "knowledge" && <KnowledgePanel />}
         {section === "monitor" && <MonitorPanel />}
         {section === "try" && <TryAgentPanel />}
+        {section === "acknowledgements" && <AcknowledgementsPanel />}
         {section === "access" && (
           <>
             <MintPanel />
@@ -1773,6 +1780,230 @@ function GuardrailsPanel() {
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Acknowledgements: SME profiles for the public /sources page ─────────────
+
+/** Read an image File, downscale to ≤400px, return a compact JPEG data URI. */
+async function fileToDataUri(file: File): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read failed"));
+    reader.readAsDataURL(file);
+  });
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("decode failed"));
+    el.src = dataUrl;
+  });
+  const max = 400;
+  const scale = Math.min(1, max / Math.max(img.width, img.height));
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return dataUrl;
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", 0.82);
+}
+
+function AcknowledgementsPanel() {
+  const queryClient = useQueryClient();
+  const list = useQuery({ queryKey: ["acknowledgements"], queryFn: listAcknowledgements });
+  const [editing, setEditing] = useState<Partial<AckRow> | null>(null);
+  const [imgError, setImgError] = useState<string | null>(null);
+  const refresh = () => void queryClient.invalidateQueries({ queryKey: ["acknowledgements"] });
+  const save = useMutation({
+    mutationFn: saveAcknowledgement,
+    onSuccess: () => {
+      setEditing(null);
+      refresh();
+    },
+  });
+  const remove = useMutation({ mutationFn: deleteAcknowledgement, onSuccess: refresh });
+
+  return (
+    <div className="space-y-4">
+      <header>
+        <h2 className="text-xl font-normal tracking-tight">Acknowledgements</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          The experts who reviewed and shaped this work. These appear on the public{" "}
+          <span className="text-foreground">/sources</span> page judges can visit. Add a photo,
+          name, role, and a short bio.
+        </p>
+      </header>
+
+      {!editing && (
+        <button
+          type="button"
+          onClick={() =>
+            setEditing({
+              name: "",
+              role: "",
+              bio: "",
+              image: null,
+              sort_order: list.data?.items.length ?? 0,
+            })
+          }
+          className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          Add a person
+        </button>
+      )}
+
+      {editing && (
+        <Card className="paper-shadow">
+          <CardContent className="space-y-3 py-4">
+            <div className="flex items-center gap-4">
+              {editing.image ? (
+                <img
+                  src={editing.image}
+                  alt="preview"
+                  className="h-16 w-16 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">
+                  no photo
+                </div>
+              )}
+              <div className="space-y-1">
+                <label className="inline-flex cursor-pointer rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+                  Upload photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setImgError(null);
+                      try {
+                        const uri = await fileToDataUri(file);
+                        setEditing((v) => ({ ...v, image: uri }));
+                      } catch {
+                        setImgError("Couldn't read that image.");
+                      }
+                    }}
+                  />
+                </label>
+                {editing.image && (
+                  <button
+                    type="button"
+                    onClick={() => setEditing((v) => ({ ...v, image: null }))}
+                    className="block text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    Remove photo
+                  </button>
+                )}
+                {imgError && <p className="text-xs text-destructive">{imgError}</p>}
+              </div>
+            </div>
+            <Input
+              value={editing.name ?? ""}
+              onChange={(e) => setEditing((v) => ({ ...v, name: e.target.value }))}
+              placeholder="Name"
+            />
+            <Input
+              value={editing.role ?? ""}
+              onChange={(e) => setEditing((v) => ({ ...v, role: e.target.value }))}
+              placeholder="Role (e.g. Trauma therapist · LCSW)"
+            />
+            <Textarea
+              value={editing.bio ?? ""}
+              onChange={(e) => setEditing((v) => ({ ...v, bio: e.target.value }))}
+              placeholder="Short bio / contribution"
+              className="min-h-24 text-sm"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={save.isPending || !editing.name?.trim()}
+                onClick={() =>
+                  save.mutate({
+                    id: editing.id,
+                    name: editing.name ?? "",
+                    role: editing.role ?? "",
+                    bio: editing.bio ?? "",
+                    image: editing.image ?? null,
+                    clearImage: editing.image === null,
+                    sortOrder: editing.sort_order ?? 0,
+                  })
+                }
+                className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-40"
+              >
+                {save.isPending ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+            {save.isError && (
+              <p className="text-sm text-destructive">
+                {save.error instanceof Error ? save.error.message : "Save failed"}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {list.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {list.isError && (
+        <p className="text-sm text-destructive">
+          Couldn&apos;t load — apply the pending migration SQL if you haven&apos;t.
+        </p>
+      )}
+      {list.data && list.data.items.length === 0 && !editing && (
+        <p className="text-sm text-muted-foreground">No one added yet.</p>
+      )}
+      <div className="space-y-2">
+        {list.data?.items.map((a) => (
+          <Card key={a.id} className="paper-shadow">
+            <CardContent className="flex items-center gap-3 py-3">
+              {a.image ? (
+                <img src={a.image} alt={a.name} className="h-12 w-12 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-sm text-muted-foreground">
+                  {a.name.slice(0, 1)}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-foreground">{a.name}</p>
+                {a.role && <p className="text-xs text-muted-foreground">{a.role}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditing(a)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                disabled={remove.isPending}
+                onClick={() => remove.mutate(a.id)}
+                className="text-xs text-muted-foreground hover:text-destructive"
+              >
+                Delete
+              </button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        The public page is at <span className="text-foreground">/sources</span> — share that link
+        with judges.
+      </p>
     </div>
   );
 }

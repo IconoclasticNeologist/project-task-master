@@ -95,47 +95,19 @@ export function languageLineFor(language: "en" | "es"): string {
     : "";
 }
 
-/** Read-only metadata for the developer dashboard's prompt display. */
-export const PROMPT_CATALOG: Array<{
-  agent: Mode | "defense-avatar";
-  title: string;
-  gitPath: string;
-  smeStatus: string;
-  text: string;
-}> = [
-  {
-    agent: "base",
-    title: "Coach",
-    gitPath: "supabase/functions/_shared/advocatePrompts.ts",
-    smeStatus: "PLACEHOLDER — trauma-therapist review pending",
-    text: COACH_BASE,
-  },
-  {
-    agent: "regulator",
-    title: "Coach — regulator",
-    gitPath: "supabase/functions/_shared/advocatePrompts.ts",
-    smeStatus: "PLACEHOLDER — trauma-therapist review pending",
-    text: COACH_REGULATOR,
-  },
-  {
-    agent: "interview",
-    title: "Coach — interviewer",
-    gitPath: "supabase/functions/_shared/advocatePrompts.ts",
-    smeStatus: "PLACEHOLDER — trauma-therapist review pending",
-    text: COACH_INTERVIEW,
-  },
-  {
-    agent: "defense",
-    title: "Practice voice (Defense)",
-    gitPath: "supabase/functions/_shared/advocatePrompts.ts",
-    smeStatus: "PLACEHOLDER — attorney + trauma-therapist review pending",
-    text: COACH_DEFENSE,
-  },
-  {
-    agent: "defense-avatar",
-    title: "Practice person (avatar brain)",
-    gitPath: "supabase/functions/_shared/advocatePrompts.ts",
-    smeStatus: "PLACEHOLDER — attorney + trauma-therapist review pending",
-    text: DEFENSE_PRACTICE_PROMPT,
-  },
-];
+/** Voice mode → prompt-registry key. */
+export function promptKeyForMode(mode: Mode): string {
+  switch (mode) {
+    case "regulator":
+      return "coach.regulator";
+    case "interview":
+      return "coach.interview";
+    case "defense":
+      return "coach.defense";
+    default:
+      return "coach.base";
+  }
+}
+
+// The prompt catalog + DB-override resolver live in _shared/promptRegistry.ts
+// (it imports the constants above). Every runtime prompt resolves through it.

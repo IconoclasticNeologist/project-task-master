@@ -36,9 +36,19 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { deriveShimKey } from "../_shared/liveavatar.ts";
-import { DEFENSE_PRACTICE_PROMPT } from "../_shared/advocatePrompts.ts";
+import { resolvePrompt } from "../_shared/promptRegistry.ts";
+import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
+
+/** Service-role client for prompt/knowledge reads (env-provided). */
+function adminClientForReads() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  return url && key
+    ? createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+    : null;
+}
 
 /**
  * Content-free invocation health record: the last 8 calls (timestamp, auth
@@ -241,8 +251,14 @@ serve(async (req) => {
     const requestedModel = typeof body?.model === "string" && body.model ? body.model : "practice";
 
     const { account, contents } = shapeConversation(messages);
+    const admin = adminClientForReads();
+    const [defensePrompt, knowledge] = await Promise.all([
+      resolvePrompt(admin, "defense.practice"),
+      buildKnowledgeBlock(admin, "defense.practice"),
+    ]);
     const systemText = [
-      DEFENSE_PRACTICE_PROMPT,
+      defensePrompt,
+      knowledge,
       "",
       "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",
       account || "(none provided — warm-up questions only)",

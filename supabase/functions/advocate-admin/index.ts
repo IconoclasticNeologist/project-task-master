@@ -35,7 +35,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
-import { PROMPT_CATALOG } from "../_shared/advocatePrompts.ts";
+import {
+  invalidatePromptCache,
+  promptDefault,
+  resolveCatalog,
+  type PromptKey,
+} from "../_shared/promptRegistry.ts";
 import {
   CAP_BOUNDS,
   MODEL_ALLOWLIST,
@@ -342,11 +347,49 @@ serve(async (req) => {
       if (error) return json(500, { error: `Could not read config: ${error.message}` });
       const rows: Record<string, unknown> = {};
       for (const row of data ?? []) rows[row.key] = row.value;
+      const prompts = await resolveCatalog(admin);
       return json(200, {
         ops: sanitizeOps(rows),
         allow: { voices: VOICE_ALLOWLIST, models: MODEL_ALLOWLIST, capBounds: CAP_BOUNDS },
-        prompts: PROMPT_CATALOG,
+        prompts,
       });
+    }
+
+    if (action === "set_prompt") {
+      // Dev edits a prompt. The git default is never lost (promptDefault); the
+      // edit is versioned for restore/audit. Empty content resets to default.
+      const key = typeof body.key === "string" ? body.key : "";
+      const content = typeof body.content === "string" ? body.content : "";
+      const source = body.source === "ai" ? "ai" : "manual";
+      // promptDefault returns "" only for an unknown key.
+      if (!promptDefault(key as PromptKey)) return json(400, { error: "Unknown prompt key" });
+      if (!content.trim()) {
+        // Treat as reset-to-default.
+        await admin.from("agent_prompts").delete().eq("key", key);
+        await admin
+          .from("agent_prompt_revisions")
+          .insert({ key, content: promptDefault(key as PromptKey), source: "restore", updated_by: callerEmail });
+        invalidatePromptCache();
+        return json(200, { ok: true, reset: true });
+      }
+      const { error } = await admin
+        .from("agent_prompts")
+        .upsert({ key, content, updated_at: new Date().toISOString(), updated_by: callerEmail });
+      if (error) return json(500, { error: `Could not save prompt: ${error.message}` });
+      await admin.from("agent_prompt_revisions").insert({ key, content, source, updated_by: callerEmail });
+      invalidatePromptCache();
+      return json(200, { ok: true });
+    }
+
+    if (action === "reset_prompt") {
+      const key = typeof body.key === "string" ? body.key : "";
+      if (!promptDefault(key as PromptKey)) return json(400, { error: "Unknown prompt key" });
+      await admin.from("agent_prompts").delete().eq("key", key);
+      await admin
+        .from("agent_prompt_revisions")
+        .insert({ key, content: promptDefault(key as PromptKey), source: "restore", updated_by: callerEmail });
+      invalidatePromptCache();
+      return json(200, { ok: true });
     }
 
     if (action === "set_agent_config") {

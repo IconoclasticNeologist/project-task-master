@@ -29,8 +29,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
-import { languageLineFor, promptFor, type Mode } from "../_shared/advocatePrompts.ts";
+import { languageLineFor, promptKeyForMode, type Mode } from "../_shared/advocatePrompts.ts";
 import { loadOps, VOICE_ALLOWLIST } from "../_shared/agentConfig.ts";
+import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 
 const SESSION_SECONDS = 15 * 60; // token window — covers the full audio session
 const START_WINDOW_SECONDS = 60; // 1 min to open the WS after minting
@@ -152,7 +153,8 @@ serve(async (req) => {
       }
     }
 
-    const systemText = promptFor(mode) + languageLineFor(language);
+    const basePrompt = await resolvePrompt(admin, promptKeyForMode(mode) as PromptKey);
+    const systemText = basePrompt + languageLineFor(language);
 
     // Mint with the primary model; retry ONCE with the fallback if configured.
     let model = ops.model.primary;

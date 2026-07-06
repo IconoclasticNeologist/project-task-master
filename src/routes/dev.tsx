@@ -1726,9 +1726,56 @@ function GuardrailsPanel() {
         </p>
       </header>
 
+      {query.data?.defaults && query.data.defaults.global.length > 0 && (
+        <Card className="paper-shadow border border-primary/30">
+          <CardHeader>
+            <CardTitle className="text-base font-normal">
+              Always-on safety floor (built in)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              These trauma-informed and legal-safety rules are baked into the app and always apply
+              under every agent. They can&apos;t be edited or removed here — your rules below are
+              layered on top of them.
+            </p>
+            <ul className="space-y-1.5">
+              {query.data.defaults.global.map((r, i) => (
+                <li key={i} className="flex gap-2 text-xs leading-relaxed text-muted-foreground">
+                  <span aria-hidden className="select-none text-primary/60">
+                    •
+                  </span>
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+            {Object.entries(query.data.defaults.byAgent).map(([k, rules]) => (
+              <div key={k} className="space-y-1">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">{k}</div>
+                <ul className="space-y-1.5">
+                  {rules.map((r, i) => (
+                    <li
+                      key={i}
+                      className="flex gap-2 text-xs leading-relaxed text-muted-foreground"
+                    >
+                      <span aria-hidden className="select-none text-primary/60">
+                        •
+                      </span>
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="paper-shadow">
         <CardHeader>
-          <CardTitle className="text-base font-normal">Global rules (every agent)</CardTitle>
+          <CardTitle className="text-base font-normal">
+            Your added global rules (every agent)
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <RuleList

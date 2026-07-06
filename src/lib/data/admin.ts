@@ -231,7 +231,8 @@ export interface Guardrails {
   global: string[];
   byAgent: Record<string, string[]>;
 }
-export const getGuardrails = () => adminCall<{ guardrails: Guardrails }>("get_guardrails");
+export const getGuardrails = () =>
+  adminCall<{ guardrails: Guardrails; defaults: Guardrails }>("get_guardrails");
 export const setGuardrails = (value: Guardrails) =>
   adminCall<{ ok: true; guardrails: Guardrails }>("set_guardrails", { value });
 
@@ -244,8 +245,7 @@ export interface AckRow {
   image: string | null;
   sort_order: number;
 }
-export const listAcknowledgements = () =>
-  adminCall<{ items: AckRow[] }>("list_acknowledgements");
+export const listAcknowledgements = () => adminCall<{ items: AckRow[] }>("list_acknowledgements");
 export const saveAcknowledgement = (item: {
   id?: string;
   name: string;

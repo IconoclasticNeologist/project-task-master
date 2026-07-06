@@ -48,6 +48,7 @@ import {
   VOICE_ALLOWLIST,
 } from "../_shared/agentConfig.ts";
 import {
+  DEFAULT_GUARDRAILS,
   EMPTY_GUARDRAILS,
   invalidateGuardrailsCache,
   sanitizeGuardrails,
@@ -392,7 +393,10 @@ serve(async (req) => {
         .select("value")
         .eq("key", "guardrails")
         .maybeSingle();
-      return json(200, { guardrails: data?.value ? sanitizeGuardrails(data.value) : EMPTY_GUARDRAILS });
+      return json(200, {
+        guardrails: data?.value ? sanitizeGuardrails(data.value) : EMPTY_GUARDRAILS,
+        defaults: DEFAULT_GUARDRAILS,
+      });
     }
 
     if (action === "set_guardrails") {

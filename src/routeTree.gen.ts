@@ -18,6 +18,7 @@ import { Route as ProfessionalRouteImport } from './routes/professional'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotebooksRouteImport } from './routes/notebooks'
+import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as ExpertRouteImport } from './routes/expert'
@@ -74,6 +75,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const NotebooksRoute = NotebooksRouteImport.update({
   id: '/notebooks',
   path: '/notebooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JudgesRoute = JudgesRouteImport.update({
+  id: '/judges',
+  path: '/judges',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomeRoute = HomeRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
+  '/judges': typeof JudgesRoute
   '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
+  '/judges': typeof JudgesRoute
   '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/expert': typeof ExpertRoute
   '/guide': typeof GuideRoute
   '/home': typeof HomeRoute
+  '/judges': typeof JudgesRoute
   '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guide'
     | '/home'
+    | '/judges'
     | '/notebooks'
     | '/onboarding'
     | '/plan'
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guide'
     | '/home'
+    | '/judges'
     | '/notebooks'
     | '/onboarding'
     | '/plan'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/expert'
     | '/guide'
     | '/home'
+    | '/judges'
     | '/notebooks'
     | '/onboarding'
     | '/plan'
@@ -288,6 +300,7 @@ export interface RootRouteChildren {
   ExpertRoute: typeof ExpertRoute
   GuideRoute: typeof GuideRoute
   HomeRoute: typeof HomeRoute
+  JudgesRoute: typeof JudgesRoute
   NotebooksRoute: typeof NotebooksRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PlanRoute: typeof PlanRoute
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       path: '/notebooks'
       fullPath: '/notebooks'
       preLoaderRoute: typeof NotebooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/judges': {
+      id: '/judges'
+      path: '/judges'
+      fullPath: '/judges'
+      preLoaderRoute: typeof JudgesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/home': {
@@ -488,6 +508,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExpertRoute: ExpertRoute,
   GuideRoute: GuideRoute,
   HomeRoute: HomeRoute,
+  JudgesRoute: JudgesRoute,
   NotebooksRoute: NotebooksRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PlanRoute: PlanRoute,

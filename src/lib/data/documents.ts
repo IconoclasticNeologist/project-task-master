@@ -1,21 +1,25 @@
 import { getSupabase } from "@/lib/supabase/client";
 import { getSurvivor } from "@/lib/auth/session";
 import { callRpc } from "@/lib/supabase/rpc";
+import { decryptToBlob, encryptFile, getDocumentKey } from "@/lib/data/fileCrypto";
 
 export interface DocumentRow {
   id: string;
   fileName: string;
   note: string | null;
+  mimeType: string | null;
   visibility: "private" | "shareable";
   storagePath: string;
   uploadedAt: string;
 }
 
-// Shape returned by the content RPCs — note is decrypted server-side.
+// Shape returned by the content RPCs — note + file_name are decrypted server-side.
 interface RpcRow {
   id: string;
   storage_path: string;
   note: string | null;
+  file_name: string | null;
+  mime_type: string | null;
   visibility: "private" | "shareable";
   uploaded_at: string;
 }
@@ -24,6 +28,7 @@ const BUCKET = "documents";
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // 10 MB
 
+// Fallback only, for any legacy path that still carries a name.
 function fileNameFromPath(path: string): string {
   const seg = path.split("/").pop() ?? path;
   const us = seg.indexOf("_");
@@ -33,8 +38,9 @@ function fileNameFromPath(path: string): string {
 function mapRow(r: RpcRow): DocumentRow {
   return {
     id: r.id,
-    fileName: fileNameFromPath(r.storage_path),
+    fileName: r.file_name ?? fileNameFromPath(r.storage_path),
     note: r.note,
+    mimeType: r.mime_type,
     visibility: r.visibility,
     storagePath: r.storage_path,
     uploadedAt: r.uploaded_at,
@@ -52,20 +58,27 @@ export async function uploadDocument(input: {
   visibility: "private" | "shareable";
 }): Promise<DocumentRow> {
   const supabase = getSupabase();
-  // The storage RLS scopes each survivor to their own {survivor_id}/… folder,
-  // so we still need the id for the upload path (the metadata insert resolves
-  // the survivor itself, inside the RPC).
+  // Storage RLS scopes each survivor to their own {survivor_id}/… folder, so we
+  // need the id for the path. The metadata RPC resolves the survivor itself.
   const survivor = await getSurvivor();
   if (!survivor) throw new Error("not authenticated");
-  const safe = input.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${survivor.id}/${crypto.randomUUID()}_${safe}`;
-  const up = await supabase.storage.from(BUCKET).upload(path, input.file, { upsert: false });
+
+  // Encrypt the bytes in the browser; Storage only ever holds ciphertext. The
+  // filename is NOT in the path anymore (it's encrypted in the metadata row).
+  const keyB64 = await getDocumentKey();
+  const cipher = await encryptFile(input.file, keyB64);
+  const path = `${survivor.id}/${crypto.randomUUID()}`;
+  const up = await supabase.storage
+    .from(BUCKET)
+    .upload(path, cipher, { upsert: false, contentType: "application/octet-stream" });
   if (up.error) throw new Error(up.error.message);
   try {
     const rows = await callRpc<RpcRow[]>("app_save_document", {
       p_storage_path: path,
       p_note: input.note ?? "",
       p_visibility: input.visibility,
+      p_file_name: input.file.name,
+      p_mime_type: input.file.type || "application/octet-stream",
     });
     const row = (rows ?? [])[0];
     if (!row) throw new Error("save failed");
@@ -85,8 +98,22 @@ export async function deleteDocument(doc: { id: string; storagePath: string }): 
   if (error) throw new Error(error.message);
 }
 
-export async function getDocumentUrl(storagePath: string): Promise<string> {
-  const { data, error } = await getSupabase().storage.from(BUCKET).createSignedUrl(storagePath, 60);
-  if (error) throw new Error(error.message);
-  return data.signedUrl;
+/**
+ * Download the ciphertext, decrypt it in the browser, and return an object URL
+ * for viewing. Pass the owning survivor's id when a gatekeeper is viewing a
+ * shared document (omit for the survivor's own files). Revoke the URL when done.
+ */
+export async function getDecryptedObjectUrl(
+  doc: { storagePath: string; mimeType: string | null },
+  survivorId?: string,
+): Promise<string> {
+  const supabase = getSupabase();
+  const signed = await supabase.storage.from(BUCKET).createSignedUrl(doc.storagePath, 60);
+  if (signed.error) throw new Error(signed.error.message);
+  const res = await fetch(signed.data.signedUrl);
+  if (!res.ok) throw new Error("Could not download the file.");
+  const cipher = await res.blob();
+  const keyB64 = await getDocumentKey(survivorId);
+  const plain = await decryptToBlob(cipher, keyB64, doc.mimeType);
+  return URL.createObjectURL(plain);
 }

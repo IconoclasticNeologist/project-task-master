@@ -12,65 +12,74 @@ vi.mock("@/lib/auth/session", () => ({
   }),
 }));
 
-import { listDocuments, uploadDocument, deleteDocument, getDocumentUrl } from "./documents";
+import { listDocuments, uploadDocument, deleteDocument } from "./documents";
+
+// 32 zero bytes, base64 — a valid AES-256 key for the crypto round-trip.
+const KEY_B64 = btoa(String.fromCharCode(...new Uint8Array(32)));
+const ROW = {
+  id: "2",
+  storage_path: "sv1/uuid",
+  note: "court",
+  file_name: "report.pdf",
+  mime_type: "application/pdf",
+  visibility: "private",
+  uploaded_at: "t",
+};
+
+// Route rpc by function name; the file-key call is cached across the file, so
+// always answer it with a valid key when it does fire.
+function routeRpc(saveResult: { data: unknown; error: unknown }) {
+  return (fn: string) => {
+    if (fn === "get_document_key") return Promise.resolve({ data: KEY_B64, error: null });
+    if (fn === "app_list_documents") return Promise.resolve({ data: [ROW], error: null });
+    if (fn === "app_save_document") return Promise.resolve(saveResult);
+    return Promise.resolve({ data: [], error: null });
+  };
+}
 
 beforeEach(() => vi.clearAllMocks());
 
 describe("listDocuments", () => {
-  it("maps a row and derives fileName from storage_path (stripping the uuid prefix)", async () => {
-    mockClient.rpc.mockResolvedValue({
-      data: [
-        {
-          id: "1",
-          storage_path: "sv1/abc-123_report.pdf",
-          note: "court",
-          visibility: "private",
-          uploaded_at: "t",
-        },
-      ],
-      error: null,
-    });
+  it("maps a row using the decrypted file_name + mime_type", async () => {
+    mockClient.rpc.mockImplementation(routeRpc({ data: [ROW], error: null }));
     const rows = await listDocuments();
-    expect(mockClient.rpc).toHaveBeenCalledWith("app_list_documents", undefined);
     expect(rows[0]).toMatchObject({
-      id: "1",
+      id: "2",
       fileName: "report.pdf",
+      mimeType: "application/pdf",
       note: "court",
       visibility: "private",
-      storagePath: "sv1/abc-123_report.pdf",
+      storagePath: "sv1/uuid",
     });
   });
 });
 
 describe("uploadDocument", () => {
-  it("uploads to the survivor's folder then saves metadata via the content RPC", async () => {
+  it("encrypts the bytes, uploads ciphertext to a name-less path, saves metadata", async () => {
     storageBucket.upload.mockResolvedValue({ data: { path: "p" }, error: null });
-    mockClient.rpc.mockResolvedValue({
-      data: [
-        {
-          id: "2",
-          storage_path: "sv1/u_report.pdf",
-          note: null,
-          visibility: "private",
-          uploaded_at: "t",
-        },
-      ],
-      error: null,
-    });
-    const file = new File(["x"], "report.pdf", { type: "application/pdf" });
+    mockClient.rpc.mockImplementation(routeRpc({ data: [ROW], error: null }));
+    const file = new File(["the private contents"], "report.pdf", { type: "application/pdf" });
     await uploadDocument({ file, note: "", visibility: "private" });
-    expect((storageBucket.upload.mock.calls[0] as unknown[])[0]).toMatch(/^sv1\//);
-    expect(mockClient.rpc).toHaveBeenCalledTimes(1);
-    const [fn, args] = mockClient.rpc.mock.calls[0] as [string, Record<string, unknown>];
-    expect(fn).toBe("app_save_document");
-    expect(args).toMatchObject({ p_note: "", p_visibility: "private" });
-    expect(String(args.p_storage_path)).toMatch(/^sv1\//);
+
+    // uploaded a Blob (ciphertext) to {survivor}/{uuid} with NO filename in path
+    const [path, blob] = storageBucket.upload.mock.calls[0] as [string, Blob];
+    expect(path).toMatch(/^sv1\/[0-9a-f-]+$/);
+    expect(blob).toBeInstanceOf(Blob);
+
+    // metadata carries the (to-be-encrypted) filename + mime, not in the path
+    const saveCall = mockClient.rpc.mock.calls.find((c) => c[0] === "app_save_document");
+    expect(saveCall?.[1]).toMatchObject({
+      p_storage_path: path,
+      p_file_name: "report.pdf",
+      p_mime_type: "application/pdf",
+      p_visibility: "private",
+    });
   });
 
   it("removes the orphaned object if the metadata save fails", async () => {
     storageBucket.upload.mockResolvedValue({ data: { path: "p" }, error: null });
     storageBucket.remove.mockResolvedValue({ data: null, error: null });
-    mockClient.rpc.mockResolvedValue({ data: null, error: { message: "insert boom" } });
+    mockClient.rpc.mockImplementation(routeRpc({ data: null, error: { message: "insert boom" } }));
     const file = new File(["x"], "a.pdf", { type: "application/pdf" });
     await expect(uploadDocument({ file, note: "", visibility: "private" })).rejects.toThrow(
       "insert boom",
@@ -84,18 +93,8 @@ describe("deleteDocument", () => {
     storageBucket.remove.mockResolvedValue({ data: null, error: null });
     const eq = vi.fn().mockResolvedValue({ error: null });
     mockClient.from.mockReturnValue({ delete: () => ({ eq }) });
-    await deleteDocument({ id: "9", storagePath: "sv1/x_a.pdf" });
-    expect(storageBucket.remove).toHaveBeenCalledWith(["sv1/x_a.pdf"]);
+    await deleteDocument({ id: "9", storagePath: "sv1/x" });
+    expect(storageBucket.remove).toHaveBeenCalledWith(["sv1/x"]);
     expect(eq).toHaveBeenCalledWith("id", "9");
-  });
-});
-
-describe("getDocumentUrl", () => {
-  it("returns a signed url", async () => {
-    storageBucket.createSignedUrl.mockResolvedValue({
-      data: { signedUrl: "https://signed" },
-      error: null,
-    });
-    expect(await getDocumentUrl("sv1/x_a.pdf")).toBe("https://signed");
   });
 });

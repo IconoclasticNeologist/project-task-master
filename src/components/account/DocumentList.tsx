@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { copy } from "@/lib/copy";
 import { useDocuments } from "@/lib/data/useDocuments";
-import { getDocumentUrl, MAX_DOCUMENT_BYTES } from "@/lib/data/documents";
+import { getDecryptedObjectUrl, MAX_DOCUMENT_BYTES, type DocumentRow } from "@/lib/data/documents";
 
 export function DocumentList({
   defaultVisibility,
@@ -43,10 +43,13 @@ export function DocumentList({
     );
   };
 
-  const onView = async (storagePath: string) => {
+  const onView = async (doc: DocumentRow) => {
     try {
-      const url = await getDocumentUrl(storagePath);
+      // Download ciphertext, decrypt in the browser, open the result. Revoke the
+      // object URL after a minute so the decrypted bytes don't linger in memory.
+      const url = await getDecryptedObjectUrl(doc);
       window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch {
       toast(copy.account.loadError);
     }
@@ -123,7 +126,7 @@ export function DocumentList({
               <div className="flex gap-3 text-xs">
                 <button
                   type="button"
-                  onClick={() => void onView(r.storagePath)}
+                  onClick={() => void onView(r)}
                   className="text-muted-foreground hover:text-foreground"
                 >
                   {copy.account.documents.view}

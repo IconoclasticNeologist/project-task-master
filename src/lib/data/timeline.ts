@@ -1,6 +1,5 @@
 import { getSupabase } from "@/lib/supabase/client";
-import { getSurvivor } from "@/lib/auth/session";
-import type { Tables } from "@/lib/supabase/types";
+import { callRpc } from "@/lib/supabase/rpc";
 
 export interface TimelineRow {
   id: string;
@@ -12,20 +11,18 @@ export interface TimelineRow {
   updatedAt: string;
 }
 
-type DbRow = Pick<
-  Tables<"timeline_events">,
-  | "id"
-  | "event_date"
-  | "relative_anchor"
-  | "description"
-  | "visibility"
-  | "created_at"
-  | "updated_at"
->;
+// Shape returned by the content RPCs — description is decrypted server-side.
+interface RpcRow {
+  id: string;
+  event_date: string | null;
+  relative_anchor: string | null;
+  description: string | null;
+  visibility: "private" | "shareable";
+  created_at: string;
+  updated_at: string;
+}
 
-const COLS = "id, event_date, relative_anchor, description, visibility, created_at, updated_at";
-
-function mapRow(r: DbRow): TimelineRow {
+function mapRow(r: RpcRow): TimelineRow {
   return {
     id: r.id,
     date: r.event_date,
@@ -38,12 +35,8 @@ function mapRow(r: DbRow): TimelineRow {
 }
 
 export async function listTimeline(): Promise<TimelineRow[]> {
-  const { data, error } = await getSupabase()
-    .from("timeline_events")
-    .select(COLS)
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => mapRow(r as DbRow));
+  const rows = await callRpc<RpcRow[]>("app_list_timeline");
+  return (rows ?? []).map(mapRow);
 }
 
 export async function upsertTimeline(input: {
@@ -53,40 +46,20 @@ export async function upsertTimeline(input: {
   description: string;
   visibility: "private" | "shareable";
 }): Promise<TimelineRow> {
-  const supabase = getSupabase();
-  if (input.id) {
-    const { data, error } = await supabase
-      .from("timeline_events")
-      .update({
-        event_date: input.date,
-        relative_anchor: input.relativeAnchor,
-        description: input.description,
-        visibility: input.visibility,
-      })
-      .eq("id", input.id)
-      .select(COLS)
-      .single();
-    if (error) throw new Error(error.message);
-    return mapRow(data as DbRow);
-  }
-  const survivor = await getSurvivor();
-  if (!survivor) throw new Error("not authenticated");
-  const { data, error } = await supabase
-    .from("timeline_events")
-    .insert({
-      survivor_id: survivor.id,
-      event_date: input.date,
-      relative_anchor: input.relativeAnchor,
-      description: input.description,
-      visibility: input.visibility,
-    })
-    .select(COLS)
-    .single();
-  if (error) throw new Error(error.message);
-  return mapRow(data as DbRow);
+  const rows = await callRpc<RpcRow[]>("app_save_timeline_event", {
+    p_id: input.id ?? null,
+    p_event_date: input.date,
+    p_relative_anchor: input.relativeAnchor,
+    p_description: input.description,
+    p_visibility: input.visibility,
+  });
+  const row = (rows ?? [])[0];
+  if (!row) throw new Error("save failed");
+  return mapRow(row);
 }
 
 export async function deleteTimeline(id: string): Promise<void> {
+  // Delete never touches ciphertext, so it stays a direct RLS-scoped call.
   const { error } = await getSupabase().from("timeline_events").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }

@@ -1,6 +1,6 @@
 import { getSupabase } from "@/lib/supabase/client";
 import { getSurvivor } from "@/lib/auth/session";
-import type { Tables } from "@/lib/supabase/types";
+import { callRpc } from "@/lib/supabase/rpc";
 
 export interface DocumentRow {
   id: string;
@@ -11,12 +11,15 @@ export interface DocumentRow {
   uploadedAt: string;
 }
 
-type DbRow = Pick<
-  Tables<"documents">,
-  "id" | "storage_path" | "note" | "visibility" | "uploaded_at"
->;
+// Shape returned by the content RPCs — note is decrypted server-side.
+interface RpcRow {
+  id: string;
+  storage_path: string;
+  note: string | null;
+  visibility: "private" | "shareable";
+  uploaded_at: string;
+}
 
-const COLS = "id, storage_path, note, visibility, uploaded_at";
 const BUCKET = "documents";
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -27,7 +30,7 @@ function fileNameFromPath(path: string): string {
   return us >= 0 ? seg.slice(us + 1) : seg;
 }
 
-function mapRow(r: DbRow): DocumentRow {
+function mapRow(r: RpcRow): DocumentRow {
   return {
     id: r.id,
     fileName: fileNameFromPath(r.storage_path),
@@ -39,12 +42,8 @@ function mapRow(r: DbRow): DocumentRow {
 }
 
 export async function listDocuments(): Promise<DocumentRow[]> {
-  const { data, error } = await getSupabase()
-    .from("documents")
-    .select(COLS)
-    .order("uploaded_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => mapRow(r as DbRow));
+  const rows = await callRpc<RpcRow[]>("app_list_documents");
+  return (rows ?? []).map(mapRow);
 }
 
 export async function uploadDocument(input: {
@@ -53,27 +52,29 @@ export async function uploadDocument(input: {
   visibility: "private" | "shareable";
 }): Promise<DocumentRow> {
   const supabase = getSupabase();
+  // The storage RLS scopes each survivor to their own {survivor_id}/… folder,
+  // so we still need the id for the upload path (the metadata insert resolves
+  // the survivor itself, inside the RPC).
   const survivor = await getSurvivor();
   if (!survivor) throw new Error("not authenticated");
   const safe = input.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${survivor.id}/${crypto.randomUUID()}_${safe}`;
   const up = await supabase.storage.from(BUCKET).upload(path, input.file, { upsert: false });
   if (up.error) throw new Error(up.error.message);
-  const { data, error } = await supabase
-    .from("documents")
-    .insert({
-      survivor_id: survivor.id,
-      storage_path: path,
-      note: input.note || null,
-      visibility: input.visibility,
-    })
-    .select(COLS)
-    .single();
-  if (error) {
+  try {
+    const rows = await callRpc<RpcRow[]>("app_save_document", {
+      p_storage_path: path,
+      p_note: input.note ?? "",
+      p_visibility: input.visibility,
+    });
+    const row = (rows ?? [])[0];
+    if (!row) throw new Error("save failed");
+    return mapRow(row);
+  } catch (e) {
+    // Roll back the orphaned blob if the metadata write fails.
     await supabase.storage.from(BUCKET).remove([path]);
-    throw new Error(error.message);
+    throw e instanceof Error ? e : new Error("save failed");
   }
-  return mapRow(data as DbRow);
 }
 
 export async function deleteDocument(doc: { id: string; storagePath: string }): Promise<void> {

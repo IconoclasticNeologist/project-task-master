@@ -74,17 +74,15 @@ serve(async (req) => {
 
       const vec = await embed(apiKey, text);
       if (!vec) return json(502, { error: "Embedding failed" });
-      const { error } = await supabase.from("embeddings").upsert(
-        {
-          survivor_id: sv,
-          source_type: sourceType,
-          source_id: sourceId,
-          chunk_text: text,
-          language,
-          embedding: `[${vec.join(",")}]`,
-        },
-        { onConflict: "survivor_id,source_id" },
-      );
+      // Index through the DEFINER RPC so the chunk is encrypted at rest
+      // (chunk_text is stored as ciphertext; match_embeddings decrypts on read).
+      const { error } = await supabase.rpc("app_index_embedding", {
+        p_source_type: sourceType,
+        p_source_id: sourceId,
+        p_chunk_text: text,
+        p_language: language,
+        p_embedding: `[${vec.join(",")}]`,
+      });
       if (error) return json(502, { error: "Index write failed" });
       return json(200, { ok: true });
     }

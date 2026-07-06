@@ -1,6 +1,5 @@
 import { getSupabase } from "@/lib/supabase/client";
-import { getSurvivor } from "@/lib/auth/session";
-import type { Tables } from "@/lib/supabase/types";
+import { callRpc } from "@/lib/supabase/rpc";
 
 export interface StatementRow {
   id: string;
@@ -11,17 +10,20 @@ export interface StatementRow {
   updatedAt: string;
 }
 
-type DbRow = Pick<
-  Tables<"statements">,
-  "id" | "raw_text" | "visibility" | "language" | "created_at" | "updated_at"
->;
+// Shape returned by the content RPCs — raw_text is decrypted server-side.
+interface RpcRow {
+  id: string;
+  raw_text: string | null;
+  visibility: "private" | "shareable";
+  language: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-const COLS = "id, raw_text, visibility, language, created_at, updated_at";
-
-function mapRow(r: DbRow): StatementRow {
+function mapRow(r: RpcRow): StatementRow {
   return {
     id: r.id,
-    text: r.raw_text,
+    text: r.raw_text ?? "",
     visibility: r.visibility,
     language: r.language === "es" ? "es" : r.language === "en" ? "en" : null,
     createdAt: r.created_at,
@@ -30,12 +32,8 @@ function mapRow(r: DbRow): StatementRow {
 }
 
 export async function listStatements(): Promise<StatementRow[]> {
-  const { data, error } = await getSupabase()
-    .from("statements")
-    .select(COLS)
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(mapRow);
+  const rows = await callRpc<RpcRow[]>("app_list_statements");
+  return (rows ?? []).map(mapRow);
 }
 
 export async function upsertStatement(input: {
@@ -43,34 +41,18 @@ export async function upsertStatement(input: {
   text: string;
   visibility: "private" | "shareable";
 }): Promise<StatementRow> {
-  const supabase = getSupabase();
-  if (input.id) {
-    const { data, error } = await supabase
-      .from("statements")
-      .update({ raw_text: input.text, visibility: input.visibility })
-      .eq("id", input.id)
-      .select(COLS)
-      .single();
-    if (error) throw new Error(error.message);
-    return mapRow(data as DbRow);
-  }
-  const survivor = await getSurvivor();
-  if (!survivor) throw new Error("not authenticated");
-  const { data, error } = await supabase
-    .from("statements")
-    .insert({
-      survivor_id: survivor.id,
-      raw_text: input.text,
-      visibility: input.visibility,
-      language: survivor.preferred_language,
-    })
-    .select(COLS)
-    .single();
-  if (error) throw new Error(error.message);
-  return mapRow(data as DbRow);
+  const rows = await callRpc<RpcRow[]>("app_save_statement", {
+    p_id: input.id ?? null,
+    p_text: input.text,
+    p_visibility: input.visibility,
+  });
+  const row = (rows ?? [])[0];
+  if (!row) throw new Error("save failed");
+  return mapRow(row);
 }
 
 export async function deleteStatement(id: string): Promise<void> {
+  // Delete never touches ciphertext, so it stays a direct RLS-scoped call.
   const { error } = await getSupabase().from("statements").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }

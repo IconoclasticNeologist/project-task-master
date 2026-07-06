@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const storageBucket = { upload: vi.fn(), remove: vi.fn(), createSignedUrl: vi.fn() };
-const mockClient = { from: vi.fn(), storage: { from: vi.fn(() => storageBucket) } };
+const mockClient = { rpc: vi.fn(), from: vi.fn(), storage: { from: vi.fn(() => storageBucket) } };
 vi.mock("@/lib/supabase/client", () => ({ getSupabase: () => mockClient }));
 vi.mock("@/lib/auth/session", () => ({
   getSurvivor: vi.fn().mockResolvedValue({
@@ -18,7 +18,7 @@ beforeEach(() => vi.clearAllMocks());
 
 describe("listDocuments", () => {
   it("maps a row and derives fileName from storage_path (stripping the uuid prefix)", async () => {
-    const order = vi.fn().mockResolvedValue({
+    mockClient.rpc.mockResolvedValue({
       data: [
         {
           id: "1",
@@ -30,8 +30,8 @@ describe("listDocuments", () => {
       ],
       error: null,
     });
-    mockClient.from.mockReturnValue({ select: () => ({ order }) });
     const rows = await listDocuments();
+    expect(mockClient.rpc).toHaveBeenCalledWith("app_list_documents", undefined);
     expect(rows[0]).toMatchObject({
       id: "1",
       fileName: "report.pdf",
@@ -43,34 +43,34 @@ describe("listDocuments", () => {
 });
 
 describe("uploadDocument", () => {
-  it("uploads to the survivor's folder then inserts metadata", async () => {
+  it("uploads to the survivor's folder then saves metadata via the content RPC", async () => {
     storageBucket.upload.mockResolvedValue({ data: { path: "p" }, error: null });
-    const single = vi.fn().mockResolvedValue({
-      data: {
-        id: "2",
-        storage_path: "sv1/u_report.pdf",
-        note: null,
-        visibility: "private",
-        uploaded_at: "t",
-      },
+    mockClient.rpc.mockResolvedValue({
+      data: [
+        {
+          id: "2",
+          storage_path: "sv1/u_report.pdf",
+          note: null,
+          visibility: "private",
+          uploaded_at: "t",
+        },
+      ],
       error: null,
     });
-    const insert = vi.fn(() => ({ select: () => ({ single }) }));
-    mockClient.from.mockReturnValue({ insert });
     const file = new File(["x"], "report.pdf", { type: "application/pdf" });
     await uploadDocument({ file, note: "", visibility: "private" });
     expect((storageBucket.upload.mock.calls[0] as unknown[])[0]).toMatch(/^sv1\//);
-    expect(insert).toHaveBeenCalledTimes(1);
-    const arg = (insert.mock.calls[0] as unknown[])[0] as Record<string, unknown>;
-    expect(arg).toMatchObject({ survivor_id: "sv1", visibility: "private", note: null });
-    expect(typeof arg.storage_path).toBe("string");
+    expect(mockClient.rpc).toHaveBeenCalledTimes(1);
+    const [fn, args] = mockClient.rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(fn).toBe("app_save_document");
+    expect(args).toMatchObject({ p_note: "", p_visibility: "private" });
+    expect(String(args.p_storage_path)).toMatch(/^sv1\//);
   });
 
-  it("removes the orphaned object if the metadata insert fails", async () => {
+  it("removes the orphaned object if the metadata save fails", async () => {
     storageBucket.upload.mockResolvedValue({ data: { path: "p" }, error: null });
     storageBucket.remove.mockResolvedValue({ data: null, error: null });
-    const single = vi.fn().mockResolvedValue({ data: null, error: { message: "insert boom" } });
-    mockClient.from.mockReturnValue({ insert: () => ({ select: () => ({ single }) }) });
+    mockClient.rpc.mockResolvedValue({ data: null, error: { message: "insert boom" } });
     const file = new File(["x"], "a.pdf", { type: "application/pdf" });
     await expect(uploadDocument({ file, note: "", visibility: "private" })).rejects.toThrow(
       "insert boom",

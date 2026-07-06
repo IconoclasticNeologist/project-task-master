@@ -26,6 +26,7 @@ import { Route as DevRouteImport } from './routes/dev'
 import { Route as BeginRouteImport } from './routes/begin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfessionalRecordsRouteImport } from './routes/professional.records'
 import { Route as ProfessionalKnowledgeRouteImport } from './routes/professional.knowledge'
 import { Route as ProfessionalClientsRouteImport } from './routes/professional.clients'
 import { Route as NotebooksSlugRouteImport } from './routes/notebooks.$slug'
@@ -115,6 +116,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfessionalRecordsRoute = ProfessionalRecordsRouteImport.update({
+  id: '/records',
+  path: '/records',
+  getParentRoute: () => ProfessionalRoute,
+} as any)
 const ProfessionalKnowledgeRoute = ProfessionalKnowledgeRouteImport.update({
   id: '/knowledge',
   path: '/knowledge',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
+  '/professional/records': typeof ProfessionalRecordsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
+  '/professional/records': typeof ProfessionalRecordsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
+  '/professional/records': typeof ProfessionalRecordsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
+    | '/professional/records'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
+    | '/professional/records'
   id:
     | '__root__'
     | '/'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
+    | '/professional/records'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -408,6 +420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/professional/records': {
+      id: '/professional/records'
+      path: '/records'
+      fullPath: '/professional/records'
+      preLoaderRoute: typeof ProfessionalRecordsRouteImport
+      parentRoute: typeof ProfessionalRoute
+    }
     '/professional/knowledge': {
       id: '/professional/knowledge'
       path: '/knowledge'
@@ -447,11 +466,13 @@ const NotebooksRouteWithChildren = NotebooksRoute._addFileChildren(
 interface ProfessionalRouteChildren {
   ProfessionalClientsRoute: typeof ProfessionalClientsRoute
   ProfessionalKnowledgeRoute: typeof ProfessionalKnowledgeRoute
+  ProfessionalRecordsRoute: typeof ProfessionalRecordsRoute
 }
 
 const ProfessionalRouteChildren: ProfessionalRouteChildren = {
   ProfessionalClientsRoute: ProfessionalClientsRoute,
   ProfessionalKnowledgeRoute: ProfessionalKnowledgeRoute,
+  ProfessionalRecordsRoute: ProfessionalRecordsRoute,
 }
 
 const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(

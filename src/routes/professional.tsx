@@ -417,6 +417,12 @@ function OrganizationTools({
           >
             {copy.professional.openClientPlans}
           </Link>
+          <Link
+            to="/professional/records"
+            className="inline-flex rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            {copy.professional.openSharedRecords}
+          </Link>
         </CardContent>
       </Card>
 

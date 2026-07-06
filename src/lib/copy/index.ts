@@ -494,6 +494,7 @@ export const copy = {
     chooseOrganization: "Choose an organization",
     openKnowledge: "Open knowledge library",
     openClientPlans: "Open client plans",
+    openSharedRecords: "Open shared records",
     overviewClients: "Your clients",
     overviewClientsEmpty:
       "No client spaces yet. A client space appears when someone accepts your invite and allows access.",
@@ -594,6 +595,21 @@ export const copy = {
       published: "Published",
       retired: "Retired",
     },
+  },
+
+  sharedRecords: {
+    title: "Shared records",
+    intro:
+      "Only what each client has marked “okay to share.” It is read-only — you cannot add or change anything here, and nothing marked private is ever shown.",
+    empty: "No client has shared words, a timeline, or papers with you yet.",
+    loadError: "We couldn’t load this just now.",
+    retry: "Try again",
+    wordsHeading: "Their words",
+    timelineHeading: "Their timeline",
+    documentsHeading: "Their papers",
+    noneShared: "Nothing shared here.",
+    view: "View",
+    viewError: "We couldn’t open that file just now.",
   },
 
   clientPlans: {

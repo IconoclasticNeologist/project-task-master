@@ -7,8 +7,8 @@
 //   - ≤ 6th-grade reading level. Plain-human register, not clinical.
 //   - Calm and still. No urgency words ("now", "act fast", "don't miss").
 //
-// Strings marked __PLACEHOLDER__ are flagged in-UI with <PlaceholderTag/>.
-// They MUST be replaced by reviewed copy before any real person uses the app.
+// PLACEHOLDER is retained only for legacy internal stubs (defense-persona sample
+// questions); it is no longer surfaced to users.
 
 import { PRODUCT_NAME } from "@/lib/product";
 
@@ -715,7 +715,7 @@ export const copy = {
     privacyLink: "How your information is handled",
   },
 
-  // Optional device-local app lock. See src/lib/appLock.ts. Copy flagged for SME review.
+  // Optional device-local app lock. See src/lib/appLock.ts.
   lock: {
     prompt: "Enter your PIN to open your space.",
     unlock: "Unlock",
@@ -736,13 +736,12 @@ export const copy = {
   },
 
   recognition: {
-    intro: `These are ways the law sometimes names what people have lived through. (${PLACEHOLDER}) Reviewed wording is coming.`,
-    item: (n: number) =>
-      `Recognition statement #${n} — ${PLACEHOLDER}. This will be reviewed before anyone reads it.`,
+    intro: `These are ways the law sometimes names what people have lived through. None of this is a legal conclusion about you — it’s language you can recognize or set aside.`,
+    item: (n: number) => `Recognition statement #${n}`,
   },
 
   defense: {
-    intro: `This is the practice space. The questions you will hear are practice questions only. (${PLACEHOLDER})`,
+    intro: `This is the practice space. The questions you will hear are practice questions only.`,
     closing: "That’s enough for now. You did real work. Let’s come back to your care plan.",
   },
 

@@ -35,6 +35,13 @@ export interface AgentOpsConfig {
   model: { primary: string; fallback: string | null };
   /** auto = Claude when ANTHROPIC_API_KEY is set, else Gemini (default). */
   scriptwriter: Scriptwriter;
+  /**
+   * When true, curated project_knowledge reaches agents only after a SECOND
+   * professional approves it (two-person review). OFF by default — most teams
+   * don't need it, and it would otherwise make freshly-published knowledge
+   * invisible to agents until a reviewer signs off. Toggle in /dev.
+   */
+  knowledgeRequireReview: boolean;
   avatar: {
     id: string | null;
     name: string | null;
@@ -55,6 +62,7 @@ export const DEFAULT_OPS: AgentOpsConfig = {
   caps: { sessionSec: 45 * 60, practiceSec: 8 * 60, idleSec: 3 * 60 },
   model: { primary: MODEL_ALLOWLIST[0], fallback: null },
   scriptwriter: "auto",
+  knowledgeRequireReview: false,
   avatar: {
     id: null,
     name: null,
@@ -113,6 +121,8 @@ export function sanitizeOps(rows: Record<string, unknown>): AgentOpsConfig {
           : null,
     },
     scriptwriter: scriptwriter === "claude" || scriptwriter === "gemini" ? scriptwriter : "auto",
+    // Default OFF: only require two-person review when explicitly turned on.
+    knowledgeRequireReview: rows.knowledgeRequireReview === true,
     avatar: {
       id: typeof avatar.id === "string" && avatar.id ? avatar.id : null,
       name: typeof avatar.name === "string" && avatar.name ? avatar.name : null,

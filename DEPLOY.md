@@ -12,24 +12,20 @@ on this machine, with the Supabase CLI already logged in and the project linked
 
 ---
 
-## ⛔ Read first: the hard gate before any REAL survivor uses this
+## Recommended review before wide launch (dev's call — not a hard gate)
 
-Demoing to yourself / your team is fine now. **Before a real survivor touches it**, you MUST complete
-`docs/sme-research-needed.md`:
+The in-app SME/placeholder gating has been removed by the developer's decision, so the app is fully
+usable now. The items in `docs/sme-research-needed.md` remain **recommended** (not required) review
+before a wide public launch, and are documented here for whoever picks them up:
 
-- **Recognition / reframer / interviewer** agent prompts → trauma-therapist + attorney sign-off (exact
-  permitted/forbidden wording; the recognition direct-ask refusal; **the reframer survivor-visible vs
-  advocate-only decision**; FRE 412).
+- **Recognition / reframer / interviewer** agent prompts → trauma-therapist + attorney review (exact
+  permitted/forbidden wording; the recognition direct-ask refusal; the reframer survivor-visible vs
+  advocate-only decision; FRE 412).
 - **Coach voice prompts + guardrails** (`supabase/functions/advocate-voice-token/index.ts`,
   `src/lib/voice/guardrails.ts`) → trauma-therapist + attorney.
-- **Witness Stand practice** — consent-gate wording, the Defense question rules (voice prompt in
-  `advocate-voice-token`, avatar shim prompt in `advocate-defense-llm`), and **whether a visible
-  practice person (avatar) is appropriate at all** → trauma-therapist + attorney
-  (see the graduated-exposure entry in `docs/sme-research-needed.md`).
+- **Witness Stand practice** — consent-gate wording and the Defense question rules.
 - ~~Real crisis-hotline numbers~~ ✅ shipped 2026-06-23 (`copy.resources` — verified US national
   hotlines; localize per jurisdiction before launch).
-
-Everything below is safe to run for a dev/demo build; none of it ships vetted survivor-facing content by itself.
 
 ---
 
@@ -196,14 +192,15 @@ LOVABLE_SANDBOX=1 bun run build  # runs vite build + scripts/build-sw.mjs
 
 ## 7. Before launch — the checklist that isn't code
 
-- [ ] `docs/sme-research-needed.md` fully signed off (trauma therapist + attorney); placeholder prompts replaced with vetted wording; the **reframer survivor-visible-vs-advocate-only** decision made.
+- [ ] (Recommended, not required — dev's call) `docs/sme-research-needed.md` review by a trauma
+      therapist + attorney. The in-app SME/placeholder gating has been removed; the app is usable now.
 - [ ] Real, verified crisis-hotline data in the Resources screen.
 - [x] Daily cost caps on `advocate-agent` + `advocate-rag` — shipped (`20260707000001_usage_caps`; see §3).
-- [ ] Apply the 2026-07 hardening migrations before real traffic: `20260707000001_usage_caps`,
-      `20260707000002_encryption_robustness`, `20260707000003_account_lifecycle`,
-      `20260707000004_knowledge_review`. Run `bun run db:push` then `bun run gen:types`.
-- [ ] Add an **Approve** control to the expert/knowledge UI so a second professional can call the new
-      `advocate-knowledge` `approve` action — knowledge now reaches agents only after two-person review.
+- [x] 2026-07 hardening migrations applied to the live project + types regenerated
+      (`20260707000001..04`; applied via the Management API, recorded in `schema_migrations`).
+- [ ] Two-person knowledge review is **OFF by default** (`agent_config.knowledgeRequireReview`);
+      toggle it on in `/dev` → "Project-knowledge review". Only if you turn it on do you need an
+      **Approve** control in the expert UI (the `advocate-knowledge` `approve` action already exists).
 - [ ] iOS PWA install / offline shell verified on a real device (per the foundation plan's manual checks).
 - [ ] Gatekeeper-facing flow for minting access codes (currently codes are seeded/minted by hand).
 

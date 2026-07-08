@@ -9,6 +9,8 @@
  * from the client, and never survivor content.
  */
 
+import { loadOps } from "./agentConfig.ts";
+
 interface KnowledgeRow {
   title: string;
   body: string;
@@ -33,6 +35,18 @@ export async function buildKnowledgeBlock(
   agentKey: string,
 ): Promise<string> {
   if (!client) return "";
+
+  // Two-person review is OFF by default — published knowledge reaches agents immediately.
+  // A dev can require a second-approver review via the /dev toggle
+  // (agent_config.knowledgeRequireReview). Read it best-effort; default off on any error.
+  let requireReview = false;
+  try {
+    const ops = await loadOps(client as unknown as Parameters<typeof loadOps>[0]);
+    requireReview = ops.knowledgeRequireReview === true;
+  } catch {
+    requireReview = false;
+  }
+
   let rows: KnowledgeRow[] = [];
   try {
     const { data } = await client
@@ -45,11 +59,9 @@ export async function buildKnowledgeBlock(
   }
   const relevant = rows.filter(
     (r) =>
-      // Two-person rule: only knowledge approved by a DIFFERENT professional than its
-      // author reaches an agent. Unreviewed or self-approved entries are ignored — this
-      // is the gate against one account poisoning every survivor's agent context.
-      r.reviewed_by &&
-      r.reviewed_by !== r.created_by &&
+      // When review is required, only knowledge approved by a DIFFERENT professional than
+      // its author reaches an agent. When off (default), any published entry is included.
+      (!requireReview || (r.reviewed_by && r.reviewed_by !== r.created_by)) &&
       (!Array.isArray(r.agent_keys) ||
         r.agent_keys.length === 0 ||
         r.agent_keys.includes(agentKey)),

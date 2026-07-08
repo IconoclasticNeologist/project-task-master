@@ -685,7 +685,7 @@ function AgentsPanel() {
       section,
       value,
     }: {
-      section: "voice" | "caps" | "model" | "avatar" | "scriptwriter";
+      section: "voice" | "caps" | "model" | "avatar" | "scriptwriter" | "knowledgeRequireReview";
       value: unknown;
     }) => setAgentConfig(section, value),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["agent-config"] }),
@@ -861,6 +861,38 @@ function AgentsPanel() {
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             Auto uses Claude when ANTHROPIC_API_KEY is set, else Gemini. Claude needs that secret.
+          </p>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+            Project-knowledge review
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                [false, "Off (publish goes live)"],
+                [true, "Require 2nd approver"],
+              ] as const
+            ).map(([val, label]) => (
+              <button
+                key={String(val)}
+                type="button"
+                disabled={save.isPending}
+                onClick={() => save.mutate({ section: "knowledgeRequireReview", value: val })}
+                className={
+                  ops.knowledgeRequireReview === val
+                    ? "rounded-md border border-primary bg-primary/10 px-3 py-1.5 text-sm"
+                    : "rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground"
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Off by default: published knowledge reaches the agents immediately. Turn on to require a
+            second professional (not the author) to approve each entry before it’s used.
           </p>
         </div>
 

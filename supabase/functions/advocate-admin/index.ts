@@ -432,11 +432,24 @@ serve(async (req) => {
       // The client sends one section at a time; sanitize the MERGED result so
       // a bad value can never land — what is stored is what will be applied.
       const section = typeof body.section === "string" ? body.section : "";
-      if (!["voice", "caps", "model", "avatar", "scriptwriter"].includes(section)) {
+      if (
+        !["voice", "caps", "model", "avatar", "scriptwriter", "knowledgeRequireReview"].includes(
+          section,
+        )
+      ) {
         return json(400, { error: "Unknown config section" });
       }
       const clean = sanitizeOps({ [section]: body.value ?? {} });
-      const value = clean[section as "voice" | "caps" | "model" | "avatar" | "scriptwriter"];
+      const value =
+        clean[
+          section as
+            | "voice"
+            | "caps"
+            | "model"
+            | "avatar"
+            | "scriptwriter"
+            | "knowledgeRequireReview"
+        ];
       const { error } = await admin
         .from("agent_config")
         .upsert({ key: section, value, updated_at: new Date().toISOString() });

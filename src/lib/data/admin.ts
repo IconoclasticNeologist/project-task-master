@@ -128,6 +128,7 @@ export interface AgentOps {
   caps: { sessionSec: number; practiceSec: number; idleSec: number };
   model: { primary: string; fallback: string | null };
   scriptwriter: "auto" | "claude" | "gemini";
+  knowledgeRequireReview: boolean;
   avatar: {
     id: string | null;
     name: string | null;
@@ -176,7 +177,7 @@ export interface AgentStatRow {
 
 export const getAgentConfig = () => adminCall<AgentConfigBundle>("get_agent_config");
 export const setAgentConfig = (
-  section: "voice" | "caps" | "model" | "avatar" | "scriptwriter",
+  section: "voice" | "caps" | "model" | "avatar" | "scriptwriter" | "knowledgeRequireReview",
   value: unknown,
 ) => adminCall<{ ok: true; value: unknown }>("set_agent_config", { section, value });
 export const listAvatars = () =>

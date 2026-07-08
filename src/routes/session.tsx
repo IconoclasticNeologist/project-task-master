@@ -23,7 +23,6 @@ import { VoiceOrb } from "@/components/session/VoiceOrb";
 import { MicSetup } from "@/components/session/MicSetup";
 import { PracticeTimer } from "@/components/session/PracticeTimer";
 import { AftercareCard } from "@/components/AftercareCard";
-import { PlaceholderTag } from "@/components/PlaceholderTag";
 import { HotlineLinks } from "@/components/CrisisCard";
 import { copy } from "@/lib/copy";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
@@ -413,10 +412,7 @@ function SessionScreen() {
         {stage === "consent" && (
           <Card>
             <CardContent className="space-y-4 py-6">
-              <h2 className="text-xl font-normal">
-                {copy.session.witness.consentTitle}
-                <PlaceholderTag />
-              </h2>
+              <h2 className="text-xl font-normal">{copy.session.witness.consentTitle}</h2>
               <p className="leading-relaxed text-foreground">{copy.session.witness.consentBody}</p>
               <ul className="space-y-2 text-sm leading-relaxed text-foreground">
                 {copy.session.witness.consentPoints.map((point) => (

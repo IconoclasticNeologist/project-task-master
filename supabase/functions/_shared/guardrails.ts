@@ -44,8 +44,7 @@ export const DEFAULT_GUARDRAILS: Guardrails = {
 
 /** Merge two guardrail sets (base wins ordering; duplicates removed). */
 export function mergeGuardrails(base: Guardrails, add: Guardrails): Guardrails {
-  const dedupe = (a: string[]) =>
-    Array.from(new Set(a.map((s) => s.trim()).filter(Boolean)));
+  const dedupe = (a: string[]) => Array.from(new Set(a.map((s) => s.trim()).filter(Boolean)));
   const byAgent: Record<string, string[]> = {};
   for (const key of new Set([...Object.keys(base.byAgent), ...Object.keys(add.byAgent)])) {
     byAgent[key] = dedupe([...(base.byAgent[key] ?? []), ...(add.byAgent[key] ?? [])]);
@@ -55,7 +54,10 @@ export function mergeGuardrails(base: Guardrails, add: Guardrails): Guardrails {
 
 function cleanList(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
-  return v.map((s) => (typeof s === "string" ? s.trim() : "")).filter(Boolean).slice(0, 40);
+  return v
+    .map((s) => (typeof s === "string" ? s.trim() : ""))
+    .filter(Boolean)
+    .slice(0, 40);
 }
 
 export function sanitizeGuardrails(value: unknown): Guardrails {
@@ -72,7 +74,10 @@ export function sanitizeGuardrails(value: unknown): Guardrails {
 interface GuardrailClient {
   from(table: string): {
     select(cols: string): {
-      eq(col: string, val: string): {
+      eq(
+        col: string,
+        val: string,
+      ): {
         maybeSingle(): Promise<{ data: { value: unknown } | null }>;
       };
     };
@@ -88,7 +93,11 @@ export async function loadGuardrails(client: GuardrailClient | null): Promise<Gu
   let g = DEFAULT_GUARDRAILS;
   try {
     if (client) {
-      const { data } = await client.from("agent_config").select("value").eq("key", "guardrails").maybeSingle();
+      const { data } = await client
+        .from("agent_config")
+        .select("value")
+        .eq("key", "guardrails")
+        .maybeSingle();
       if (data?.value) g = mergeGuardrails(DEFAULT_GUARDRAILS, sanitizeGuardrails(data.value));
     }
   } catch {

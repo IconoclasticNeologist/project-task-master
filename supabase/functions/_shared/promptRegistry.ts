@@ -196,7 +196,10 @@ async function loadOverrides(client: OverrideClient | null): Promise<Map<string,
 }
 
 /** The live prompt for a key: DB override if set, else the git default. */
-export async function resolvePrompt(client: OverrideClient | null, key: PromptKey): Promise<string> {
+export async function resolvePrompt(
+  client: OverrideClient | null,
+  key: PromptKey,
+): Promise<string> {
   const overrides = await loadOverrides(client);
   return overrides.get(key) ?? promptDefault(key);
 }

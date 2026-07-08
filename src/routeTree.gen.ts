@@ -15,6 +15,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SessionRouteImport } from './routes/session'
 import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as ProfessionalRouteImport } from './routes/professional'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotebooksRouteImport } from './routes/notebooks'
@@ -60,6 +61,11 @@ const ResourcesRoute = ResourcesRouteImport.update({
 const ProfessionalRoute = ProfessionalRouteImport.update({
   id: '/professional',
   path: '/professional',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanRoute = PlanRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
+  '/privacy': typeof PrivacyRoute
   '/professional': typeof ProfessionalRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
+  '/privacy': typeof PrivacyRoute
   '/professional': typeof ProfessionalRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/notebooks': typeof NotebooksRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
+  '/privacy': typeof PrivacyRoute
   '/professional': typeof ProfessionalRouteWithChildren
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/notebooks'
     | '/onboarding'
     | '/plan'
+    | '/privacy'
     | '/professional'
     | '/resources'
     | '/session'
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/notebooks'
     | '/onboarding'
     | '/plan'
+    | '/privacy'
     | '/professional'
     | '/resources'
     | '/session'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/notebooks'
     | '/onboarding'
     | '/plan'
+    | '/privacy'
     | '/professional'
     | '/resources'
     | '/session'
@@ -304,6 +316,7 @@ export interface RootRouteChildren {
   NotebooksRoute: typeof NotebooksRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PlanRoute: typeof PlanRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfessionalRoute: typeof ProfessionalRouteWithChildren
   ResourcesRoute: typeof ResourcesRoute
   SessionRoute: typeof SessionRoute
@@ -354,6 +367,13 @@ declare module '@tanstack/react-router' {
       path: '/professional'
       fullPath: '/professional'
       preLoaderRoute: typeof ProfessionalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan': {
@@ -512,6 +532,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotebooksRoute: NotebooksRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PlanRoute: PlanRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfessionalRoute: ProfessionalRouteWithChildren,
   ResourcesRoute: ResourcesRoute,
   SessionRoute: SessionRoute,

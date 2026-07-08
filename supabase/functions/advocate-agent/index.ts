@@ -17,9 +17,17 @@ import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
 import { loadOps } from "../_shared/agentConfig.ts";
 import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
+import { callerSubject, capFromEnv, enforceUsage } from "../_shared/usage.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 1024;
+
+// Daily caps (env-overridable). Per-user stops one session running away; the global cap
+// is the backstop against anonymous-signup looping. Generous enough that real use is
+// never blocked; low enough that scripted abuse hits a wall.
+const AGENT_CAP_PER_USER = capFromEnv("AGENT_DAILY_CAP_PER_USER", 120);
+const AGENT_CAP_GLOBAL = capFromEnv("AGENT_DAILY_CAP_GLOBAL", 5000);
+const LIMIT_MESSAGE = "You've reached today's limit for this feature. Please try again tomorrow.";
 
 // All agent prompts now resolve through _shared/promptRegistry.ts (git default
 // ⊕ dev override). The agent name IS the prompt key for the five text agents.
@@ -236,6 +244,14 @@ serve(async (req) => {
       }
 
       const admin = adminClient();
+      const usage = await enforceUsage(
+        admin,
+        "agent",
+        callerSubject(req),
+        AGENT_CAP_PER_USER,
+        AGENT_CAP_GLOBAL,
+      );
+      if (!usage.ok && usage.limited) return json(429, { error: LIMIT_MESSAGE });
       const [defensePrompt, knowledge, ops, guardrails] = await Promise.all([
         resolvePrompt(admin, "defense.practice"),
         buildKnowledgeBlock(admin, "defense.practice"),
@@ -268,6 +284,14 @@ serve(async (req) => {
     if (!userText) return json(400, { error: "Empty input" });
 
     const admin = adminClient();
+    const usage = await enforceUsage(
+      admin,
+      "agent",
+      callerSubject(req),
+      AGENT_CAP_PER_USER,
+      AGENT_CAP_GLOBAL,
+    );
+    if (!usage.ok && usage.limited) return json(429, { error: LIMIT_MESSAGE });
     const [systemPrompt, knowledge, guardrails] = await Promise.all([
       resolvePrompt(admin, agent as PromptKey),
       buildKnowledgeBlock(admin, agent),

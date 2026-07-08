@@ -372,9 +372,12 @@ serve(async (req) => {
       if (!content.trim()) {
         // Treat as reset-to-default.
         await admin.from("agent_prompts").delete().eq("key", key);
-        await admin
-          .from("agent_prompt_revisions")
-          .insert({ key, content: promptDefault(key as PromptKey), source: "restore", updated_by: callerEmail });
+        await admin.from("agent_prompt_revisions").insert({
+          key,
+          content: promptDefault(key as PromptKey),
+          source: "restore",
+          updated_by: callerEmail,
+        });
         invalidatePromptCache();
         return json(200, { ok: true, reset: true });
       }
@@ -382,7 +385,9 @@ serve(async (req) => {
         .from("agent_prompts")
         .upsert({ key, content, updated_at: new Date().toISOString(), updated_by: callerEmail });
       if (error) return json(500, { error: `Could not save prompt: ${error.message}` });
-      await admin.from("agent_prompt_revisions").insert({ key, content, source, updated_by: callerEmail });
+      await admin
+        .from("agent_prompt_revisions")
+        .insert({ key, content, source, updated_by: callerEmail });
       invalidatePromptCache();
       return json(200, { ok: true });
     }
@@ -413,9 +418,12 @@ serve(async (req) => {
       const key = typeof body.key === "string" ? body.key : "";
       if (!promptDefault(key as PromptKey)) return json(400, { error: "Unknown prompt key" });
       await admin.from("agent_prompts").delete().eq("key", key);
-      await admin
-        .from("agent_prompt_revisions")
-        .insert({ key, content: promptDefault(key as PromptKey), source: "restore", updated_by: callerEmail });
+      await admin.from("agent_prompt_revisions").insert({
+        key,
+        content: promptDefault(key as PromptKey),
+        source: "restore",
+        updated_by: callerEmail,
+      });
       invalidatePromptCache();
       return json(200, { ok: true });
     }

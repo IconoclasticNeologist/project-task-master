@@ -24,6 +24,7 @@ import { MicSetup } from "@/components/session/MicSetup";
 import { PracticeTimer } from "@/components/session/PracticeTimer";
 import { AftercareCard } from "@/components/AftercareCard";
 import { PlaceholderTag } from "@/components/PlaceholderTag";
+import { HotlineLinks } from "@/components/CrisisCard";
 import { copy } from "@/lib/copy";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
 import { useLiveAvatarPractice } from "@/lib/voice/useLiveAvatarPractice";
@@ -52,28 +53,6 @@ type Medium = "gemini" | "avatar";
 // The person has to have SAID something substantive before a close is owed —
 // a one-word reply to the greeting shouldn't trigger the containment ritual.
 const HARD_MATERIAL_USER_CHARS = 80;
-
-function HotlineLinks() {
-  return (
-    <div className="space-y-2">
-      {copy.resources.crisis.map((entry) => {
-        const dial = entry.number.replace(/[^0-9]/g, "");
-        return (
-          <div key={entry.name} className="rounded-md border border-border px-3 py-2">
-            <p className="text-sm text-foreground">{entry.name}</p>
-            <a
-              href={`tel:${dial}`}
-              className="text-base font-medium text-foreground underline underline-offset-2"
-            >
-              {entry.number}
-            </a>
-            <p className="text-xs text-muted-foreground">{entry.hours}</p>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function SessionScreen() {
   const [stage, setStage] = useState<Stage>("start");

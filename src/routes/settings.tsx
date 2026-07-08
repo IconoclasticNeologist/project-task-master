@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { requireSurvivor } from "@/lib/auth/guard";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { copy } from "@/lib/copy";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import type { SurvivorSettings } from "@/lib/data/settings";
+import { downloadMySpace, deleteMySpace } from "@/lib/data/accountLifecycle";
 import { getMotionPref, setMotionPref } from "@/lib/motion";
+import { setLangPref } from "@/lib/lang";
+import { isLockEnabled, setPin, disableLock, lock } from "@/lib/appLock";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/settings")({
@@ -39,9 +44,80 @@ function SettingsScreen() {
     setMotionOn(getMotionPref() === "on");
   }, []);
 
+  const navigate = useNavigate();
+  const [dataBusy, setDataBusy] = useState<false | "export" | "delete">(false);
+
+  // Optional app lock (device-local). Read the current state after mount (localStorage).
+  const [lockOn, setLockOn] = useState(false);
+  const [settingPin, setSettingPin] = useState(false);
+  const [pin1, setPin1] = useState("");
+  const [pin2, setPin2] = useState("");
+  const [lockErr, setLockErr] = useState<string | null>(null);
+  useEffect(() => {
+    setLockOn(isLockEnabled());
+  }, []);
+
+  const onSavePin = async () => {
+    if (pin1.length < 4) {
+      setLockErr(copy.lock.tooShort);
+      return;
+    }
+    if (pin1 !== pin2) {
+      setLockErr(copy.lock.mismatch);
+      return;
+    }
+    try {
+      await setPin(pin1);
+      setLockOn(true);
+      setSettingPin(false);
+      setPin1("");
+      setPin2("");
+      setLockErr(null);
+    } catch {
+      setLockErr(copy.settings.dataError);
+    }
+  };
+
+  const onDisableLock = () => {
+    disableLock();
+    setLockOn(false);
+    setSettingPin(false);
+    setPin1("");
+    setPin2("");
+    setLockErr(null);
+  };
+
   const onSave = () => {
     setSaved(false);
-    save.mutate(form, { onSuccess: () => setSaved(true) });
+    save.mutate(form, {
+      onSuccess: () => {
+        setSaved(true);
+        // Mirror the language locally so <html lang> is right on the next load too.
+        setLangPref(form.language === "es" ? "es" : "en");
+      },
+    });
+  };
+
+  const onExport = async () => {
+    setDataBusy("export");
+    try {
+      await downloadMySpace();
+    } catch {
+      toast(copy.settings.dataError);
+    } finally {
+      setDataBusy(false);
+    }
+  };
+
+  const onDelete = async () => {
+    setDataBusy("delete");
+    try {
+      await deleteMySpace();
+      void navigate({ to: "/" });
+    } catch {
+      toast(copy.settings.dataError);
+      setDataBusy(false);
+    }
   };
 
   return (
@@ -180,6 +256,146 @@ function SettingsScreen() {
               {copy.settings.save}
             </button>
             {saved && <p className="text-center text-xs text-muted-foreground">Saved.</p>}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-normal">{copy.lock.section}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs leading-relaxed text-muted-foreground">{copy.lock.explain}</p>
+                {!lockOn && !settingPin && (
+                  <button
+                    type="button"
+                    onClick={() => setSettingPin(true)}
+                    className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {copy.lock.setCta}
+                  </button>
+                )}
+                {settingPin && (
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="pin1">{copy.lock.newLabel}</Label>
+                      <Input
+                        id="pin1"
+                        type="password"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={pin1}
+                        onChange={(e) => setPin1(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="pin2">{copy.lock.confirmLabel}</Label>
+                      <Input
+                        id="pin2"
+                        type="password"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={pin2}
+                        onChange={(e) => setPin2(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                      />
+                    </div>
+                    {lockErr && <p className="text-sm text-destructive">{lockErr}</p>}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void onSavePin()}
+                        className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                      >
+                        {copy.lock.saveCta}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSettingPin(false);
+                          setPin1("");
+                          setPin2("");
+                          setLockErr(null);
+                        }}
+                        className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground"
+                      >
+                        {copy.lock.cancel}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {lockOn && !settingPin && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-foreground">{copy.lock.onNote}</p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <button
+                        type="button"
+                        onClick={() => lock()}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        {copy.lock.lockNow}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSettingPin(true)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        {copy.lock.setCta}
+                      </button>
+                      <ConfirmButton
+                        onConfirm={onDisableLock}
+                        trigger={copy.lock.disableCta}
+                        confirmLabel={copy.lock.disableCta}
+                        cancelLabel={copy.lock.cancel}
+                        className="text-muted-foreground hover:text-destructive"
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-normal">{copy.settings.dataSection}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => void onExport()}
+                    disabled={dataBusy !== false}
+                    className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  >
+                    {dataBusy === "export"
+                      ? copy.settings.dataExportBusy
+                      : copy.settings.dataExport}
+                  </button>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {copy.settings.dataExportNote}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <ConfirmButton
+                    disabled={dataBusy !== false}
+                    onConfirm={() => void onDelete()}
+                    trigger={
+                      dataBusy === "delete"
+                        ? copy.settings.dataDeleteBusy
+                        : copy.settings.dataDelete
+                    }
+                    confirmLabel={copy.settings.dataDeleteConfirm}
+                    cancelLabel={copy.settings.dataDeleteCancel}
+                    className="text-sm text-muted-foreground hover:text-destructive disabled:opacity-40"
+                  />
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {copy.settings.dataDeleteNote}
+                  </p>
+                </div>
+                <Link
+                  to="/privacy"
+                  className="block text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                >
+                  {copy.settings.privacyLink}
+                </Link>
+              </CardContent>
+            </Card>
           </>
         )}
       </div>

@@ -33,9 +33,15 @@ import { languageLineFor, promptKeyForMode, type Mode } from "../_shared/advocat
 import { loadOps, VOICE_ALLOWLIST } from "../_shared/agentConfig.ts";
 import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
+import { callerSubject, capFromEnv, enforceUsage } from "../_shared/usage.ts";
 
 const SESSION_SECONDS = 15 * 60; // token window — covers the full audio session
 const START_WINDOW_SECONDS = 60; // 1 min to open the WS after minting
+
+// Per-user daily voice cap. The existing DAILY_VOICE_SESSION_CAP remains the GLOBAL cap;
+// this stops a single session from consuming that whole shared budget and denying voice
+// to every other survivor. Global dimension is 0 here (the legacy counter owns global).
+const VOICE_CAP_PER_USER = capFromEnv("VOICE_DAILY_CAP_PER_USER", 20);
 
 function pickMode(input: unknown): Mode {
   if (typeof input === "string" && ["base", "regulator", "defense", "interview"].includes(input)) {
@@ -139,6 +145,15 @@ serve(async (req) => {
     // on read, safe defaults when the table is absent or unreadable.
     const ops = await loadOps(admin);
     const voice = requestedVoice ?? ops.voice[mode];
+
+    // Per-user daily cap first (cheap, fails fast) — one survivor can't drain the global
+    // budget. Global dimension disabled here; the legacy counter below owns the global cap.
+    const perUser = await enforceUsage(admin, "voice", callerSubject(req), VOICE_CAP_PER_USER, 0);
+    if (!perUser.ok && perUser.limited) {
+      return json(429, {
+        error: "You've reached today's voice limit. Please try again tomorrow.",
+      });
+    }
 
     // Daily cap check (fails closed).
     const dailyCap = Number(Deno.env.get("DAILY_VOICE_SESSION_CAP") ?? "200");

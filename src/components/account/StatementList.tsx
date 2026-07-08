@@ -6,6 +6,9 @@ import { useStatements } from "@/lib/data/useStatements";
 import type { StatementRow } from "@/lib/data/statements";
 import { useAgent } from "@/lib/agents/useAgent";
 import { VisibilityToggle } from "@/components/account/VisibilityToggle";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { CrisisCard } from "@/components/CrisisCard";
+import { tripwire } from "@/lib/agents/safety/distress";
 
 export function StatementList({
   defaultVisibility,
@@ -25,8 +28,15 @@ export function StatementList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [editVis, setEditVis] = useState<StatementRow["visibility"]>("private");
+  const [showCrisis, setShowCrisis] = useState(false);
 
   const busy = upsert.isPending || remove.isPending;
+
+  // Deterministic distress check on whatever the person writes. It never blocks saving
+  // (their words are theirs) — it just surfaces support when the language signals crisis.
+  const checkForCrisis = (text: string) => {
+    if (tripwire(text)?.kind === "crisis") setShowCrisis(true);
+  };
 
   const makeDraft = (id: string, text: string) => {
     setDraftFor(id);
@@ -39,6 +49,7 @@ export function StatementList({
 
   const onSaveNew = () => {
     if (!newDraftText.trim() || busy) return;
+    checkForCrisis(newDraftText);
     upsert.mutate(
       { text: newDraftText.trim(), visibility: draftVis },
       {
@@ -52,6 +63,7 @@ export function StatementList({
 
   const onSaveEdit = (id: string) => {
     if (busy) return;
+    checkForCrisis(editText);
     upsert.mutate(
       { id, text: editText.trim(), visibility: editVis },
       { onSuccess: () => setEditingId(null) },
@@ -78,6 +90,18 @@ export function StatementList({
 
   return (
     <div className="space-y-4">
+      {showCrisis && (
+        <div className="space-y-2">
+          <CrisisCard />
+          <button
+            type="button"
+            onClick={() => setShowCrisis(false)}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            {copy.account.dismiss}
+          </button>
+        </div>
+      )}
       {!drafting && (
         <button
           type="button"
@@ -198,14 +222,11 @@ export function StatementList({
                     >
                       Edit
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => !busy && remove.mutate(r.id)}
+                    <ConfirmButton
                       disabled={busy}
-                      className="text-muted-foreground hover:text-destructive disabled:opacity-40"
-                    >
-                      {copy.account.statement.delete}
-                    </button>
+                      onConfirm={() => !busy && remove.mutate(r.id)}
+                      trigger={copy.account.statement.delete}
+                    />
                   </div>
                 </div>
                 {draftFor === r.id && draftText && (

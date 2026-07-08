@@ -7,7 +7,12 @@ export interface Survivor {
   onboarded_at: string | null;
 }
 
-export type RedeemResult = { ok: true; survivorId: string } | { ok: false };
+export type RedeemResult =
+  | { ok: true; survivorId: string }
+  // "invalid": the code is genuinely wrong/spent. "network": we couldn't reach the
+  // server, so the code may still be perfectly good — never tell a survivor their
+  // valid code "didn't work" when the real problem was a flaky connection.
+  | { ok: false; reason: "invalid" | "network" };
 
 /** Ensure an anonymous Supabase session exists. Returns true ONLY if THIS call created one. */
 export async function ensureAnonymous(): Promise<boolean> {
@@ -29,13 +34,19 @@ export async function ensureAnonymous(): Promise<boolean> {
 export async function redeemCode(code: string): Promise<RedeemResult> {
   const supabase = getSupabase();
 
+  // A transport/server error (RPC .error set) means we couldn't verify — that's a
+  // network failure, not a bad code. Only a clean `data === false` is a real rejection.
   const legacyVerify = await supabase.rpc("verify_access_code", { p_code: code });
-  let redeemFunction: "redeem_access_code" | "redeem_client_invite" | null =
-    legacyVerify.error || !legacyVerify.data ? null : "redeem_access_code";
+  if (legacyVerify.error) return { ok: false, reason: "network" };
+
+  let redeemFunction: "redeem_access_code" | "redeem_client_invite" | null = legacyVerify.data
+    ? "redeem_access_code"
+    : null;
 
   if (!redeemFunction) {
     const organizationVerify = await supabase.rpc("verify_client_invite", { p_code: code });
-    if (organizationVerify.error || !organizationVerify.data) return { ok: false };
+    if (organizationVerify.error) return { ok: false, reason: "network" };
+    if (!organizationVerify.data) return { ok: false, reason: "invalid" };
     redeemFunction = "redeem_client_invite";
   }
 
@@ -43,13 +54,14 @@ export async function redeemCode(code: string): Promise<RedeemResult> {
   try {
     createdSession = await ensureAnonymous();
   } catch {
-    return { ok: false };
+    return { ok: false, reason: "network" };
   }
 
   const redeem = await supabase.rpc(redeemFunction, { p_code: code });
   if (redeem.error || !redeem.data) {
     if (createdSession) await supabase.auth.signOut(); // only undo a session WE created
-    return { ok: false };
+    // The code verified a moment ago, so a failure here is almost always transport/race.
+    return { ok: false, reason: redeem.error ? "network" : "invalid" };
   }
   return { ok: true, survivorId: redeem.data as string };
 }
@@ -68,7 +80,7 @@ export async function createSelfServeSurvivor(): Promise<RedeemResult> {
   try {
     createdSession = await ensureAnonymous();
   } catch {
-    return { ok: false };
+    return { ok: false, reason: "network" };
   }
 
   // create_self_serve_survivor isn't in the generated types until the migration
@@ -79,7 +91,7 @@ export async function createSelfServeSurvivor(): Promise<RedeemResult> {
   const created = await rpc("create_self_serve_survivor");
   if (created.error || !created.data) {
     if (createdSession) await supabase.auth.signOut(); // only undo a session WE created
-    return { ok: false };
+    return { ok: false, reason: "network" };
   }
   return { ok: true, survivorId: created.data };
 }

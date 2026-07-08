@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { copy } from "@/lib/copy";
 import { useDocuments } from "@/lib/data/useDocuments";
 import { getDecryptedObjectUrl, MAX_DOCUMENT_BYTES, type DocumentRow } from "@/lib/data/documents";
+import { ConfirmButton } from "@/components/ConfirmButton";
 
 export function DocumentList({
   defaultVisibility,
@@ -131,14 +132,11 @@ export function DocumentList({
                 >
                   {copy.account.documents.view}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => !busy && remove.mutate({ id: r.id, storagePath: r.storagePath })}
+                <ConfirmButton
                   disabled={busy}
-                  className="text-muted-foreground hover:text-destructive disabled:opacity-40"
-                >
-                  Delete
-                </button>
+                  onConfirm={() => !busy && remove.mutate({ id: r.id, storagePath: r.storagePath })}
+                  trigger="Delete"
+                />
               </div>
             </div>
           </CardContent>

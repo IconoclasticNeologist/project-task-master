@@ -13,9 +13,11 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerSW } from "../pwa/registerSW";
 import { InstallPrompt } from "../components/InstallPrompt";
+import { LockGate } from "@/components/LockGate";
 import { Toaster } from "@/components/ui/sonner";
 import { PRODUCT_NAME } from "@/lib/product";
 import { MOTION_HEAD_SCRIPT } from "@/lib/motion";
+import { LANG_HEAD_SCRIPT } from "@/lib/lang";
 
 function NotFoundComponent() {
   return (
@@ -114,6 +116,8 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
         {/* Apply the Stillness preference before first paint (no flash). */}
         <script dangerouslySetInnerHTML={{ __html: MOTION_HEAD_SCRIPT }} />
+        {/* Set <html lang> from the saved language before first paint (screen readers). */}
+        <script dangerouslySetInnerHTML={{ __html: LANG_HEAD_SCRIPT }} />
       </head>
       <body>
         {children}
@@ -135,6 +139,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <InstallPrompt />
+      <LockGate />
       <Toaster />
     </QueryClientProvider>
   );

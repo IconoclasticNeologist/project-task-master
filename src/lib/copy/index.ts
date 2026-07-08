@@ -26,6 +26,8 @@ export const copy = {
     codeCta: "Continue",
     codeError:
       "That code did not work. A code can run out, or be used one time. You can check with whoever gave it to you.",
+    codeNetworkError:
+      "We couldn't reach the server just now — your code is still good. Check your connection and try again.",
     profileTitle: "A couple of small things.",
     profileBody: "These help this space fit you. You can change them later.",
     languageLabel: "Which language feels easiest?",
@@ -326,6 +328,7 @@ export const copy = {
       "Sign-in is not turned on yet, so this is saved on this device only. When sign-in is turned on, your space will move with you.",
     loadError: "We couldn't load this just now.",
     retry: "Try again",
+    dismiss: "Hide this",
     tabs: {
       statements: "Your words",
       timeline: "Your timeline",
@@ -697,6 +700,39 @@ export const copy = {
     motionNote:
       "Small fades and a little feedback when you tap, so things feel answered. You can turn it off for a completely still screen — some people find that calmer. Your device’s own reduce-motion setting is always respected.",
     save: "Save",
+    dataSection: "Your data",
+    dataExport: "Download a copy of my data",
+    dataExportBusy: "Preparing…",
+    dataExportNote:
+      "A file with your statements, timeline, care plan, and the list of documents you added. It’s saved to this device — keep it somewhere safe.",
+    dataDelete: "Delete everything",
+    dataDeleteBusy: "Deleting…",
+    dataDeleteConfirm: "Yes, delete it all",
+    dataDeleteCancel: "Keep my data",
+    dataDeleteNote:
+      "This removes your statements, timeline, documents, and care plan for good. It cannot be undone, and a code cannot be used twice — you would start fresh.",
+    dataError: "We couldn’t do that just now. Please try again.",
+    privacyLink: "How your information is handled",
+  },
+
+  // Optional device-local app lock. See src/lib/appLock.ts. Copy flagged for SME review.
+  lock: {
+    prompt: "Enter your PIN to open your space.",
+    unlock: "Unlock",
+    wrong: "That PIN didn’t match. Try again.",
+    section: "Lock this app",
+    explain:
+      "Add a PIN so your space asks for it when the app opens, or after it has been in the background. It stays on this device and is never sent anywhere. There is no way to recover it — if you forget it, you would start over on this device.",
+    setCta: "Set a PIN",
+    newLabel: "Choose a PIN (4–8 numbers)",
+    confirmLabel: "Enter it again",
+    mismatch: "Those didn’t match. Try again.",
+    tooShort: "Use at least 4 numbers.",
+    saveCta: "Turn on lock",
+    onNote: "Lock is on for this device.",
+    lockNow: "Lock now",
+    disableCta: "Turn off lock",
+    cancel: "Cancel",
   },
 
   recognition: {

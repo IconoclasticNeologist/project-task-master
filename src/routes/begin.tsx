@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { copy } from "@/lib/copy";
 import { createSelfServeSurvivor, updateProfile } from "@/lib/auth/session";
+import { setLangPref } from "@/lib/lang";
 import { pageTitle } from "@/lib/product";
 
 // Self-serve entry for a person with no code and no advocate. A calm safety
@@ -49,6 +50,7 @@ function BeginScreen() {
     setBusy(true);
     try {
       if (survivorId) {
+        setLangPref(language);
         try {
           await updateProfile(survivorId, {
             preferred_language: language,

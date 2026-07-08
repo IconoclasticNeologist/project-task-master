@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { copy } from "@/lib/copy";
 import { useTimeline } from "@/lib/data/useTimeline";
 import { VisibilityToggle } from "@/components/account/VisibilityToggle";
+import { ConfirmButton } from "@/components/ConfirmButton";
 
 export function TimelineList({
   defaultVisibility,
@@ -130,14 +131,12 @@ export function TimelineList({
                   })
                 }
               />
-              <button
-                type="button"
-                onClick={() => !busy && remove.mutate(r.id)}
+              <ConfirmButton
                 disabled={busy}
+                onConfirm={() => !busy && remove.mutate(r.id)}
+                trigger="Delete"
                 className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-40"
-              >
-                Delete
-              </button>
+              />
             </div>
           </CardContent>
         </Card>

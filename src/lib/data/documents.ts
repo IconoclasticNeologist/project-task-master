@@ -92,10 +92,18 @@ export async function uploadDocument(input: {
 
 export async function deleteDocument(doc: { id: string; storagePath: string }): Promise<void> {
   const supabase = getSupabase();
-  const del = await supabase.storage.from(BUCKET).remove([doc.storagePath]);
-  if (del.error) throw new Error(del.error.message);
+  // Delete the metadata row first (the reversible, user-visible step). Only then remove
+  // the ciphertext blob. If we removed bytes first and the row delete failed, the document
+  // would stay listed forever but be permanently unopenable; an orphaned blob is harmless
+  // ciphertext by comparison.
   const { error } = await supabase.from("documents").delete().eq("id", doc.id);
   if (error) throw new Error(error.message);
+  const del = await supabase.storage.from(BUCKET).remove([doc.storagePath]);
+  if (del.error) {
+    // Best-effort: the authoritative record is already gone. Don't fail the user action
+    // over a leftover encrypted blob.
+    console.warn("[documents] blob cleanup failed after row delete:", del.error.message);
+  }
 }
 
 /**

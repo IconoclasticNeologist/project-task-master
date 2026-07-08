@@ -56,12 +56,18 @@ serve(async (req) => {
     if (action === "list") {
       const { data, error } = await admin
         .from("project_knowledge")
-        .select("id, title, body, agent_keys, status, updated_at")
+        .select("id, title, body, agent_keys, status, updated_at, created_by, reviewed_by")
         .order("updated_at", { ascending: false });
       if (error) return json(500, { error: `Could not read: ${error.message}` });
       return json(200, {
         items: (data ?? []).map((r) => ({
           id: r.id,
+          // Whether this entry has cleared the two-person review and actually reaches
+          // agents. A published entry that is unreviewed or self-approved does NOT.
+          liveToAgents:
+            r.status === "published" && !!r.reviewed_by && r.reviewed_by !== r.created_by,
+          createdBy: r.created_by ?? null,
+          reviewedBy: r.reviewed_by ?? null,
           title: r.title,
           body: r.body,
           agentKeys: r.agent_keys ?? [],
@@ -88,6 +94,10 @@ serve(async (req) => {
         agent_keys: agentKeys,
         status,
         updated_at: new Date().toISOString(),
+        // Any edit invalidates a prior approval — the changed text must be re-reviewed by
+        // a second professional before it can reach agents again.
+        reviewed_by: null,
+        reviewed_at: null,
       };
       if (typeof item.id === "string" && item.id) {
         const { error } = await admin.from("project_knowledge").update(row).eq("id", item.id);
@@ -101,6 +111,30 @@ serve(async (req) => {
         .single();
       if (error) return json(500, { error: `Could not save: ${error.message}` });
       return json(200, { ok: true, id: data.id });
+    }
+
+    if (action === "approve") {
+      // The two-person rule: a DIFFERENT approved professional signs off before an entry
+      // can reach agents. You cannot approve what you authored.
+      const id = typeof body.id === "string" ? body.id : "";
+      if (!id) return json(400, { error: "Missing id" });
+      const { data: existing, error: readErr } = await admin
+        .from("project_knowledge")
+        .select("created_by")
+        .eq("id", id)
+        .single();
+      if (readErr) return json(500, { error: `Could not read: ${readErr.message}` });
+      if (existing?.created_by && user.email && existing.created_by === user.email) {
+        return json(403, {
+          error: "Someone other than the author must review this before it goes live.",
+        });
+      }
+      const { error } = await admin
+        .from("project_knowledge")
+        .update({ reviewed_by: user.email ?? "reviewer", reviewed_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) return json(500, { error: `Could not approve: ${error.message}` });
+      return json(200, { ok: true, id });
     }
 
     if (action === "delete") {

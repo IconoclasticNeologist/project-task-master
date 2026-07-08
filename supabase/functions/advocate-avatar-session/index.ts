@@ -35,6 +35,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { deriveShimKey, ensureDefenseLlmConfig } from "../_shared/liveavatar.ts";
 import { loadOps } from "../_shared/agentConfig.ts";
+import { callerSubject, capFromEnv, enforceUsage } from "../_shared/usage.ts";
+
+// Per-user daily avatar cap. Avatar minutes are the most expensive path (FULL mode ~2
+// credits/min), so this is the tightest per-user limit. The shared media-session counter
+// below remains the GLOBAL cap.
+const AVATAR_CAP_PER_USER = capFromEnv("AVATAR_DAILY_CAP_PER_USER", 10);
 
 const LIVEAVATAR_API = "https://api.liveavatar.com";
 // LiveAvatar's public demo interactive avatar (from their quickstart docs).
@@ -76,7 +82,6 @@ serve(async (req) => {
       return json(503, { error: "Practice person is not available" });
     }
 
-
     const llmConfigurationId = await resolveLlmConfigId(apiKey);
     if (!llmConfigurationId) {
       // Self-provisioning failed — refuse rather than let LiveAvatar's
@@ -102,6 +107,14 @@ serve(async (req) => {
       ? ops.avatar.sandbox
       : (Deno.env.get("LIVEAVATAR_SANDBOX") ?? "").toLowerCase() === "true";
     const maxSessionSeconds = ops.caps.practiceSec + 30;
+
+    // Per-user daily cap first — one survivor can't drain the shared media budget.
+    const perUser = await enforceUsage(admin, "avatar", callerSubject(req), AVATAR_CAP_PER_USER, 0);
+    if (!perUser.ok && perUser.limited) {
+      return json(429, {
+        error: "You've reached today's practice limit. Please try again tomorrow.",
+      });
+    }
 
     // Shared daily media-session budget (fails closed, same as voice).
     const dailyCap = Number(Deno.env.get("DAILY_VOICE_SESSION_CAP") ?? "200");

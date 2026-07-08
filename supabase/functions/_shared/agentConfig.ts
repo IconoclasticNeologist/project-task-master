@@ -112,8 +112,7 @@ export function sanitizeOps(rows: Record<string, unknown>): AgentOpsConfig {
           ? model.fallback
           : null,
     },
-    scriptwriter:
-      scriptwriter === "claude" || scriptwriter === "gemini" ? scriptwriter : "auto",
+    scriptwriter: scriptwriter === "claude" || scriptwriter === "gemini" ? scriptwriter : "auto",
     avatar: {
       id: typeof avatar.id === "string" && avatar.id ? avatar.id : null,
       name: typeof avatar.name === "string" && avatar.name ? avatar.name : null,

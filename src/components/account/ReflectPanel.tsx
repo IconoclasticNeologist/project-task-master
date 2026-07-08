@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
 import { useAgent } from "@/lib/agents/useAgent";
 import { useStatements } from "@/lib/data/useStatements";
+import { CrisisCard } from "@/components/CrisisCard";
+import { tripwire } from "@/lib/agents/safety/distress";
 
 // Collapsed by default so it stays a calm, secondary affordance instead of
 // dominating every tab of the account screen.
@@ -12,6 +14,7 @@ export function ReflectPanel() {
   const { query } = useStatements();
   const entries = (query.data ?? []).map((s) => s.text);
   const [out, setOut] = useState("");
+  const [showCrisis, setShowCrisis] = useState(false);
   const [lastRun, setLastRun] = useState<
     "reframer" | "recognition" | "interviewer" | "directAsk" | null
   >(null);
@@ -19,6 +22,8 @@ export function ReflectPanel() {
   const run = (which: "reframer" | "recognition" | "interviewer" | "directAsk") => {
     setOut("");
     setLastRun(null);
+    // Surface support if the person's own words carry crisis language (never blocks).
+    if (tripwire(entries.join("\n"))?.kind === "crisis") setShowCrisis(true);
     if (which !== "interviewer" && entries.length === 0) {
       setOut(copy.account.reflect.empty);
       return;
@@ -61,6 +66,7 @@ export function ReflectPanel() {
         </button>
         {open && (
           <div className="mt-3 space-y-3">
+            {showCrisis && <CrisisCard />}
             <p className="text-xs leading-relaxed text-muted-foreground">
               {copy.account.reflect.intro}
             </p>

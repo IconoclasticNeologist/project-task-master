@@ -25,7 +25,7 @@ if (!OUT) {
 
 // Offline shell is the hand-authored static public/offline.html (copied into the client
 // output by Vite). Offline open is a required safety property, so fail loudly if missing.
-const navigateFallback = "/offline.html";
+const OFFLINE_URL = "/offline.html";
 if (!existsSync(`${OUT}/offline.html`)) {
   console.error(`[build-sw] ${OUT}/offline.html not found — is public/offline.html present?`);
   process.exit(1);
@@ -35,8 +35,12 @@ const { count, size, warnings } = await generateSW({
   globDirectory: OUT,
   globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2}"],
   swDest: `${OUT}/sw.js`,
-  navigateFallback,
-  navigateFallbackDenylist: [/^\/api\//],
+  // NO navigateFallback: this is an SSR app (each route is server-rendered), not an SPA
+  // app-shell. A Workbox navigateFallback binds EVERY navigation to a single precached
+  // page with no network attempt — which, pointed at the static offline shell, serves
+  // "You're offline" on every refresh / deep link / PWA relaunch even when fully online.
+  // Instead we handle navigations network-first below and fall back to the shell only
+  // when the network genuinely fails.
   cleanupOutdatedCaches: true,
   clientsClaim: true,
   skipWaiting: true,
@@ -45,6 +49,14 @@ const { count, size, warnings } = await generateSW({
       // NEVER cache Supabase or any data API — survivor data must not persist on device.
       urlPattern: ({ url }) => /\.supabase\.(co|in)$/.test(url.hostname),
       handler: "NetworkOnly",
+    },
+    {
+      // Page navigations: always go to the network (SSR HTML is authoritative and may be
+      // personalized); serve the precached offline shell only when the network fails.
+      urlPattern: ({ request, url }) =>
+        request.mode === "navigate" && !url.pathname.startsWith("/api/"),
+      handler: "NetworkOnly",
+      options: { precacheFallback: { fallbackURL: OFFLINE_URL } },
     },
     {
       // Static images/fonts may be cached.
@@ -62,5 +74,5 @@ const { count, size, warnings } = await generateSW({
 for (const w of warnings) console.warn("[build-sw]", w);
 console.log(
   `[build-sw] precached ${count} files (${(size / 1024).toFixed(0)} KiB) → ${OUT}/sw.js; ` +
-    `navigateFallback=${navigateFallback}`,
+    `navigations=network-first, offlineFallback=${OFFLINE_URL}`,
 );

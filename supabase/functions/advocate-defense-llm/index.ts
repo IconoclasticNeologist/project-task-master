@@ -75,9 +75,7 @@ function recordInvocation(entry: Record<string, unknown>): void {
         .maybeSingle();
       const arr = Array.isArray(data?.value) ? (data.value as unknown[]) : [];
       arr.unshift({ t: new Date().toISOString(), ...entry });
-      await admin
-        .from("agent_config")
-        .upsert({ key: "shim_recent", value: arr.slice(0, 8) });
+      await admin.from("agent_config").upsert({ key: "shim_recent", value: arr.slice(0, 8) });
     })().catch(() => undefined);
   } catch {
     /* observability must never break the brain */
@@ -101,6 +99,33 @@ function acceptedKeys(): Promise<string[]> {
 }
 const MAX_OUTPUT_TOKENS = 200;
 const MAX_ACCOUNT_CHARS = 4000;
+
+/** Constant-time string compare so the bearer check can't be timing-probed. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const ab = enc.encode(a);
+  const bb = enc.encode(b);
+  let diff = ab.length ^ bb.length;
+  const len = Math.max(ab.length, bb.length);
+  for (let i = 0; i < len; i++) diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0);
+  return diff === 0;
+}
+
+// Best-effort in-memory rate limit. This shim is verify_jwt=false (no per-user identity),
+// so the guard is a per-isolate sliding window — it resets on cold start and won't span
+// isolates, but it blunts a runaway loop that holds the shared bearer. Real per-user cost
+// control lives in the JWT-gated functions.
+const RL_WINDOW_MS = 60_000;
+const RL_MAX = Number(Deno.env.get("DEFENSE_SHIM_RATE_PER_MIN") ?? "240");
+let rlHits: number[] = [];
+function rateLimited(): boolean {
+  if (!Number.isFinite(RL_MAX) || RL_MAX <= 0) return false;
+  const now = Date.now();
+  rlHits = rlHits.filter((t) => now - t < RL_WINDOW_MS);
+  if (rlHits.length >= RL_MAX) return true;
+  rlHits.push(now);
+  return false;
+}
 const ACCOUNT_SENTINEL = "[[PRACTICE_ACCOUNT]]";
 
 // DEFENSE_PRACTICE_PROMPT is imported from _shared/advocatePrompts.ts —
@@ -237,9 +262,16 @@ serve(async (req) => {
     }
 
     const auth = req.headers.get("Authorization") ?? "";
-    if (!keys.some((k) => auth === `Bearer ${k}`)) {
+    const presented = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
+    if (!presented || !keys.some((k) => timingSafeEqual(presented, k))) {
       recordInvocation({ status: 401, authHeaderPresent: auth.startsWith("Bearer ") });
       return json(401, { error: "Unauthorized" });
+    }
+
+    // Authorized but abusive: throttle before doing any model work.
+    if (rateLimited()) {
+      recordInvocation({ status: 429 });
+      return json(429, { error: "Rate limited" });
     }
 
     if (req.method !== "POST" || !new URL(req.url).pathname.endsWith("/chat/completions")) {
@@ -296,7 +328,9 @@ serve(async (req) => {
       });
       if (!res.ok) {
         recordInvocation({
-          status: 502, provider: "anthropic", up: res.status,
+          status: 502,
+          provider: "anthropic",
+          up: res.status,
           err: (await res.text().catch(() => "")).slice(0, 160),
         });
         return json(502, { error: "Upstream error" });
@@ -329,7 +363,9 @@ serve(async (req) => {
       );
       if (!res.ok) {
         recordInvocation({
-          status: 502, provider: "gemini", up: res.status,
+          status: 502,
+          provider: "gemini",
+          up: res.status,
           err: (await res.text().catch(() => "")).slice(0, 160),
         });
         return json(502, { error: "Upstream error" });
@@ -338,12 +374,19 @@ serve(async (req) => {
       text = out?.candidates?.[0]?.content?.parts?.[0]?.text;
     }
     if (typeof text !== "string" || !text.trim()) {
-      recordInvocation({ status: 502, err: "malformed reply", provider: anthropicKey ? "anthropic" : "gemini" });
+      recordInvocation({
+        status: 502,
+        err: "malformed reply",
+        provider: anthropicKey ? "anthropic" : "gemini",
+      });
       return json(502, { error: "Malformed reply" });
     }
     recordInvocation({
-      status: 200, turns: contents.length, stream,
-      provider: anthropicKey ? "anthropic" : "gemini", chars: text.length,
+      status: 200,
+      turns: contents.length,
+      stream,
+      provider: anthropicKey ? "anthropic" : "gemini",
+      chars: text.length,
     });
 
     if (stream) {

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { copy } from "@/lib/copy";
 import { redeemCode, updateProfile } from "@/lib/auth/session";
+import { setLangPref } from "@/lib/lang";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/enter")({
@@ -23,18 +24,18 @@ function EnterScreen() {
   const [code, setCode] = useState("");
   const [survivorId, setSurvivorId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failure, setFailure] = useState<"invalid" | "network" | null>(null);
   const [language, setLanguage] = useState<"en" | "es">("en");
   const [name, setName] = useState("");
 
   const submitCode = async () => {
     if (busy) return;
     setBusy(true);
-    setFailed(false);
+    setFailure(null);
     try {
       const result = await redeemCode(code.trim());
       if (!result.ok) {
-        setFailed(true);
+        setFailure(result.reason);
         return;
       }
       setSurvivorId(result.survivorId);
@@ -49,6 +50,7 @@ function EnterScreen() {
     setBusy(true);
     try {
       if (survivorId) {
+        setLangPref(language);
         try {
           await updateProfile(survivorId, {
             preferred_language: language,
@@ -95,9 +97,9 @@ function EnterScreen() {
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     {copy.enter.codeHint}
                   </p>
-                  {failed && (
+                  {failure && (
                     <p className="pt-1 text-sm leading-relaxed text-foreground">
-                      {copy.enter.codeError}
+                      {failure === "network" ? copy.enter.codeNetworkError : copy.enter.codeError}
                     </p>
                   )}
                 </CardContent>

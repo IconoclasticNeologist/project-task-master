@@ -16,6 +16,9 @@ export function getDocumentKey(survivorId?: string): Promise<string> {
   let p = keyCache.get(cacheKey);
   if (!p) {
     p = callRpc<string>("get_document_key", survivorId ? { p_survivor_id: survivorId } : {});
+    // Only cache a resolved key. If the RPC rejects (a transient blip), evict so the next
+    // view/upload retries instead of the whole session inheriting a poisoned rejected promise.
+    p.catch(() => keyCache.delete(cacheKey));
     keyCache.set(cacheKey, p);
   }
   return p;

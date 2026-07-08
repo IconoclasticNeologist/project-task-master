@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,11 +50,15 @@ function PlanScreen() {
       setForm({ category: "hearing_details", title: "", details: "" });
       refresh();
     },
+    onError: () => toast("We couldn't save that just now. Please try again."),
   });
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "in_progress" | "done" }) =>
       updateCourtPlanItemStatus(id, status),
     onSuccess: refresh,
+    // A survivor may be at the courthouse marking items done; a silent failure would
+    // leave them believing it saved. Surface it so they can retry.
+    onError: () => toast("We couldn't update that just now. Please try again."),
   });
 
   return (

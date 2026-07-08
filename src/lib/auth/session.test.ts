@@ -26,7 +26,7 @@ describe("redeemCode", () => {
       .mockResolvedValueOnce({ data: null, error: null }) // legacy verify → null
       .mockResolvedValueOnce({ data: null, error: null }); // organization verify → null
     const result = await redeemCode("BAD");
-    expect(result).toEqual({ ok: false });
+    expect(result).toEqual({ ok: false, reason: "invalid" });
     expect(mockClient.auth.signInAnonymously).not.toHaveBeenCalled();
   });
 
@@ -54,7 +54,7 @@ describe("redeemCode", () => {
       .mockResolvedValueOnce({ data: "gk-1", error: null })
       .mockResolvedValueOnce({ data: null, error: { message: "invalid or expired code" } });
     const result = await redeemCode("GOOD");
-    expect(result).toEqual({ ok: false });
+    expect(result).toEqual({ ok: false, reason: "network" });
     expect(mockClient.auth.signOut).toHaveBeenCalledTimes(1);
   });
 });
@@ -67,7 +67,7 @@ describe("redeemCode — sign-in failure", () => {
       error: { message: "anonymous sign-ins are disabled" },
     });
     const result = await redeemCode("GOOD");
-    expect(result).toEqual({ ok: false });
+    expect(result).toEqual({ ok: false, reason: "network" });
     expect(mockClient.rpc).toHaveBeenCalledTimes(1); // verify only; redeem never reached
   });
 
@@ -77,7 +77,7 @@ describe("redeemCode — sign-in failure", () => {
       .mockResolvedValueOnce({ data: "gk-1", error: null }) // verify ok
       .mockResolvedValueOnce({ data: null, error: { message: "invalid or expired code" } }); // redeem fails
     const result = await redeemCode("GOOD");
-    expect(result).toEqual({ ok: false });
+    expect(result).toEqual({ ok: false, reason: "network" });
     expect(mockClient.auth.signInAnonymously).not.toHaveBeenCalled();
     expect(mockClient.auth.signOut).not.toHaveBeenCalled(); // pre-existing session preserved
   });

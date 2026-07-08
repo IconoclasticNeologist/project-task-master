@@ -12,7 +12,13 @@
 //   2. Surface the survivor's aftercare plan (AftercareCard).
 //   3. Offer to pause.
 
+// Deterministic detection is intentionally broad and errs toward firing — a false
+// "are you okay?" is harmless; a miss is not. Substring stop-words are chosen to avoid
+// collisions with common words (no bare "para"/"basta"). English + Spanish, because the
+// Coach speaks both. NOTE: the DETECTION is engineering; the crisis-RESPONSE wording
+// (copy.session.crisis*) still needs trauma-therapist sign-off before launch.
 const STOP_WORDS = [
+  // English
   "stop",
   "i want to stop",
   "i need to stop",
@@ -20,14 +26,40 @@ const STOP_WORDS = [
   "i cant",
   "too much",
   "make it stop",
+  "i need a break",
+  // Spanish (collision-safe phrases only)
+  "no puedo más",
+  "no puedo mas",
+  "necesito parar",
+  "quiero parar",
+  "es demasiado",
+  "ya no puedo",
+  "déjame en paz",
 ];
 
 const CRISIS_PATTERNS: RegExp[] = [
-  /\bkill myself\b/i,
-  /\bend it\b/i,
-  /\bhurt myself\b/i,
-  /\bno reason to (live|be here)\b/i,
-  /\bcan('|)t do this\b/i,
+  // English — suicidal ideation / self-harm
+  /\bkill(ing)?\s+(myself|my ?self)\b/i,
+  /\bend(ing)?\s+(it|my life|things)\b/i,
+  /\b(hurt|harm|cut)(ing)?\s+myself\b/i,
+  /\bno reason to (live|be here|go on)\b/i,
+  /\bcan('|’|)?t (do this|go on|keep going)\b/i,
+  /\bwant(ing)? to die\b/i,
+  /\b(don'?t|do not|dont)\s+want to (live|be alive|be here|wake up|exist)\b/i,
+  /\bbetter off (dead|without me)\b/i,
+  /\btake (all )?(my|the) pills\b/i,
+  /\boverdose\b/i,
+  /\bsuicid\w*/i,
+  /\b(nothing|no point) (left )?to live for\b/i,
+  // Spanish — ideación suicida / autolesión
+  /\bquiero morir(me)?\b/i,
+  /\bme quiero (matar|morir)\b/i,
+  /\bmatar(me)?\b/i,
+  /\bno quiero (vivir|estar aquí|estar aqui|seguir)\b/i,
+  /\bacabar con todo\b/i,
+  /\bhacerme daño\b/i,
+  /\bsuicid\w*/i,
+  /\btomar(me)? (todas )?las pastillas\b/i,
 ];
 
 export type DistressSignal = { kind: "stop" } | { kind: "crisis"; match: string } | null;

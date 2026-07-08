@@ -1,5 +1,5 @@
-import { upsertStatement } from "./statements";
-import { upsertTimeline } from "./timeline";
+import { listStatements, upsertStatement } from "./statements";
+import { listTimeline, upsertTimeline } from "./timeline";
 import { saveAftercare } from "./settings";
 import { indexStatement } from "@/lib/agents/rag";
 
@@ -8,7 +8,28 @@ import { indexStatement } from "@/lib/agents/rag";
 // screen and AI feature has real content to work on. The statements are written
 // so the recognition/reframer agents have genuine patterns to surface and the
 // organizer has something to clarify. Remove before any real use.
+
+// Defense-in-depth: even if a build accidentally ships with the demo flag on, this
+// must be impossible to trigger against a real person's account.
+const DEMO_ENABLED = import.meta.env.DEV || import.meta.env.VITE_DEMO_TOOLS === "true";
+
 export async function loadExampleData(): Promise<void> {
+  if (!DEMO_ENABLED) {
+    throw new Error("Example data is not available in this build.");
+  }
+  // NEVER overwrite an existing space. Only seed a genuinely empty account, so a real
+  // survivor who somehow reached this button can't lose their care plan or have fictional
+  // statements injected over their own.
+  const [existingStatements, existingTimeline] = await Promise.all([
+    listStatements(),
+    listTimeline(),
+  ]);
+  if (existingStatements.length > 0 || existingTimeline.length > 0) {
+    throw new Error(
+      "This account already has content — example data is only for a fresh demo account.",
+    );
+  }
+
   await saveAftercare({
     supportPerson: "My sister, Ana",
     calmingAnchor: "A song my mother used to sing",

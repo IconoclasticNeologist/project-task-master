@@ -130,7 +130,9 @@ serve(async (req) => {
       const input = tool?.input ?? {};
       improved = typeof input.improved_content === "string" ? input.improved_content : "";
       explanation = typeof input.explanation === "string" ? input.explanation : "";
-      keyChanges = Array.isArray(input.key_changes) ? input.key_changes.filter((s: unknown) => typeof s === "string") : [];
+      keyChanges = Array.isArray(input.key_changes)
+        ? input.key_changes.filter((s: unknown) => typeof s === "string")
+        : [];
     } else {
       const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("GOOGLE_AI_API_KEY");
       if (!geminiKey) return json(503, { error: "No scriptwriter model configured" });
@@ -167,7 +169,9 @@ serve(async (req) => {
         const parsed = JSON.parse(raw);
         improved = typeof parsed.improved_content === "string" ? parsed.improved_content : "";
         explanation = typeof parsed.explanation === "string" ? parsed.explanation : "";
-        keyChanges = Array.isArray(parsed.key_changes) ? parsed.key_changes.filter((s: unknown) => typeof s === "string") : [];
+        keyChanges = Array.isArray(parsed.key_changes)
+          ? parsed.key_changes.filter((s: unknown) => typeof s === "string")
+          : [];
       } catch {
         return json(502, { error: "Improver returned malformed output" });
       }

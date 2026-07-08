@@ -27,7 +27,7 @@ function WelcomeScreen() {
           <Card className="paper-shadow">
             <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
               <p>You can talk or type.</p>
-              <p>Nothing is recorded.</p>
+              <p>You choose what to save.</p>
               <p>Your words belong to you.</p>
             </CardContent>
           </Card>

@@ -15,6 +15,23 @@ describe("tripwire", () => {
   it("stays quiet on ordinary text", () => {
     expect(tripwire("we moved to the second apartment in spring")).toBeNull();
   });
+
+  it("catches common English ideation phrasings", () => {
+    expect(tripwire("some nights I just want to die")?.kind).toBe("crisis");
+    expect(tripwire("I'm going to take all my pills tonight")?.kind).toBe("crisis");
+    expect(tripwire("I don't want to be alive anymore")?.kind).toBe("crisis");
+  });
+
+  it("catches Spanish ideation (the Coach speaks Spanish)", () => {
+    expect(tripwire("solo quiero morir")?.kind).toBe("crisis");
+    expect(tripwire("ya no quiero vivir")?.kind).toBe("crisis");
+  });
+
+  it("does not false-fire on common Spanish words", () => {
+    // "para" (for) and "bastante" (quite) must not trip the stop-word substring match.
+    expect(tripwire("esto es para mi hija")).toBeNull();
+    expect(tripwire("fue bastante difícil ese día")).toBeNull();
+  });
 });
 
 describe("makeTranscriptTripwire (live voice fragments)", () => {

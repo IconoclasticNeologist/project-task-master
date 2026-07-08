@@ -67,7 +67,7 @@ const PILLARS: Pillar[] = [
     lead: "Every claim traces back to a primary or reputable source.",
     points: [
       "Built on verified law and court rules, official agency guidance, and peer-reviewed trauma-informed research — each distinguished from the others.",
-      "Reviewed and shaped with subject-matter experts — attorneys, victim advocates, and trauma-informed clinicians.",
+      "Designed for subject-matter-expert sign-off: the survivor-facing prompts and safety wording are structured so attorneys, victim advocates, and trauma-informed clinicians can review and approve them before any survivor uses them.",
       "The “process, not scripts” approach is drawn directly from that research, so the app can help without ever shaping testimony.",
     ],
   },

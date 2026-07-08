@@ -9,13 +9,18 @@
  * from the client, and never survivor content.
  */
 
+interface KnowledgeRow {
+  title: string;
+  body: string;
+  agent_keys: string[];
+  created_by: string | null;
+  reviewed_by: string | null;
+}
+
 interface KnowledgeClient {
   from(table: string): {
     select(cols: string): {
-      eq(
-        col: string,
-        val: string,
-      ): Promise<{ data: Array<{ title: string; body: string; agent_keys: string[] }> | null }>;
+      eq(col: string, val: string): Promise<{ data: KnowledgeRow[] | null }>;
     };
   };
 }
@@ -28,18 +33,26 @@ export async function buildKnowledgeBlock(
   agentKey: string,
 ): Promise<string> {
   if (!client) return "";
-  let rows: Array<{ title: string; body: string; agent_keys: string[] }> = [];
+  let rows: KnowledgeRow[] = [];
   try {
     const { data } = await client
       .from("project_knowledge")
-      .select("title, body, agent_keys")
+      .select("title, body, agent_keys, created_by, reviewed_by")
       .eq("status", "published");
     rows = data ?? [];
   } catch {
     return "";
   }
   const relevant = rows.filter(
-    (r) => !Array.isArray(r.agent_keys) || r.agent_keys.length === 0 || r.agent_keys.includes(agentKey),
+    (r) =>
+      // Two-person rule: only knowledge approved by a DIFFERENT professional than its
+      // author reaches an agent. Unreviewed or self-approved entries are ignored — this
+      // is the gate against one account poisoning every survivor's agent context.
+      r.reviewed_by &&
+      r.reviewed_by !== r.created_by &&
+      (!Array.isArray(r.agent_keys) ||
+        r.agent_keys.length === 0 ||
+        r.agent_keys.includes(agentKey)),
   );
   if (relevant.length === 0) return "";
 

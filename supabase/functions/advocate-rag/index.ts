@@ -14,9 +14,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
+import { callerSubject, capFromEnv, enforceUsage } from "../_shared/usage.ts";
 
 const EMBED_MODEL = Deno.env.get("GEMINI_EMBED_MODEL") ?? "gemini-embedding-001";
 const EMBED_DIM = 1536;
+
+// Every index/search call embeds (a Gemini cost). Cap per-user daily + global. RAG is
+// cheaper and higher-frequency than the text agents (indexes on every statement save),
+// so the defaults are more generous.
+const RAG_CAP_PER_USER = capFromEnv("RAG_DAILY_CAP_PER_USER", 400);
+const RAG_CAP_GLOBAL = capFromEnv("RAG_DAILY_CAP_GLOBAL", 20000);
 
 async function embed(apiKey: string, text: string): Promise<number[] | null> {
   const res = await fetch(
@@ -56,6 +63,28 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
+
+    // Service-role client solely for the daily usage cap (bump_usage is service-role only,
+    // so a user can't grief the shared global counter). All DATA ops still go through the
+    // JWT-scoped `supabase` client above — this never reads or writes survivor rows.
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const admin = serviceKey
+      ? createClient(supabaseUrl, serviceKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        })
+      : null;
+    const usage = await enforceUsage(
+      admin,
+      "rag",
+      callerSubject(req),
+      RAG_CAP_PER_USER,
+      RAG_CAP_GLOBAL,
+    );
+    if (!usage.ok && usage.limited) {
+      return json(429, {
+        error: "You've reached today's search limit. Please try again tomorrow.",
+      });
+    }
 
     const body = await req.json().catch(() => null);
     const action = body && typeof body === "object" ? body.action : null;

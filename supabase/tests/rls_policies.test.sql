@@ -12,6 +12,13 @@
 --
 -- Self-contained: creates its own fixtures and rolls everything back. Re-runnable
 -- after future migrations as a standing regression guard.
+--
+-- TODO (coverage gaps flagged in the 2026-07 security audit — extend this guard):
+--   • consent model: client_access_grants + has_active_client_access (pending vs active
+--     vs revoked), and the app_list_shared_* readers
+--   • storage RLS on the documents bucket + get_document_key authorization
+--   • match_embeddings cross-survivor scoping; self-serve (NULL-gatekeeper) isolation
+--   • the pre-auth `anon` role boundary
 -- ─────────────────────────────────────────────────────────────────────────────
 
 create extension if not exists pgtap with schema extensions;
@@ -52,19 +59,22 @@ insert into public.survivors (id, auth_user_id, gatekeeper_id, first_name) value
   ('a0000000-0000-0000-0000-0000000000aa', 'a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-0000000000c1', 'A'),
   ('b0000000-0000-0000-0000-0000000000bb', 'b0000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-0000000000c2', 'B');
 
-insert into public.statements (survivor_id, raw_text, visibility) values
-  ('a0000000-0000-0000-0000-0000000000aa', 'A shareable', 'shareable'),
-  ('a0000000-0000-0000-0000-0000000000aa', 'A private',   'private'),
-  ('b0000000-0000-0000-0000-0000000000bb', 'B shareable', 'shareable');
+-- Content columns are encrypted at rest (raw_text → raw_text_enc); the fixtures write
+-- ciphertext through content_encrypt, matching the post-20260705000006 schema.
+insert into public.statements (survivor_id, raw_text_enc, visibility) values
+  ('a0000000-0000-0000-0000-0000000000aa', public.content_encrypt('A shareable'), 'shareable'),
+  ('a0000000-0000-0000-0000-0000000000aa', public.content_encrypt('A private'),   'private'),
+  ('b0000000-0000-0000-0000-0000000000bb', public.content_encrypt('B shareable'), 'shareable');
 
 insert into public.documents (survivor_id, storage_path, visibility) values
   ('a0000000-0000-0000-0000-0000000000aa', 'a0000000-0000-0000-0000-0000000000aa/doc1.pdf', 'shareable'),
   ('a0000000-0000-0000-0000-0000000000aa', 'a0000000-0000-0000-0000-0000000000aa/doc2.pdf', 'private');
 
-insert into public.timeline_events (survivor_id, title, visibility) values
-  ('a0000000-0000-0000-0000-0000000000aa', 'A event shareable', 'shareable'),
-  ('a0000000-0000-0000-0000-0000000000aa', 'A event private',   'private'),
-  ('b0000000-0000-0000-0000-0000000000bb', 'B event shareable', 'shareable');
+-- timeline_events.title was dropped; the content column is description_enc (encrypted).
+insert into public.timeline_events (survivor_id, description_enc, visibility) values
+  ('a0000000-0000-0000-0000-0000000000aa', public.content_encrypt('A event shareable'), 'shareable'),
+  ('a0000000-0000-0000-0000-0000000000aa', public.content_encrypt('A event private'),   'private'),
+  ('b0000000-0000-0000-0000-0000000000bb', public.content_encrypt('B event shareable'), 'shareable');
 
 insert into public.flags (survivor_id, flag_type, note) values
   ('a0000000-0000-0000-0000-0000000000aa', 'gap',   'needs detail'),

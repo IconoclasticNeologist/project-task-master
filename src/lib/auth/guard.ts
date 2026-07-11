@@ -1,4 +1,6 @@
 import { redirect } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { copy } from "@/lib/copy";
 import { getSurvivor } from "./session";
 
 /**
@@ -19,6 +21,9 @@ export async function requireSurvivor() {
     return; // transient error — do not evict; let the route render
   }
   if (!survivor) {
+    // Say why — a silent bounce back to the welcome screen reads as a dead link
+    // to someone tapping "I've been here before" on a device with no space yet.
+    toast(copy.guard.noSpaceHere);
     throw redirect({ to: "/" });
   }
 }

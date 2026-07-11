@@ -40,6 +40,10 @@ function BeginScreen() {
       }
       setSurvivorId(result.survivorId);
       setPhase("profile");
+    } catch {
+      // A throw here (misconfig, unexpected client error) must never leave the
+      // button silently dead — surface the same calm failure message.
+      toast(copy.begin.failed);
     } finally {
       setBusy(false);
     }

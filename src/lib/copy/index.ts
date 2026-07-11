@@ -58,6 +58,12 @@ export const copy = {
     failed: "We couldn’t set that up just now. You can try again in a moment.",
   },
 
+  // Shown when a protected page sends someone back to the welcome screen
+  // because this device holds no space yet. Silence there reads as a broken app.
+  guard: {
+    noSpaceHere: "We couldn’t find a saved space on this device. You can begin a new one below.",
+  },
+
   shell: {
     leaveNow: "Leave now",
     iNeedABreak: "I need a break",

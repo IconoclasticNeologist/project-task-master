@@ -6,7 +6,10 @@ import { getSupabase } from "./client";
 // content read/write goes through these DEFINER RPCs so plaintext never touches
 // a client-visible column.
 export async function callRpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
-  const rpc = getSupabase().rpc as unknown as (
+  const supabase = getSupabase();
+  // .bind keeps the client as `this` — a detached rpc reference throws inside
+  // supabase-js ("Cannot read properties of undefined (reading 'rest')").
+  const rpc = supabase.rpc.bind(supabase) as unknown as (
     f: string,
     a?: Record<string, unknown>,
   ) => Promise<{ data: T | null; error: { message: string } | null }>;

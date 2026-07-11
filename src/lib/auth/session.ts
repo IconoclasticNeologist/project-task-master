@@ -83,12 +83,7 @@ export async function createSelfServeSurvivor(): Promise<RedeemResult> {
     return { ok: false, reason: "network" };
   }
 
-  // create_self_serve_survivor isn't in the generated types until the migration
-  // is applied + types regenerated; type this one call locally.
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-  ) => Promise<{ data: string | null; error: { message: string } | null }>;
-  const created = await rpc("create_self_serve_survivor");
+  const created = await supabase.rpc("create_self_serve_survivor");
   if (created.error || !created.data) {
     if (createdSession) await supabase.auth.signOut(); // only undo a session WE created
     return { ok: false, reason: "network" };

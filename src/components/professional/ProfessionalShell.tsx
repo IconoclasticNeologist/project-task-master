@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getSupabase } from "@/lib/supabase/client";
 import { HomeButton } from "@/components/HomeButton";
+import { copy } from "@/lib/copy";
 
 // Shared chrome for every professional-surface screen: a home link back to the
 // workspace root, and a way to sign out. Kept deliberately separate from the
@@ -8,7 +9,14 @@ import { HomeButton } from "@/components/HomeButton";
 // affordances like "Leave now" belong on a professional account).
 export function ProfessionalShell({ children }: { children: ReactNode }) {
   const signOut = async () => {
-    await getSupabase().auth.signOut();
+    const supabase = getSupabase();
+    // An anonymous (survivor) session that wandered here is unrecoverable once
+    // signed out — one tap must never orphan a private space silently.
+    const { data } = await supabase.auth.getUser();
+    if (data.user?.is_anonymous && !window.confirm(copy.professional.anonymousSignOutConfirm)) {
+      return;
+    }
+    await supabase.auth.signOut();
     window.location.assign("/professional");
   };
 

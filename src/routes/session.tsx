@@ -27,6 +27,7 @@ import { HotlineLinks } from "@/components/CrisisCard";
 import { copy } from "@/lib/copy";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
 import { useLiveAvatarPractice } from "@/lib/voice/useLiveAvatarPractice";
+import { makeCaptionStream } from "@/lib/voice/captions";
 import {
   generateContainmentClose,
   requiresContainment,
@@ -115,6 +116,13 @@ function SessionScreen() {
   // whichever hook is live without a use-before-declare cycle.
   const handleDistressRef = useRef<(sig: DistressSignal) => void>(() => {});
 
+  // Ephemeral caption of the words being spoken right now — a rolling line so a
+  // muted phone (or a person who can't play audio out loud) can still follow.
+  // Never a transcript: capped, per-turn, wiped by the same local-first path
+  // that silences playback.
+  const captionsRef = useRef(makeCaptionStream());
+  const [caption, setCaption] = useState("");
+
   const {
     status,
     micState,
@@ -132,6 +140,7 @@ function SessionScreen() {
     mode: "base",
     language: settings.query.data?.language ?? "en",
     onUserText: markUserContent,
+    onCoachText: (t) => setCaption(captionsRef.current.push(t)),
     onDistress: (sig) => handleDistressRef.current(sig),
   });
 
@@ -153,6 +162,8 @@ function SessionScreen() {
 
   /** Silence and close whichever medium is carrying the session. Local-first. */
   const stopActiveMedia = () => {
+    captionsRef.current.clear();
+    setCaption("");
     if (mediumRef.current === "avatar") {
       avatar.interrupt();
       avatar.disconnect();
@@ -323,6 +334,10 @@ function SessionScreen() {
   const onSendText = () => {
     if (!composer.trim()) return;
     const text = composer.trim();
+    // A send starts a new model turn — the previous caption must not bleed
+    // into the reply that answers this message.
+    captionsRef.current.clear();
+    setCaption("");
     if (mediumRef.current === "avatar") {
       avatar.sendText(text);
     } else {
@@ -496,6 +511,14 @@ function SessionScreen() {
               <p className="text-center text-sm text-muted-foreground" role="status">
                 {mediumConnecting ? "Connecting…" : personaLine}
               </p>
+              {caption && medium !== "avatar" && (
+                <p
+                  aria-live="polite"
+                  className="mx-auto max-w-md text-center text-sm leading-relaxed text-foreground/80"
+                >
+                  {caption}
+                </p>
+              )}
               {witnessStand && avatarFellBack && (
                 <p className="text-center text-xs leading-relaxed text-muted-foreground">
                   {copy.session.witness.voiceFallback}
@@ -607,14 +630,18 @@ function SessionScreen() {
                   ? copy.safety.crisisTitle
                   : handoff.reason === "timer"
                     ? copy.session.witness.capReached
-                    : copy.safety.stoppedTitle}
+                    : handoff.reason === "dropped"
+                      ? copy.safety.droppedTitle
+                      : copy.safety.stoppedTitle}
               </h2>
               <p className="leading-relaxed text-foreground">
                 {handoff.reason === "crisis"
                   ? copy.safety.crisisBody
-                  : handoff.fromPractice
-                    ? copy.safety.practiceOver
-                    : copy.safety.coachStepsIn}
+                  : handoff.reason === "dropped"
+                    ? copy.safety.droppedBody
+                    : handoff.fromPractice
+                      ? copy.safety.practiceOver
+                      : copy.safety.coachStepsIn}
               </p>
               <p className="text-sm leading-relaxed text-muted-foreground">
                 {copy.safety.takeABreath}

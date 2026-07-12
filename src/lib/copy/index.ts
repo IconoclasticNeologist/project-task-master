@@ -42,16 +42,18 @@ export const copy = {
   // Self-serve entry — for a person who has no code and no advocate. The safety
   // check does, in the app, what an advocate's tech-safety planning would do.
   begin: {
-    onOwnLink: "I don’t have a code",
+    haveCodeLink: "I have a code from someone helping me",
+    welcomeSupport: "Need to talk to a person right now? Open Support",
     safetyTitle: "Before we start.",
     safetyBody:
       "You don’t need a code or a helper to use this. First, a few small things to help keep you safe.",
     safetyPoints: [
       "Try to use a device that is yours — one other people don’t check.",
       "If someone might see your screen, “Leave now” at the top leaves this page fast.",
-      "You can use this without giving your name. Nothing is recorded.",
+      "You can use this without giving your name. Only what you choose to keep is saved — nothing else.",
       "A trained advocate can help too, if you ever want one. The Support page has free, private numbers, any time.",
     ],
+    supportLink: "Open the Support page",
     safetyCta: "I understand — begin",
     notNow: "Not now",
     creating: "Setting up your space…",
@@ -67,6 +69,15 @@ export const copy = {
   shell: {
     leaveNow: "Leave now",
     iNeedABreak: "I need a break",
+  },
+
+  breakScreen: {
+    title: "A moment for you.",
+    body: "Nothing here needs anything from you right now.",
+    breath: "If it helps, breathe with the circle. In slowly… and out even slower.",
+    carePlanTitle: "Your care plan",
+    backToIt: "Back to what I was doing",
+    home: "Home",
   },
 
   nav: {
@@ -483,6 +494,8 @@ export const copy = {
     anonymousTitle: "Use a separate professional sign-in.",
     anonymousBody:
       "This browser is using a private client space. To protect both spaces, use a separate browser profile for professional work.",
+    anonymousSignOutConfirm:
+      "Signing out closes the private space in this browser. If it was started without a code, there is no way to open it again. Sign out anyway?",
     signInTitle: "Sign in to your professional workspace.",
     signInBody:
       "Use your work email. We will send a sign-in link. This space is for approved professional accounts, not client accounts.",
@@ -762,6 +775,11 @@ export const copy = {
     stoppedTitle: "Everything is stopped.",
     practiceOver: "The practice voice is gone. Your Coach is here.",
     coachStepsIn: "Let’s slow down together. Your Coach is here.",
+    // A connection that fell over on its own is the network's fault — say so,
+    // so it never reads as something the person did or something alarming.
+    droppedTitle: "The connection rested.",
+    droppedBody:
+      "The line dropped for a moment — that was the network, not you. Your Coach is right here when you’re ready.",
     continueWithCoach: "Continue with your Coach",
     takeABreath: "Take a breath. There is no rush.",
     // Crisis tier — shown when the tripwire hears self-harm language.

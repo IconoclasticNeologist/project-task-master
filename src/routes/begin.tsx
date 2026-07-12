@@ -98,6 +98,12 @@ function BeginScreen() {
                   </ul>
                 </CardContent>
               </Card>
+              <Link
+                to="/resources"
+                className="block text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                {copy.begin.supportLink}
+              </Link>
             </div>
             <div className="space-y-3">
               <button

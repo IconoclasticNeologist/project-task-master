@@ -86,6 +86,7 @@ function ProfessionalScreen() {
             <button
               type="button"
               onClick={() => {
+                if (!window.confirm(copy.professional.anonymousSignOutConfirm)) return;
                 void getSupabase()
                   .auth.signOut()
                   .then(() => window.location.assign("/professional"));

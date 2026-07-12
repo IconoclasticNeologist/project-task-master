@@ -78,10 +78,13 @@ describe("containment close", () => {
     expect(requiresContainment({ ...base, hardMaterialTouched: false })).toBe(false);
   });
 
-  it("includes the containment frame — it stays here, and it will be here", () => {
+  // The frame must be TRUE: no transcript is kept, so the close never claims
+  // the conversation stays — the durable comfort points at the saved words in
+  // Your space instead. (Full truthfulness contract: containment.test.ts.)
+  it("includes the containment frame — spoken words aren't kept, saved words are", () => {
     const close = generateContainmentClose(base);
-    expect(close).toContain("What we talked about stays here.");
-    expect(close).toContain("It will be here when you come back.");
+    expect(close).toContain("Nothing we said out loud is saved");
+    expect(close).toContain("they will be there when you come back");
     expect(close).toContain("my sister");
     expect(close).toContain("tea on the porch");
   });

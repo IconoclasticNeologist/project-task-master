@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
+import { useSurvivor } from "@/lib/auth/useSurvivor";
 import { loadExampleData } from "@/lib/data/demoSeed";
 import { AftercareCard } from "@/components/AftercareCard";
 import { requireSurvivor } from "@/lib/auth/guard";
@@ -17,6 +18,9 @@ export const Route = createFileRoute("/home")({
 
 function HomeScreen() {
   const { query } = useSurvivorSettings();
+  const survivor = useSurvivor();
+  // They chose this name at the door — use it, or the greeting rings hollow.
+  const chosenName = survivor.data?.first_name?.trim();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const seed = useMutation({
@@ -33,7 +37,9 @@ function HomeScreen() {
     <Shell>
       <div className="space-y-8">
         <header className="space-y-2">
-          <h1 className="text-2xl font-normal tracking-tight">{copy.home.title}</h1>
+          <h1 className="text-2xl font-normal tracking-tight">
+            {chosenName ? `Hello, ${chosenName}.` : copy.home.title}
+          </h1>
           <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
         </header>
 

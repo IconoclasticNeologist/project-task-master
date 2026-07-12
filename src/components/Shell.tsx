@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { copy } from "@/lib/copy";
 import { HomeButton } from "@/components/HomeButton";
+import { leaveQuickly } from "@/lib/leaveNow";
 
 /**
  * Calm, mobile-first layout shell.
@@ -32,14 +33,12 @@ export function Shell({ children, hideNav = false }: { children: ReactNode; hide
           <div className="flex items-center gap-4">
             <button
               type="button"
-              onClick={() => {
-                window.location.replace("https://www.weather.gov/");
-              }}
+              onClick={() => leaveQuickly()}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               {copy.shell.leaveNow}
             </button>
-            <Link to="/home" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link to="/break" className="text-sm text-muted-foreground hover:text-foreground">
               {copy.shell.iNeedABreak}
             </Link>
           </div>

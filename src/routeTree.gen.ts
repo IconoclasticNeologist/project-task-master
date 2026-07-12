@@ -25,6 +25,7 @@ import { Route as GuideRouteImport } from './routes/guide'
 import { Route as ExpertRouteImport } from './routes/expert'
 import { Route as EnterRouteImport } from './routes/enter'
 import { Route as DevRouteImport } from './routes/dev'
+import { Route as BreakRouteImport } from './routes/break'
 import { Route as BeginRouteImport } from './routes/begin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
@@ -113,6 +114,11 @@ const DevRoute = DevRouteImport.update({
   path: '/dev',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BreakRoute = BreakRouteImport.update({
+  id: '/break',
+  path: '/break',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BeginRoute = BeginRouteImport.update({
   id: '/begin',
   path: '/begin',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/begin': typeof BeginRoute
+  '/break': typeof BreakRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/expert': typeof ExpertRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/begin': typeof BeginRoute
+  '/break': typeof BreakRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/expert': typeof ExpertRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/begin': typeof BeginRoute
+  '/break': typeof BreakRoute
   '/dev': typeof DevRoute
   '/enter': typeof EnterRoute
   '/expert': typeof ExpertRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/begin'
+    | '/break'
     | '/dev'
     | '/enter'
     | '/expert'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/begin'
+    | '/break'
     | '/dev'
     | '/enter'
     | '/expert'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/begin'
+    | '/break'
     | '/dev'
     | '/enter'
     | '/expert'
@@ -307,6 +319,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
   BeginRoute: typeof BeginRoute
+  BreakRoute: typeof BreakRoute
   DevRoute: typeof DevRoute
   EnterRoute: typeof EnterRoute
   ExpertRoute: typeof ExpertRoute
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/break': {
+      id: '/break'
+      path: '/break'
+      fullPath: '/break'
+      preLoaderRoute: typeof BreakRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/begin': {
       id: '/begin'
       path: '/begin'
@@ -523,6 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
   BeginRoute: BeginRoute,
+  BreakRoute: BreakRoute,
   DevRoute: DevRoute,
   EnterRoute: EnterRoute,
   ExpertRoute: ExpertRoute,

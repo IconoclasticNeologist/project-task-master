@@ -11,7 +11,10 @@ export async function getProfessionalSession(): Promise<ProfessionalSession> {
   if (error) throw new Error(error.message);
   if (!data.user) return { kind: "signed_out" };
 
-  if (data.user.app_metadata?.provider === "anonymous") {
+  // Live anonymous sessions carry app_metadata: {} — the provider tag is not
+  // reliable. is_anonymous is. Misclassifying a survivor as a professional
+  // would show them a Sign out that permanently orphans their anonymous space.
+  if (data.user.is_anonymous || data.user.app_metadata?.provider === "anonymous") {
     return { kind: "anonymous" };
   }
   return { kind: "professional", email: data.user.email ?? null };

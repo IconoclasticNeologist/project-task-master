@@ -28,8 +28,11 @@ export function generateContainmentClose(s: SessionState): string {
   const aftercare = s.aftercare
     ? `Your care plan is right here: ${s.aftercare.supportPerson} is who helps you feel safe; ${s.aftercare.calmingThing} is what helps you feel calm.`
     : `When you are ready, take a few minutes for yourself.`;
-  // The containment frame: what was said stays here, and it will be here
-  // when the person comes back. This line is the point of the close.
-  const staysHere = `What we talked about stays here. It will be here when you come back.`;
-  return `${named} ${aftercare} ${staysHere} Thank you for trusting me with that.`;
+  // The containment frame, told truthfully: the spoken conversation is not
+  // recorded anywhere (deliberate design), and the durable comfort points at
+  // what IS kept — the words they chose to save, and the open door. The
+  // closing screen's title already says "Thank you for trusting me with
+  // that," so the close must not repeat it.
+  const staysHere = `Nothing we said out loud is saved anywhere. The words you chose to keep are in Your space, and they will be there when you come back.`;
+  return `${named} ${aftercare} ${staysHere}`;
 }

@@ -6,10 +6,13 @@ import { generateSW } from "workbox-build";
 import { existsSync } from "node:fs";
 
 // The client output dir depends on the build context:
-//   Lovable sandbox / Cloudflare deploy → dist/client
-//   local `nitro: true` build           → .output/public
+//   Vercel deploy (nitro preset "vercel") → .vercel/output/static  ← must be FIRST:
+//     the intermediate dist/client may also exist, but Vercel serves only from
+//     .vercel/output/static — an sw.js written elsewhere never reaches the site.
+//   Lovable sandbox / Cloudflare deploy   → dist/client
+//   local `nitro: true` build             → .output/public
 // Detect by the copied manifest so the SW lands beside the served assets.
-const CANDIDATES = ["dist/client", ".output/public", "dist/public", "dist"];
+const CANDIDATES = [".vercel/output/static", "dist/client", ".output/public", "dist/public", "dist"];
 const OUT = CANDIDATES.find((d) => existsSync(`${d}/manifest.webmanifest`));
 
 if (!OUT) {

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TourRouteImport } from './routes/tour'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -34,6 +35,11 @@ import { Route as ProfessionalKnowledgeRouteImport } from './routes/professional
 import { Route as ProfessionalClientsRouteImport } from './routes/professional.clients'
 import { Route as NotebooksSlugRouteImport } from './routes/notebooks.$slug'
 
+const TourRoute = TourRouteImport.update({
+  id: '/tour',
+  path: '/tour',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
+  '/tour': typeof TourRoute
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
+  '/tour': typeof TourRoute
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
   '/team': typeof TeamRoute
+  '/tour': typeof TourRoute
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/team'
+    | '/tour'
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/team'
+    | '/tour'
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sources'
     | '/team'
+    | '/tour'
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
@@ -336,10 +348,18 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SourcesRoute: typeof SourcesRoute
   TeamRoute: typeof TeamRoute
+  TourRoute: typeof TourRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tour': {
+      id: '/tour'
+      path: '/tour'
+      fullPath: '/tour'
+      preLoaderRoute: typeof TourRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team': {
       id: '/team'
       path: '/team'
@@ -560,6 +580,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SourcesRoute: SourcesRoute,
   TeamRoute: TeamRoute,
+  TourRoute: TourRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

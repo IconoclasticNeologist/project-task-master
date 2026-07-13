@@ -11,6 +11,7 @@ import {
   Heart,
   Scale,
   NotebookPen,
+  MonitorPlay,
   type LucideIcon,
 } from "lucide-react";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
@@ -105,6 +106,24 @@ function JudgesScreen() {
             on.
           </p>
         </header>
+
+        <Link
+          to="/tour"
+          className="paper-shadow mt-8 flex items-center gap-3 rounded-lg bg-card p-4 text-foreground hover:bg-card/70"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[oklch(0.92_0.05_150)] text-[oklch(0.36_0.07_150)]">
+            <MonitorPlay className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </span>
+          <span className="flex-1">
+            <span className="block text-sm">Take the interactive tour</span>
+            <span className="block text-sm text-muted-foreground">
+              A two-minute guided replay of the real survivor journey — and the safety behind it.
+            </span>
+          </span>
+          <span aria-hidden className="text-muted-foreground">
+            →
+          </span>
+        </Link>
 
         <div className="mt-10 space-y-5">
           {PILLARS.map((p) => {

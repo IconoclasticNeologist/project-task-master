@@ -5,6 +5,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/lib/supabase/client";
+import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
 
 export const Route = createFileRoute("/sources")({
@@ -224,6 +225,8 @@ function SourcesScreen() {
           local rules can add rights or change how they work; the app marks jurisdiction-dependent
           content and points people to their own advocate or lawyer.
         </p>
+
+        <ReviewerFooter />
       </div>
     </div>
   );

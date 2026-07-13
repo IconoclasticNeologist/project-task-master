@@ -14,6 +14,7 @@ import {
   MonitorPlay,
   type LucideIcon,
 } from "lucide-react";
+import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
 
 export const Route = createFileRoute("/judges")({
@@ -175,6 +176,8 @@ function JudgesScreen() {
           protect the dignity, safety, and voice of people who have survived trafficking as they
           face one of the hardest things they may ever be asked to do.
         </p>
+
+        <ReviewerFooter />
       </div>
     </div>
   );

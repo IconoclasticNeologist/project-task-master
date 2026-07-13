@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
+import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { copy } from "@/lib/copy";
 import { accessMode, selfServeEnabled } from "@/lib/auth/config";
 import { pageTitle } from "@/lib/product";
@@ -32,36 +33,40 @@ function WelcomeScreen() {
             </CardContent>
           </Card>
         </div>
-        <div className="space-y-3 pb-4">
-          {/* A person who found this on their own needs no code — the primary
-              door is self-serve. Code-holders were sent by someone who can
-              also tell them which button to press. */}
-          <Link
-            to={selfServeEnabled ? "/begin" : accessMode === "gated" ? "/enter" : "/onboarding"}
-            className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Begin
-          </Link>
-          {selfServeEnabled && accessMode === "gated" && (
+        <div className="pb-4">
+          <div className="space-y-3">
+            {/* A person who found this on their own needs no code — the primary
+                door is self-serve. Code-holders were sent by someone who can
+                also tell them which button to press. */}
             <Link
-              to="/enter"
+              to={selfServeEnabled ? "/begin" : accessMode === "gated" ? "/enter" : "/onboarding"}
+              className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Begin
+            </Link>
+            {selfServeEnabled && accessMode === "gated" && (
+              <Link
+                to="/enter"
+                className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
+              >
+                {copy.begin.haveCodeLink}
+              </Link>
+            )}
+            <Link
+              to="/home"
               className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
             >
-              {copy.begin.haveCodeLink}
+              I’ve been here before
             </Link>
-          )}
-          <Link
-            to="/home"
-            className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
-          >
-            I’ve been here before
-          </Link>
-          <Link
-            to="/resources"
-            className="block w-full px-4 py-2 text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-          >
-            {copy.begin.welcomeSupport}
-          </Link>
+            <Link
+              to="/resources"
+              className="block w-full px-4 py-2 text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              {copy.begin.welcomeSupport}
+            </Link>
+          </div>
+          {/* Reviewer-only wayfinding, framed so a survivor reads past it. */}
+          <ReviewerFooter lead="Reviewing this project?" />
         </div>
       </div>
     </Shell>

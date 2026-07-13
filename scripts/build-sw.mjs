@@ -12,7 +12,13 @@ import { existsSync } from "node:fs";
 //   Lovable sandbox / Cloudflare deploy   → dist/client
 //   local `nitro: true` build             → .output/public
 // Detect by the copied manifest so the SW lands beside the served assets.
-const CANDIDATES = [".vercel/output/static", "dist/client", ".output/public", "dist/public", "dist"];
+const CANDIDATES = [
+  ".vercel/output/static",
+  "dist/client",
+  ".output/public",
+  "dist/public",
+  "dist",
+];
 const OUT = CANDIDATES.find((d) => existsSync(`${d}/manifest.webmanifest`));
 
 if (!OUT) {

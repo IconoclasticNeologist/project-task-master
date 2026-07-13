@@ -31,7 +31,7 @@ describe("makeCaptionStream", () => {
   });
 
   it("keeps only the tail of a very long turn, cut at a word boundary", () => {
-    let t = 0;
+    const t = 0;
     const s = makeCaptionStream({ maxChars: 40, now: () => t });
     s.push("The courtroom is a large quiet room and the judge sits at the front behind a bench.");
     const out = s.current();

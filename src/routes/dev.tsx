@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSupabase } from "@/lib/supabase/client";
+import { isDeviceDemoFlagOn, setDemoToolsEnabled } from "@/lib/data/demoTools";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
 import {
   approveProfessional,
@@ -902,6 +903,8 @@ function AgentsPanel() {
           saving={save.isPending}
         />
 
+        <DemoToolsSection />
+
         <p className="text-xs leading-relaxed text-muted-foreground">
           Prompts moved to their own <span className="text-foreground">Prompts</span> tab — every
           one is editable there, with Improve-with-AI.
@@ -914,6 +917,52 @@ function AgentsPanel() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// Per-DEVICE toggle (localStorage, not agent_config): flips the "Load an example"
+// seed button on the survivor Home screen for THIS browser only. Deliberately not
+// global — on the shared live deployment a global switch would show a destructive
+// "load fake data" button to every visitor, including real survivors.
+function DemoToolsSection() {
+  const [on, setOn] = useState(false);
+  useEffect(() => setOn(isDeviceDemoFlagOn()), []);
+  const apply = (next: boolean) => {
+    setDemoToolsEnabled(next);
+    setOn(next);
+  };
+  return (
+    <div>
+      <h3 className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
+        Demo tools (this device)
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            [false, "Off"],
+            [true, "On (show demo seed)"],
+          ] as const
+        ).map(([val, label]) => (
+          <button
+            key={String(val)}
+            type="button"
+            onClick={() => apply(val)}
+            className={
+              on === val
+                ? "rounded-md border border-primary bg-primary/10 px-3 py-1.5 text-sm"
+                : "rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground"
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+        Reveals “Load an example (demo)” on the Home screen — on this browser only. Loading it
+        replaces the current account’s content with a fictional example (with a confirm), so every
+        screen has something to show. Real survivors on other devices never see the button.
+      </p>
+    </div>
   );
 }
 

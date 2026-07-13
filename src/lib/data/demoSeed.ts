@@ -1,7 +1,8 @@
-import { listStatements, upsertStatement } from "./statements";
-import { listTimeline, upsertTimeline } from "./timeline";
+import { listStatements, upsertStatement, deleteStatement } from "./statements";
+import { listTimeline, upsertTimeline, deleteTimeline } from "./timeline";
 import { saveAftercare } from "./settings";
 import { indexStatement } from "@/lib/agents/rag";
+import { isDemoToolsEnabled } from "./demoTools";
 
 // DEMO ONLY — a presenter aid, not a survivor feature. Fills the current
 // (logged-in) survivor's space with one believable, fictional example so every
@@ -9,26 +10,23 @@ import { indexStatement } from "@/lib/agents/rag";
 // so the recognition/reframer agents have genuine patterns to surface and the
 // organizer has something to clarify. Remove before any real use.
 
-// Defense-in-depth: even if a build accidentally ships with the demo flag on, this
-// must be impossible to trigger against a real person's account.
-const DEMO_ENABLED = import.meta.env.DEV || import.meta.env.VITE_DEMO_TOOLS === "true";
-
 export async function loadExampleData(): Promise<void> {
-  if (!DEMO_ENABLED) {
+  // Defense-in-depth: the gate must hold even if a build ships with the flag on.
+  // isDemoToolsEnabled() is TRUE only in a dev build, a VITE_DEMO_TOOLS build, or
+  // on a device where /dev flipped the per-device flag — so a real survivor on
+  // their own device can never reach this.
+  if (!isDemoToolsEnabled()) {
     throw new Error("Example data is not available in this build.");
   }
-  // NEVER overwrite an existing space. Only seed a genuinely empty account, so a real
-  // survivor who somehow reached this button can't lose their care plan or have fictional
-  // statements injected over their own.
+  // Reset-to-example: clear whatever is in THIS (RLS-scoped) account, then seed a
+  // clean example. The caller (Home) confirms before replacing a non-empty account.
+  // Only ever the current survivor's own content is touched.
   const [existingStatements, existingTimeline] = await Promise.all([
     listStatements(),
     listTimeline(),
   ]);
-  if (existingStatements.length > 0 || existingTimeline.length > 0) {
-    throw new Error(
-      "This account already has content — example data is only for a fresh demo account.",
-    );
-  }
+  for (const s of existingStatements) await deleteStatement(s.id);
+  for (const t of existingTimeline) await deleteTimeline(t.id);
 
   await saveAftercare({
     supportPerson: "My sister, Ana",

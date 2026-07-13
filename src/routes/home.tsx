@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { copy } from "@/lib/copy";
@@ -6,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { useSurvivor } from "@/lib/auth/useSurvivor";
 import { loadExampleData } from "@/lib/data/demoSeed";
+import { isDemoToolsEnabled } from "@/lib/data/demoTools";
 import { AftercareCard } from "@/components/AftercareCard";
 import { requireSurvivor } from "@/lib/auth/guard";
 import { pageTitle } from "@/lib/product";
@@ -23,6 +25,11 @@ function HomeScreen() {
   const chosenName = survivor.data?.first_name?.trim();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  // Client-only: the per-device demo flag lives in localStorage, unavailable
+  // during SSR — resolve it after mount so the button never causes a hydration
+  // mismatch (server renders nothing here; client reveals it if enabled).
+  const [demoVisible, setDemoVisible] = useState(false);
+  useEffect(() => setDemoVisible(isDemoToolsEnabled()), []);
   const seed = useMutation({
     mutationFn: loadExampleData,
     onSuccess: async () => {
@@ -43,15 +50,24 @@ function HomeScreen() {
           <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
         </header>
 
-        {/* Presenter aid, never survivor-facing: only in dev builds or when the
-            deploy env opts in with VITE_DEMO_TOOLS=true (set it for the judged
-            demo build; leave unset anywhere a real person could land). */}
-        {(import.meta.env.DEV || import.meta.env.VITE_DEMO_TOOLS === "true") && (
+        {/* Presenter aid, never survivor-facing. Shown only when demo tools are
+            enabled here — a dev/VITE_DEMO_TOOLS build, or this device's /dev flag.
+            Loading replaces the account's current content with the example, so
+            confirm first. */}
+        {demoVisible && (
           <div className="space-y-1">
             <button
               type="button"
               disabled={seed.isPending}
-              onClick={() => seed.mutate()}
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Load the demo example? This clears anything currently in this account and replaces it with the example.",
+                  )
+                ) {
+                  seed.mutate();
+                }
+              }}
               className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
             >
               {seed.isPending ? "Loading an example…" : "Load an example (demo)"}

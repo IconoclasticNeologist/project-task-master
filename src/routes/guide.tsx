@@ -108,6 +108,18 @@ function GuideScreen() {
           </Card>
         </Link>
 
+        <Link to="/study">
+          <Card className="paper-shadow">
+            <CardContent className="flex items-center justify-between py-5">
+              <div>
+                <div className="text-base font-normal text-foreground">{copy.study.title}</div>
+                <div className="text-xs text-muted-foreground">{copy.study.guideCardHint}</div>
+              </div>
+              <span className="text-muted-foreground">→</span>
+            </CardContent>
+          </Card>
+        </Link>
+
         <p className="text-xs leading-relaxed text-muted-foreground">{copy.guide.sourceNote}</p>
       </div>
     </Shell>

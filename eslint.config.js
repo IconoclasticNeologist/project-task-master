@@ -6,7 +6,10 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  // .vercel/.tanstack are local build artifacts and .claude/worktrees holds
+  // other sessions' checkouts — all absent in CI; without ignoring them, a
+  // local `eslint .` lints generated bundles and sibling working copies.
+  { ignores: ["dist", ".output", ".vinxi", ".vercel", ".tanstack", ".nitro", ".claude/worktrees"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

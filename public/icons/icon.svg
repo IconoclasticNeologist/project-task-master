@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="The Advocate placeholder icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Tend placeholder icon">
   <rect width="512" height="512" fill="#FAF7EF"/>
   <rect x="112" y="112" width="288" height="288" rx="48" fill="#7C8B7A"/>
-  <text x="256" y="332" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="220" fill="#FAF7EF" text-anchor="middle">A</text>
+  <text x="256" y="332" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="220" fill="#FAF7EF" text-anchor="middle">T</text>
   <text x="256" y="468" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="34" fill="#7C8B7A" text-anchor="middle" opacity="0.75">placeholder</text>
 </svg>

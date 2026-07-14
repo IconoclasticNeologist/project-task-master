@@ -88,6 +88,7 @@ function HomeScreen() {
             label={copy.guide.moreGuidesLabel}
             hint={copy.guide.moreGuidesHint}
           />
+          <Tile to="/study" label={copy.study.title} hint={copy.study.homeTileHint} />
           <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
           <Tile
             to="/account"

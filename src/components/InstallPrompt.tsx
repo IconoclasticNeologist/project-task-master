@@ -3,6 +3,7 @@ import { Share } from "lucide-react";
 import { usePwaInstall } from "@/pwa/usePwaInstall";
 import { useStandalone } from "@/pwa/useDisplayMode";
 import { useIosSafari } from "@/pwa/useIosSafari";
+import { PRODUCT_NAME } from "@/lib/product";
 
 const DISMISS_KEY = "advocate.installPromptDismissed";
 
@@ -31,7 +32,7 @@ export function InstallPrompt() {
     <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md px-6 pb-6">
       <div className="rounded-lg border border-border bg-card p-4 text-foreground shadow-sm">
         <p className="text-sm">
-          Add The Advocate to your home screen for a private, full-screen space.
+          Add {PRODUCT_NAME} to your home screen for a private, full-screen space.
         </p>
 
         {canInstall ? (

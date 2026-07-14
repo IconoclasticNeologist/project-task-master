@@ -2,21 +2,21 @@ import type { CSSProperties } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { copy } from "@/lib/copy";
-import { notebooks, type NotebookCover } from "@/lib/copy/notebooks";
+import { studyGuides, type GuideColor } from "@/lib/copy/studyGuides";
 import { pageTitle } from "@/lib/product";
 
-// Mini-guide shelf. A grid of notebook covers that "open" — by navigating to
-// /notebooks/$slug — into a ruled-paper interior. This route is also the
+// Study-guide shelf. Bigger, paged guides that open — by navigating to
+// /study/$slug — into a one-step-at-a-time player. This route is also the
 // layout for its children, so on a child route it just renders <Outlet/>
-// (mirrors the professional.tsx self-index pattern).
-export const Route = createFileRoute("/notebooks")({
-  head: () => ({ meta: [{ title: pageTitle(copy.notebooks.title) }] }),
-  component: NotebooksScreen,
+// (mirrors the notebooks.tsx self-index pattern).
+export const Route = createFileRoute("/study")({
+  head: () => ({ meta: [{ title: pageTitle(copy.study.title) }] }),
+  component: StudyShelf,
 });
 
-// Calm, desaturated cover colors. Kept light so near-black text reads easily.
-// Each maps to a cover fill and a slightly deeper bound spine.
-const COVER: Record<NotebookCover, { cover: string; spine: string }> = {
+// Same calm, desaturated covers as the notebooks shelf (kept in sync by hand;
+// the two shelves are siblings, not the same module).
+const COVER: Record<GuideColor, { cover: string; spine: string }> = {
   sage: { cover: "oklch(0.88 0.05 150)", spine: "oklch(0.80 0.06 150)" },
   sand: { cover: "oklch(0.90 0.045 82)", spine: "oklch(0.83 0.05 82)" },
   clay: { cover: "oklch(0.86 0.055 45)", spine: "oklch(0.78 0.06 45)" },
@@ -28,27 +28,27 @@ const COVER: Record<NotebookCover, { cover: string; spine: string }> = {
   rose: { cover: "oklch(0.88 0.045 15)", spine: "oklch(0.80 0.05 15)" },
 };
 
-function NotebooksScreen() {
+export function StudyShelf() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  // On a child route (an open notebook), render the child instead of the shelf.
-  if (pathname !== "/notebooks") return <Outlet />;
+  // On a child route (an open guide), render the child instead of the shelf.
+  if (pathname !== "/study") return <Outlet />;
 
   return (
     <Shell>
       <div className="space-y-6">
         <header className="space-y-2">
-          <h1 className="text-2xl font-normal tracking-tight">{copy.notebooks.title}</h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">{copy.notebooks.intro}</p>
+          <h1 className="text-2xl font-normal tracking-tight">{copy.study.title}</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">{copy.study.intro}</p>
         </header>
 
         <div className="grid grid-cols-2 gap-4">
-          {notebooks.map((n) => {
-            const c = COVER[n.color];
+          {studyGuides.map((g) => {
+            const c = COVER[g.color];
             return (
               <Link
-                key={n.slug}
-                to="/notebooks/$slug"
-                params={{ slug: n.slug }}
+                key={g.slug}
+                to="/study/$slug"
+                params={{ slug: g.slug }}
                 className="block rounded-[0.35rem_0.7rem_0.7rem_0.35rem]"
               >
                 <div
@@ -62,13 +62,16 @@ function NotebooksScreen() {
                     style={{ background: c.spine }}
                   />
                   <span className="text-[0.7rem] font-medium tracking-wide text-foreground/45 tabular-nums">
-                    {n.index}
+                    {g.index}
                   </span>
                   <div className="mt-auto space-y-1">
                     <h2 className="text-base font-normal leading-snug text-foreground">
-                      {n.title}
+                      {g.title}
                     </h2>
-                    <p className="text-xs leading-relaxed text-foreground/70">{n.cover}</p>
+                    <p className="text-xs leading-relaxed text-foreground/70">{g.cover}</p>
+                    <p className="text-[0.7rem] leading-relaxed text-foreground/55">
+                      {copy.study.minutesTemplate.replace("{n}", String(g.minutes))}
+                    </p>
                   </div>
                 </div>
               </Link>
@@ -76,16 +79,7 @@ function NotebooksScreen() {
           })}
         </div>
 
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          <Link to="/study" className="text-foreground underline underline-offset-2">
-            {copy.study.notebooksCrossLink}
-          </Link>
-        </p>
-
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          These are short, general guides — not legal advice. Your advocate or lawyer knows your
-          court and your situation.
-        </p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{copy.study.shelfNote}</p>
       </div>
     </Shell>
   );

@@ -117,6 +117,35 @@ const SOURCE_GROUPS: Array<{ heading: string; items: Array<{ name: string; url: 
       },
     ],
   },
+  {
+    heading: "Study-guide research",
+    items: [
+      {
+        name: "Justice 101 — the federal criminal process in plain language (U.S. DOJ, USAO)",
+        url: "https://www.justice.gov/usao/justice-101",
+      },
+      {
+        name: "Criminal Cases — how a case moves (U.S. Courts)",
+        url: "https://www.uscourts.gov/about-federal-courts/types-cases/criminal-cases",
+      },
+      {
+        name: "Appeals — what an appeal is and is not (U.S. Courts)",
+        url: "https://www.uscourts.gov/about-federal-courts/types-cases/appeals",
+      },
+      {
+        name: "Glossary of Legal Terms (U.S. Courts)",
+        url: "https://www.uscourts.gov/glossary",
+      },
+      {
+        name: "Federal Rule of Evidence 611 — mode of examining witnesses (Cornell LII)",
+        url: "https://www.law.cornell.edu/rules/fre/rule_611",
+      },
+      {
+        name: "National Crime Victim Law Institute (NCVLI) — victims' rights resources",
+        url: "https://law.lclark.edu/centers/national_crime_victim_law_institute/",
+      },
+    ],
+  },
 ];
 
 function SourcesScreen() {

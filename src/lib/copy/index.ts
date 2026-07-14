@@ -266,6 +266,34 @@ export const copy = {
     nextLabel: "Next",
   },
 
+  // The study-guide shelf (/study). Guide content lives in ./studyGuides.ts.
+  study: {
+    title: "Study guides",
+    intro:
+      "Bigger topics, taken one small step at a time. Open what helps, skip what doesn't. There is no order you have to follow.",
+    minutesTemplate: "about {n} minutes — no rush",
+    shelfNote:
+      "These are general guides — not legal advice. Your advocate or lawyer knows your court and your situation.",
+    contentsTitle: "Inside this guide",
+    contentsHint: "You can read in order, or tap any step. Skipping is always okay.",
+    begin: "Begin",
+    backToShelf: "All study guides",
+    prevLabel: "Back",
+    nextLabel: "Next",
+    listen: "Listen to this step",
+    stopListening: "Stop listening",
+    flipHintFront: "Tap to see what it can mean",
+    flipHintBack: "Tap to see the saying again",
+    checkInNothingSaved: "Want to try a few questions? Just for you — nothing is saved.",
+    storyLabel: "A story, not a real person — to show what it can be like.",
+    wordsHeading: "Words from this guide",
+    notFound: "That study guide isn’t here. It may have moved.",
+    homeTileHint: "Bigger topics, one small step at a time.",
+    guideCardHint: "Bigger guides, one step at a time.",
+    notebooksCrossLink:
+      "Looking for something deeper? The study guides take bigger topics one step at a time.",
+  },
+
   session: {
     title: "Session",
     coachIntro: "Hi. I’m here. We can go slowly.",

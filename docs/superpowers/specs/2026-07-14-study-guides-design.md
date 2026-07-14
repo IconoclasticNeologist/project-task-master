@@ -197,9 +197,10 @@ on the notebooks shelf. **Not** added to the Shell footer nav (full at 7).
   ≥1 step, every step ≥1 block; every `checkIn.answerIndex` in range; every
   `[[term]]` mark resolves to a `vocab` entry; banned-word lint over all guide
   copy (urgency words: "now", "act fast", "don't miss", "hurry"; plus
-  "victim" — with the official role title "victim-witness" as the one allowed
-  exception, matching existing notebook usage); `minutes` present; `close`
-  present.
+  "victim" — with two allowed exceptions, both official proper names a person
+  will hear in court: the role title "victim-witness" (existing notebook
+  usage) and the form name "victim impact statement", quoted once in guide 08);
+  `minutes` present; `close` present.
 - **Component tests** (jsdom): one render test per block kind; FlipCard flips
   on tap only; CheckIn shows explanation after choice and stores nothing;
   VocabText marks render as buttons with definitions; ListenButton absent when

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TourRouteImport } from './routes/tour'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as StudyRouteImport } from './routes/study'
 import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SessionRouteImport } from './routes/session'
@@ -30,6 +31,7 @@ import { Route as BreakRouteImport } from './routes/break'
 import { Route as BeginRouteImport } from './routes/begin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudySlugRouteImport } from './routes/study.$slug'
 import { Route as ProfessionalRecordsRouteImport } from './routes/professional.records'
 import { Route as ProfessionalKnowledgeRouteImport } from './routes/professional.knowledge'
 import { Route as ProfessionalClientsRouteImport } from './routes/professional.clients'
@@ -43,6 +45,11 @@ const TourRoute = TourRouteImport.update({
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudyRoute = StudyRouteImport.update({
+  id: '/study',
+  path: '/study',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SourcesRoute = SourcesRouteImport.update({
@@ -140,6 +147,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudySlugRoute = StudySlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => StudyRoute,
+} as any)
 const ProfessionalRecordsRoute = ProfessionalRecordsRouteImport.update({
   id: '/records',
   path: '/records',
@@ -181,12 +193,14 @@ export interface FileRoutesByFullPath {
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
+  '/study': typeof StudyRouteWithChildren
   '/team': typeof TeamRoute
   '/tour': typeof TourRoute
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
   '/professional/records': typeof ProfessionalRecordsRoute
+  '/study/$slug': typeof StudySlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -208,12 +222,14 @@ export interface FileRoutesByTo {
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
+  '/study': typeof StudyRouteWithChildren
   '/team': typeof TeamRoute
   '/tour': typeof TourRoute
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
   '/professional/records': typeof ProfessionalRecordsRoute
+  '/study/$slug': typeof StudySlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -236,12 +252,14 @@ export interface FileRoutesById {
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
   '/sources': typeof SourcesRoute
+  '/study': typeof StudyRouteWithChildren
   '/team': typeof TeamRoute
   '/tour': typeof TourRoute
   '/notebooks/$slug': typeof NotebooksSlugRoute
   '/professional/clients': typeof ProfessionalClientsRoute
   '/professional/knowledge': typeof ProfessionalKnowledgeRoute
   '/professional/records': typeof ProfessionalRecordsRoute
+  '/study/$slug': typeof StudySlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -265,12 +283,14 @@ export interface FileRouteTypes {
     | '/session'
     | '/settings'
     | '/sources'
+    | '/study'
     | '/team'
     | '/tour'
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
     | '/professional/records'
+    | '/study/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -292,12 +312,14 @@ export interface FileRouteTypes {
     | '/session'
     | '/settings'
     | '/sources'
+    | '/study'
     | '/team'
     | '/tour'
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
     | '/professional/records'
+    | '/study/$slug'
   id:
     | '__root__'
     | '/'
@@ -319,12 +341,14 @@ export interface FileRouteTypes {
     | '/session'
     | '/settings'
     | '/sources'
+    | '/study'
     | '/team'
     | '/tour'
     | '/notebooks/$slug'
     | '/professional/clients'
     | '/professional/knowledge'
     | '/professional/records'
+    | '/study/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -347,6 +371,7 @@ export interface RootRouteChildren {
   SessionRoute: typeof SessionRoute
   SettingsRoute: typeof SettingsRoute
   SourcesRoute: typeof SourcesRoute
+  StudyRoute: typeof StudyRouteWithChildren
   TeamRoute: typeof TeamRoute
   TourRoute: typeof TourRoute
 }
@@ -365,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/study': {
+      id: '/study'
+      path: '/study'
+      fullPath: '/study'
+      preLoaderRoute: typeof StudyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sources': {
@@ -500,6 +532,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/study/$slug': {
+      id: '/study/$slug'
+      path: '/$slug'
+      fullPath: '/study/$slug'
+      preLoaderRoute: typeof StudySlugRouteImport
+      parentRoute: typeof StudyRoute
+    }
     '/professional/records': {
       id: '/professional/records'
       path: '/records'
@@ -559,6 +598,16 @@ const ProfessionalRouteWithChildren = ProfessionalRoute._addFileChildren(
   ProfessionalRouteChildren,
 )
 
+interface StudyRouteChildren {
+  StudySlugRoute: typeof StudySlugRoute
+}
+
+const StudyRouteChildren: StudyRouteChildren = {
+  StudySlugRoute: StudySlugRoute,
+}
+
+const StudyRouteWithChildren = StudyRoute._addFileChildren(StudyRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
@@ -579,6 +628,7 @@ const rootRouteChildren: RootRouteChildren = {
   SessionRoute: SessionRoute,
   SettingsRoute: SettingsRoute,
   SourcesRoute: SourcesRoute,
+  StudyRoute: StudyRouteWithChildren,
   TeamRoute: TeamRoute,
   TourRoute: TourRoute,
 }

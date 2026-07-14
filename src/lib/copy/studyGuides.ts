@@ -293,8 +293,7 @@ export function narrationTextForStep(guide: StudyGuide, step: GuideStep): string
         b.title + ".",
         ...b.paragraphs,
       );
-    else if (b.kind === "timeline")
-      for (const s of b.steps) parts.push(s.title + ". " + s.body);
+    else if (b.kind === "timeline") for (const s of b.steps) parts.push(s.title + ". " + s.body);
     // checkIn: skipped — interactive.
   }
   if (step === guide.steps[guide.steps.length - 1]) parts.push(guide.close);

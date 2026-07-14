@@ -16,6 +16,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSurvivor } from "@/lib/auth/guard";
+import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
+import { NoSpacePanel } from "@/components/NoSpacePanel";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +57,7 @@ type Medium = "gemini" | "avatar";
 const HARD_MATERIAL_USER_CHARS = 80;
 
 function SessionScreen() {
+  const gate = useRequireSurvivor();
   const [stage, setStage] = useState<Stage>("start");
   const [screenMode, setScreenMode] = useState<ScreenMode>("voice");
   const [witnessStand, setWitnessStand] = useState(false);
@@ -394,6 +397,14 @@ function SessionScreen() {
     medium === "avatar" ? avatar.practiceCapSec : mediumOpen ? caps.practiceSec : null;
 
   const sessionActive = stage === "live" || stage === "handoff" || stage === "paused";
+
+  if (gate.status !== "ok") {
+    return (
+      <Shell>
+        <NoSpacePanel />
+      </Shell>
+    );
+  }
 
   return (
     <Shell hideNav={sessionActive}>

@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerSW } from "../pwa/registerSW";
 import { InstallPrompt } from "../components/InstallPrompt";
 import { LockGate } from "@/components/LockGate";
+import { HelperWidget } from "@/components/helper/HelperWidget";
 import { Toaster } from "@/components/ui/sonner";
 import { PRODUCT_NAME } from "@/lib/product";
 import { MOTION_HEAD_SCRIPT } from "@/lib/motion";
@@ -162,6 +163,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <InstallPrompt />
+      <HelperWidget />
       <LockGate />
       <Toaster />
     </QueryClientProvider>

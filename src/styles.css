@@ -56,8 +56,10 @@
   --popover: oklch(0.985 0.01 85);
   --popover-foreground: var(--foreground);
 
-  /* Muted sage — used sparingly */
-  --primary: oklch(0.62 0.04 150);
+  /* Muted sage — used sparingly. Darkened from oklch(0.62 0.04 150) so
+     primary-foreground (a near-white cream) clears WCAG AA (~5.6:1,
+     was ~3.4:1) for text and icons placed on a primary fill. */
+  --primary: oklch(0.5 0.055 150);
   --primary-foreground: oklch(0.985 0.008 85);
 
   /* Warm sand tones */
@@ -73,7 +75,9 @@
 
   --border: oklch(0.9 0.018 80);
   --input: oklch(0.9 0.018 80);
-  --ring: oklch(0.7 0.03 150);
+  /* Matches the darkened --primary above so focus rings and the primary
+     fill read as one consistent sage. */
+  --ring: oklch(0.5 0.055 150);
 }
 
 @layer base {
@@ -290,4 +294,18 @@ html[data-motion="off"] *::after {
   margin-left: -3px;
   border-radius: 9999px;
   background: oklch(0.55 0.08 40 / 0.5);
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Short-viewport landing tweak. On laptops under ~880px tall, the welcome
+   hero's default top padding pushes "Begin" and the reviewer footer below
+   the fold. Applied to the hero container (see src/routes/index.tsx); at
+   normal heights this rule doesn't match, so nothing changes. Left
+   unlayered (outside @layer) like the other custom utilities above so it
+   reliably wins over the Tailwind pt-* utility already on that element.
+   ────────────────────────────────────────────────────────────────────── */
+@media (max-height: 880px) {
+  .welcome-tight {
+    padding-top: 1rem;
+  }
 }

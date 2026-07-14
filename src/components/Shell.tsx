@@ -34,11 +34,14 @@ export function Shell({ children, hideNav = false }: { children: ReactNode; hide
             <button
               type="button"
               onClick={() => leaveQuickly()}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="-mx-1.5 -my-3 px-1.5 py-3 text-sm text-muted-foreground hover:text-foreground"
             >
               {copy.shell.leaveNow}
             </button>
-            <Link to="/break" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link
+              to="/break"
+              className="-mx-1.5 -my-3 px-1.5 py-3 text-sm text-muted-foreground hover:text-foreground"
+            >
               {copy.shell.iNeedABreak}
             </Link>
           </div>
@@ -56,8 +59,8 @@ export function Shell({ children, hideNav = false }: { children: ReactNode; hide
                   to={item.to}
                   className={
                     isActive
-                      ? "text-sm text-foreground"
-                      : "text-sm text-muted-foreground hover:text-foreground"
+                      ? "-mx-1.5 -my-3 px-1.5 py-3 text-sm text-foreground"
+                      : "-mx-1.5 -my-3 px-1.5 py-3 text-sm text-muted-foreground hover:text-foreground"
                   }
                 >
                   {item.label}

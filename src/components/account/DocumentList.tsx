@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { copy } from "@/lib/copy";
 import { useDocuments } from "@/lib/data/useDocuments";
@@ -56,7 +57,14 @@ export function DocumentList({
     }
   };
 
-  if (query.isLoading) return <p className="text-sm text-muted-foreground">…</p>;
+  if (query.isLoading) {
+    return (
+      <div className="space-y-3" aria-busy="true">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    );
+  }
   if (query.isError) {
     return (
       <div className="space-y-3">

@@ -18,6 +18,7 @@ import {
   COACH_INTERVIEW,
   COACH_REGULATOR,
   DEFENSE_PRACTICE_PROMPT,
+  HELPER_GUIDE,
 } from "./advocatePrompts.ts";
 
 const TRANSLATOR_PROMPT = [
@@ -79,7 +80,8 @@ export type PromptKey =
   | "organizer"
   | "reframer"
   | "recognition"
-  | "interviewer";
+  | "interviewer"
+  | "helper";
 
 export interface PromptMeta {
   key: PromptKey;
@@ -160,6 +162,13 @@ export const PROMPT_CATALOG: PromptMeta[] = [
     group: "Reflect",
     note: "One gentle open invitation to start sharing.",
     default: INTERVIEWER_PROMPT,
+  },
+  {
+    key: "helper",
+    title: "Guide — in-app helper chat",
+    group: "Guide (widget)",
+    note: "The 'Questions?' widget. Explains the app, offers navigation; never feelings work, never legal advice. The app map is injected beneath this prompt at runtime.",
+    default: HELPER_GUIDE,
   },
 ];
 

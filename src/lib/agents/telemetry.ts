@@ -5,9 +5,9 @@
 
 import { getSupabase } from "@/lib/supabase/client";
 
-export type TelemetryAgent = "base" | "regulator" | "interview" | "defense";
+export type TelemetryAgent = "base" | "regulator" | "interview" | "defense" | "helper";
 export type TelemetryMedium = "voice" | "avatar" | "text";
-export type TelemetryEvent = "ended_clean" | "tripwire_stops" | "errors";
+export type TelemetryEvent = "started" | "ended_clean" | "tripwire_stops" | "errors";
 
 export function sendAgentTelemetry(
   agent: TelemetryAgent,

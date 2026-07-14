@@ -1,4 +1,5 @@
 import { Info, MessageCircle } from "lucide-react";
+import { CheckIn } from "@/components/study/CheckIn";
 import { FlipCard } from "@/components/study/FlipCard";
 import { TimelineList } from "@/components/study/TimelineList";
 import { VocabText } from "@/components/study/VocabText";
@@ -86,6 +87,8 @@ function BlockView({ block, vocab }: { block: GuideBlock; vocab: VocabTerm[] }) 
       );
     case "timeline":
       return <TimelineList steps={block.steps} vocab={vocab} />;
+    case "checkIn":
+      return <CheckIn intro={block.intro} questions={block.questions} />;
     default:
       return null;
   }

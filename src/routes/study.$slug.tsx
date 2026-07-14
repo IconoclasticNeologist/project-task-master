@@ -4,6 +4,7 @@ import { Shell } from "@/components/Shell";
 import { ProgressDots } from "@/components/ProgressDots";
 import { Button } from "@/components/ui/button";
 import { GuideStepView } from "@/components/study/GuideStepView";
+import { ListenButton } from "@/components/study/ListenButton";
 import { copy } from "@/lib/copy";
 import { STUDY_GUIDE_DISCLAIMER, studyGuideBySlug, type StudyGuide } from "@/lib/copy/studyGuides";
 import { pageTitle } from "@/lib/product";
@@ -105,7 +106,15 @@ export function GuidePlayerView({ guide }: { guide: StudyGuide }) {
               </section>
             ) : (
               <div className="space-y-6">
-                <h2 className="text-lg font-normal text-foreground">{step.title}</h2>
+                <div className="space-y-3">
+                  <h2 className="text-lg font-normal text-foreground">{step.title}</h2>
+                  {step.audio === true && (
+                    <ListenButton
+                      key={`/audio/study/${guide.slug}/${step.id}.mp3`}
+                      src={`/audio/study/${guide.slug}/${step.id}.mp3`}
+                    />
+                  )}
+                </div>
                 <GuideStepView guide={guide} step={step} isLast={isLast} />
               </div>
             )}

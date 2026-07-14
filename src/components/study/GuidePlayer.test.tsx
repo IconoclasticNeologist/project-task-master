@@ -64,3 +64,21 @@ describe("GuideNotFound", () => {
     expect(screen.getByText(copy.study.notFound)).toBeInTheDocument();
   });
 });
+
+describe("narration", () => {
+  it("shows the listen button only on steps with generated audio", () => {
+    const fixture = {
+      ...guide01,
+      steps: [
+        { ...guide01.steps[0], id: "s1", audio: true },
+        { ...guide01.steps[1], id: "s2" },
+      ],
+    };
+    render(<GuidePlayerView guide={fixture} />);
+    fireEvent.click(screen.getByRole("button", { name: copy.study.begin }));
+    expect(screen.getByRole("button", { name: copy.study.listen })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(copy.study.nextLabel) }));
+    expect(screen.queryByRole("button", { name: copy.study.listen })).not.toBeInTheDocument();
+  });
+});

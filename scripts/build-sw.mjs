@@ -42,6 +42,8 @@ if (!existsSync(`${OUT}/offline.html`)) {
 
 const { count, size, warnings } = await generateSW({
   globDirectory: OUT,
+  // mp3 deliberately excluded: study-guide narration is runtime-fetched on tap,
+  // never precached — keeps the PWA install light (spec 2026-07-14).
   globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest,woff2}"],
   swDest: `${OUT}/sw.js`,
   // NO navigateFallback: this is an SSR app (each route is server-rendered), not an SPA

@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
+import { NoSpacePanel } from "@/components/NoSpacePanel";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireSurvivor } from "@/lib/auth/guard";
+import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
 import {
   accessScopeLabels,
   professionalRoleLabel,
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/team")({
 });
 
 function TeamScreen() {
+  const { status } = useRequireSurvivor();
   const { query, respond } = useAccessGrants();
   const grants = query.data ?? [];
   const visibleGrants = grants.filter(
@@ -26,47 +29,51 @@ function TeamScreen() {
 
   return (
     <Shell>
-      <div className="space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-normal tracking-tight">{copy.team.title}</h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">{copy.team.intro}</p>
-        </header>
+      {status !== "ok" ? (
+        <NoSpacePanel />
+      ) : (
+        <div className="space-y-6">
+          <header className="space-y-2">
+            <h1 className="text-2xl font-normal tracking-tight">{copy.team.title}</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">{copy.team.intro}</p>
+          </header>
 
-        {query.isLoading ? (
-          <p className="text-sm text-muted-foreground">{copy.team.loading}</p>
-        ) : query.isError ? (
-          <Card>
-            <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
-              <p>{copy.team.loadError}</p>
-              <button
-                type="button"
-                onClick={() => void query.refetch()}
-                className="rounded-md border border-border px-3 py-2 text-sm hover:text-foreground"
-              >
-                {copy.team.retry}
-              </button>
-            </CardContent>
-          </Card>
-        ) : visibleGrants.length === 0 ? (
-          <Card>
-            <CardContent className="space-y-2 py-5 text-sm leading-relaxed text-muted-foreground">
-              <p className="text-foreground">{copy.team.emptyTitle}</p>
-              <p>{copy.team.emptyBody}</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {visibleGrants.map((grant) => (
-              <AccessGrantCard
-                key={grant.id}
-                grant={grant}
-                pending={respond.isPending}
-                onRespond={(decision) => respond.mutate({ id: grant.id, decision })}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+          {query.isLoading ? (
+            <p className="text-sm text-muted-foreground">{copy.team.loading}</p>
+          ) : query.isError ? (
+            <Card>
+              <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
+                <p>{copy.team.loadError}</p>
+                <button
+                  type="button"
+                  onClick={() => void query.refetch()}
+                  className="rounded-md border border-border px-3 py-2 text-sm hover:text-foreground"
+                >
+                  {copy.team.retry}
+                </button>
+              </CardContent>
+            </Card>
+          ) : visibleGrants.length === 0 ? (
+            <Card>
+              <CardContent className="space-y-2 py-5 text-sm leading-relaxed text-muted-foreground">
+                <p className="text-foreground">{copy.team.emptyTitle}</p>
+                <p>{copy.team.emptyBody}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {visibleGrants.map((grant) => (
+                <AccessGrantCard
+                  key={grant.id}
+                  grant={grant}
+                  pending={respond.isPending}
+                  onRespond={(decision) => respond.mutate({ id: grant.id, decision })}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </Shell>
   );
 }

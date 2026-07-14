@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSurvivor } from "@/lib/auth/guard";
+import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
 import { Shell } from "@/components/Shell";
+import { NoSpacePanel } from "@/components/NoSpacePanel";
 import { StatementList } from "@/components/account/StatementList";
 import { TimelineList } from "@/components/account/TimelineList";
 import { DocumentList } from "@/components/account/DocumentList";
@@ -23,6 +25,7 @@ export const Route = createFileRoute("/account")({
 type Tab = "statements" | "timeline" | "documents";
 
 function AccountScreen() {
+  const { status } = useRequireSurvivor();
   // Lets the home tiles deep-link to a tab (e.g. /account#timeline) without
   // introducing a typed search param. Read once on mount; tab buttons take over after.
   const [tab, setTab] = useState<Tab>(() => {
@@ -48,82 +51,86 @@ function AccountScreen() {
 
   return (
     <Shell>
-      <div className="space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-normal tracking-tight">{copy.account.title}</h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">{copy.account.intro}</p>
-        </header>
+      {status !== "ok" ? (
+        <NoSpacePanel />
+      ) : (
+        <div className="space-y-6">
+          <header className="space-y-2">
+            <h1 className="text-2xl font-normal tracking-tight">{copy.account.title}</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">{copy.account.intro}</p>
+          </header>
 
-        <p className="rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-          {copy.account.sharedNote}
-        </p>
+          <p className="rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+            {copy.account.sharedNote}
+          </p>
 
-        <div className="flex gap-2">
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={copy.account.searchPlaceholder}
-            className="flex-1"
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          />
-          <button
-            type="button"
-            onClick={handleSearch}
-            disabled={pending}
-            className="rounded-md border border-border px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            Search
-          </button>
-        </div>
-
-        {hits !== null && (
-          <div className="space-y-2">
-            {hits.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{copy.account.searchEmpty}</p>
-            ) : (
-              hits.map((h, i) => (
-                <div
-                  key={i}
-                  className="rounded-md border border-border bg-card px-3 py-2 text-sm leading-relaxed"
-                >
-                  {h.chunk_text}
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        <nav className="flex gap-2 border-b border-border">
-          {(
-            [
-              ["statements", copy.account.tabs.statements],
-              ["timeline", copy.account.tabs.timeline],
-              ["documents", copy.account.tabs.documents],
-            ] as const
-          ).map(([k, label]) => (
+          <div className="flex gap-2">
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={copy.account.searchPlaceholder}
+              className="flex-1"
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
             <button
-              key={k}
               type="button"
-              onClick={() => setTab(k)}
-              className={
-                tab === k
-                  ? "border-b-2 border-foreground px-3 py-2 text-sm text-foreground"
-                  : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-              }
+              onClick={handleSearch}
+              disabled={pending}
+              className="rounded-md border border-border px-4 py-1.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
             >
-              {label}
+              Search
             </button>
-          ))}
-        </nav>
+          </div>
 
-        {tab === "statements" && <StatementList defaultVisibility={defaultVisibility} />}
-        {tab === "timeline" && <TimelineList defaultVisibility={defaultVisibility} />}
-        {tab === "documents" && <DocumentList defaultVisibility={defaultVisibility} />}
+          {hits !== null && (
+            <div className="space-y-2">
+              {hits.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{copy.account.searchEmpty}</p>
+              ) : (
+                hits.map((h, i) => (
+                  <div
+                    key={i}
+                    className="rounded-md border border-border bg-card px-3 py-2 text-sm leading-relaxed"
+                  >
+                    {h.chunk_text}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
 
-        <DraftExport />
+          <nav className="flex gap-2 border-b border-border">
+            {(
+              [
+                ["statements", copy.account.tabs.statements],
+                ["timeline", copy.account.tabs.timeline],
+                ["documents", copy.account.tabs.documents],
+              ] as const
+            ).map(([k, label]) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setTab(k)}
+                className={
+                  tab === k
+                    ? "border-b-2 border-foreground px-3 py-2 text-sm text-foreground"
+                    : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
 
-        <ReflectPanel />
-      </div>
+          {tab === "statements" && <StatementList defaultVisibility={defaultVisibility} />}
+          {tab === "timeline" && <TimelineList defaultVisibility={defaultVisibility} />}
+          {tab === "documents" && <DocumentList defaultVisibility={defaultVisibility} />}
+
+          <DraftExport />
+
+          <ReflectPanel />
+        </div>
+      )}
     </Shell>
   );
 }

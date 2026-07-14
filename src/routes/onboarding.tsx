@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { requireSurvivor } from "@/lib/auth/guard";
+import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
 import { getSurvivor } from "@/lib/auth/session";
 import { saveAftercare, markOnboarded } from "@/lib/data/settings";
 import { Shell } from "@/components/Shell";
+import { NoSpacePanel } from "@/components/NoSpacePanel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +29,7 @@ export const Route = createFileRoute("/onboarding")({
 const STEPS = ["welcome", "feelings", "care", "aftercare", "how", "rules"] as const;
 
 function OnboardingScreen() {
+  const { status } = useRequireSurvivor();
   const navigate = useNavigate();
   const [stepIdx, setStepIdx] = useState(0);
   const [supportPerson, setSupportPerson] = useState("");
@@ -135,40 +138,44 @@ function OnboardingScreen() {
 
   return (
     <Shell hideNav>
-      <div className="flex flex-1 flex-col justify-between gap-8 py-6">
-        <div className="space-y-6 pt-6">
-          <ProgressDots step={stepIdx} total={STEPS.length} />
-          <h1 className="text-2xl font-normal leading-snug tracking-tight">{body.title}</h1>
-          <p className="text-base leading-relaxed text-foreground">{body.copy}</p>
-          {extra}
-        </div>
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={onCta}
-            className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            {body.cta}
-          </button>
-          <div className="flex items-center justify-between">
+      {status !== "ok" ? (
+        <NoSpacePanel />
+      ) : (
+        <div className="flex flex-1 flex-col justify-between gap-8 py-6">
+          <div className="space-y-6 pt-6">
+            <ProgressDots step={stepIdx} total={STEPS.length} />
+            <h1 className="text-2xl font-normal leading-snug tracking-tight">{body.title}</h1>
+            <p className="text-base leading-relaxed text-foreground">{body.copy}</p>
+            {extra}
+          </div>
+          <div className="space-y-3">
             <button
               type="button"
-              onClick={back}
-              disabled={stepIdx === 0}
-              className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+              onClick={onCta}
+              className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
-              Back
+              {body.cta}
             </button>
-            <button
-              type="button"
-              onClick={next}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Skip
-            </button>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={back}
+                disabled={stepIdx === 0}
+                className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={next}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Skip
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </Shell>
   );
 }

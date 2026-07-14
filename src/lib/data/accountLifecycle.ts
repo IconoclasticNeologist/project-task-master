@@ -39,7 +39,7 @@ export async function exportMySpace(): Promise<{ filename: string; json: string 
   };
 
   return {
-    filename: `my-advocate-data-${new Date().toISOString().slice(0, 10)}.json`,
+    filename: `my-tend-data-${new Date().toISOString().slice(0, 10)}.json`,
     json: JSON.stringify(payload, null, 2),
   };
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Shell } from "@/components/Shell";
@@ -18,6 +18,19 @@ export const Route = createFileRoute("/enter")({
 const primaryButtonClass =
   "block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-40";
 
+// Three soft pulsing dots — motion-safe CSS animation (the global Stillness /
+// reduced-motion kill-switch in styles.css zeroes `animation-duration` on `*`,
+// so this is honored automatically). No spinner icon on purpose.
+function CreatingDots() {
+  return (
+    <span className="inline-flex items-center gap-0.5 align-middle" aria-hidden="true">
+      <span className="h-1 w-1 animate-pulse rounded-full bg-current" />
+      <span className="h-1 w-1 animate-pulse rounded-full bg-current [animation-delay:200ms]" />
+      <span className="h-1 w-1 animate-pulse rounded-full bg-current [animation-delay:400ms]" />
+    </span>
+  );
+}
+
 function EnterScreen() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<"code" | "profile">("code");
@@ -27,6 +40,17 @@ function EnterScreen() {
   const [failure, setFailure] = useState<"invalid" | "network" | null>(null);
   const [language, setLanguage] = useState<"en" | "es">("en");
   const [name, setName] = useState("");
+  // Second-stage reassurance: mirrors begin.tsx's create flow (audit P0-3) for the
+  // coded-entry redeem, which performs the equivalent "setting up your space" work.
+  const [showStillWorking, setShowStillWorking] = useState(false);
+  useEffect(() => {
+    if (!busy) {
+      setShowStillWorking(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowStillWorking(true), 2500);
+    return () => clearTimeout(timer);
+  }, [busy]);
 
   const submitCode = async () => {
     if (busy) return;
@@ -105,15 +129,29 @@ function EnterScreen() {
                 </CardContent>
               </Card>
             </div>
-            <button
-              type="button"
-              onClick={submitCode}
-              disabled={busy || code.trim().length === 0}
-              aria-busy={busy}
-              className={primaryButtonClass}
-            >
-              {busy ? "…" : copy.enter.codeCta}
-            </button>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={submitCode}
+                disabled={busy || code.trim().length === 0}
+                aria-busy={busy}
+                className={primaryButtonClass}
+              >
+                {busy ? (
+                  <span className="inline-flex items-center gap-2">
+                    {copy.begin.creating}
+                    <CreatingDots />
+                  </span>
+                ) : (
+                  copy.enter.codeCta
+                )}
+              </button>
+              {busy && showStillWorking && (
+                <p aria-live="polite" className="text-sm text-muted-foreground">
+                  {copy.begin.stillWorking}
+                </p>
+              )}
+            </div>
           </>
         ) : (
           <>

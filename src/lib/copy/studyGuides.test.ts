@@ -8,8 +8,10 @@ import {
 
 // Urgency words are banned as words ("now" alone), not substrings ("know").
 const BANNED = [/\bnow\b/i, /\bact fast\b/i, /\bdon'?t miss\b/i, /\bhurry\b/i];
-// "victim" is banned except in the official role title "victim-witness".
-const VICTIM = /victim(?!-witness)/i;
+// "victim" is banned except in two official proper names a person will hear
+// in court: the role title "victim-witness" and the form name quoted once in
+// guide 08, "victim impact statement". Neither labels the person.
+const VICTIM = /victim(?!-witness| impact statement)/i;
 
 function textOf(block: unknown): string[] {
   const b = block as Record<string, unknown>;

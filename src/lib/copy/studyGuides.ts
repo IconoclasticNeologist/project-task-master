@@ -897,6 +897,675 @@ export const studyGuides: readonly StudyGuide[] = [
     close:
       "The sharpest hour of a case is still just questions and answers, one at a time. Yours can each take the time they need.",
   },
+  {
+    slug: "your-rights",
+    index: "06",
+    title: "Your rights in the process",
+    cover: "To be told. To be there. To be heard. To be protected.",
+    tab: "Rights",
+    color: "lav",
+    minutes: 8,
+    vocab: [
+      {
+        term: "notice",
+        meaning: "Being told, ahead of time, about the public court dates in your case.",
+      },
+      {
+        term: "restitution",
+        meaning:
+          "Money a judge can order the person responsible to pay, toward what the crime cost you.",
+      },
+    ],
+    steps: [
+      {
+        id: "in-short",
+        title: "In short",
+        blocks: [
+          {
+            kind: "summary",
+            points: [
+              "People affected by a crime have rights in the process.",
+              "The main ones: to be told, to be there, to be heard, to be protected.",
+              "Rights exist on paper. People help make them real.",
+              "Asking about your rights is itself one of your rights.",
+            ],
+          },
+          {
+            kind: "intro",
+            body: "In the United States, federal law lists rights for people affected by a crime, and many states have their own lists. This guide walks the big ones. Which apply to your case depends on where it is — your advocate or a lawyer can say.",
+          },
+        ],
+      },
+      {
+        id: "to-be-told",
+        title: "To be told",
+        blocks: [
+          {
+            kind: "card",
+            title: "Knowing what is happening",
+            body: "You have the right to reasonable [[notice]] — being told about public court dates in your case, ahead of time. You should not have to learn about a hearing after it happened. If dates seem to pass without word, you can raise it.",
+            ask: "You could ask the prosecutor's office or victim-witness staff how they will keep you informed — by call, letter, or email.",
+          },
+        ],
+      },
+      {
+        id: "to-be-there",
+        title: "To be there",
+        blocks: [
+          {
+            kind: "card",
+            title: "A seat in the room",
+            body: "You generally have the right to attend public court dates in your case. Sometimes a rule keeps witnesses out of the room until after they testify — that rule protects the case, not anyone's comfort, and your lawyer or advocate can explain how it applies to you.",
+            ask: "You could ask whether you can be in the room for each hearing, and if not, why.",
+          },
+        ],
+      },
+      {
+        id: "to-be-heard",
+        title: "To be heard",
+        blocks: [
+          {
+            kind: "card",
+            title: "Your voice, on the record",
+            body: "At some hearings — like sentencing, or when a deal is decided — you can often be heard: out loud, or in writing. The judge decides the case, but your voice can be part of the record. There is a whole guide about this, called “Being heard.”",
+            ask: "You could ask your advocate which hearings in your case allow you to be heard.",
+          },
+        ],
+      },
+      {
+        id: "protection-and-privacy",
+        title: "To protection and privacy",
+        blocks: [
+          {
+            kind: "card",
+            title: "Fairness, dignity, respect",
+            body: "The law says people in your position should be reasonably protected, and treated with fairness and with respect for your dignity and privacy. That can mean separate waiting areas, escorts, or limits on what can be asked in court. The “Privacy and protection” guide goes deeper.",
+            ask: "You could ask victim-witness staff what protections your courthouse offers, and how to request them.",
+          },
+        ],
+      },
+      {
+        id: "restitution",
+        title: "Money the judge can order",
+        blocks: [
+          {
+            kind: "card",
+            title: "Repairing what it cost",
+            body: "[[Restitution]] is money a judge can order the person responsible to pay, to help repair what the crime cost — like medical bills, counseling, lost pay, or moving costs. In some kinds of cases, including trafficking cases in federal court, the law requires the judge to order it. Keeping receipts and records helps the people who ask for it on your behalf.",
+            ask: "You could ask the prosecutor or your advocate how restitution works in your case, and which records help.",
+          },
+        ],
+      },
+      {
+        id: "people-make-rights-real",
+        title: "People make rights real",
+        blocks: [
+          {
+            kind: "card",
+            title: "Rights on paper need hands",
+            body: "Rights on paper need people to use them. Advocates, victim-witness staff, prosecutors, and rights clinics can each help. If a right seems skipped, saying so is allowed — to your advocate, to the prosecutor's office, or to your own lawyer if you have one.",
+            ask: "You could ask a rights clinic or legal-aid office to explain, in plain words, which rights apply in your case.",
+          },
+        ],
+      },
+      {
+        id: "check-in",
+        title: "A gentle check-in",
+        blocks: [
+          {
+            kind: "checkIn",
+            questions: [
+              {
+                prompt: "You find out a hearing happened and no one told you. That is…",
+                choices: [
+                  "Normal — no one has to tell you",
+                  "Worth raising — being told is a right",
+                  "Your fault",
+                ],
+                answerIndex: 1,
+                explain:
+                  "Being told about public court dates is a right. If dates pass without word, you can raise it with the prosecutor's office or your advocate.",
+              },
+              {
+                prompt: "Where can your voice often be part of the case?",
+                choices: ["Nowhere", "At some hearings, like sentencing", "Only through the news"],
+                answerIndex: 1,
+                explain:
+                  "At some hearings — like sentencing, or when a deal is decided — you can often be heard, out loud or in writing.",
+              },
+              {
+                prompt: "Restitution is…",
+                choices: [
+                  "A fine paid to the court",
+                  "Money ordered to help repair what the crime cost you",
+                  "A reward for testifying",
+                ],
+                answerIndex: 1,
+                explain:
+                  "Restitution is money the judge can order the person responsible to pay, toward costs like medical care, counseling, or lost pay.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    close: "Rights are not favors. They were written for people exactly where you are standing.",
+  },
+  {
+    slug: "evidence-simply",
+    index: "07",
+    title: "Evidence, simply",
+    cover: "How a court learns what happened — and what stays out.",
+    tab: "Evidence",
+    color: "moss",
+    minutes: 7,
+    vocab: [
+      {
+        term: "evidence",
+        meaning: "Anything the court is allowed to consider: words, things, papers.",
+      },
+      { term: "exhibit", meaning: "A thing shown in court — a paper, a photo, an object." },
+      {
+        term: "hearsay",
+        meaning: "Retelling, in court, what someone said outside of court. Usually kept out.",
+      },
+      {
+        term: "record",
+        meaning: "The official written memory of everything said and shown in the case.",
+      },
+    ],
+    steps: [
+      {
+        id: "in-short",
+        title: "In short",
+        blocks: [
+          {
+            kind: "summary",
+            points: [
+              "Evidence is how a court learns what happened.",
+              "It comes as words, things, and papers.",
+              "Rules decide what can come in. The rules are about fairness.",
+              "Nobody expects you to know these rules — that is the lawyers' job.",
+            ],
+          },
+          {
+            kind: "intro",
+            body: "Courtrooms run on evidence. This guide is about what counts, why some things stay out, and why lawyers interrupt each other about it.",
+          },
+        ],
+      },
+      {
+        id: "what-counts",
+        title: "What evidence is",
+        blocks: [
+          {
+            kind: "card",
+            title: "Words, things, papers",
+            body: "[[Evidence]] is anything the court is allowed to consider: what witnesses say, objects, photos, papers, messages, records. A thing shown in court is called an [[exhibit]]. Everything said and shown becomes part of the [[record]] — the official written memory of the case.",
+            ask: "You could ask the prosecutor, in general terms, what kinds of evidence exist in your case.",
+          },
+        ],
+      },
+      {
+        id: "what-stays-out",
+        title: "Why some things stay out",
+        blocks: [
+          {
+            kind: "card",
+            title: "Rules about fairness",
+            body: "Not everything can come in. Some things are unreliable, or unfair, or off-limits by rule — like most [[hearsay]], which is retelling what someone else said outside of court. Rules also limit questions about certain parts of a person's past. When something stays out, it is the rules working — not your story being doubted.",
+            ask: "You could ask a lawyer why hearsay is usually kept out, and what the exceptions look like.",
+          },
+        ],
+      },
+      {
+        id: "why-lawyers-interrupt",
+        title: "Why lawyers interrupt",
+        blocks: [
+          {
+            kind: "card",
+            title: "Arguing about rules, not about you",
+            body: "When lawyers object, they are arguing about the rules of evidence — whether a question or a paper follows them. It can sound sharp. It is aimed at each other and at the rules, not at you. You can wait quietly while the judge decides.",
+            ask: "You could ask your advocate to sit where you can see them during these pauses.",
+          },
+          {
+            kind: "quote",
+            text: "The rules of evidence are the lawyers' job. Yours is only the truth.",
+            meaning:
+              "Witnesses are never expected to know evidence law. If a question breaks a rule, a lawyer speaks up — that is the system checking itself. Your only task stays the same: answer truthfully, at your pace.",
+          },
+        ],
+      },
+      {
+        id: "check-in",
+        title: "A gentle check-in",
+        blocks: [
+          {
+            kind: "checkIn",
+            questions: [
+              {
+                prompt: "What is an exhibit?",
+                choices: [
+                  "A courtroom decoration",
+                  "A thing shown in court as evidence",
+                  "A kind of hearing",
+                ],
+                answerIndex: 1,
+                explain:
+                  "An exhibit is a thing shown in court — a photo, a paper, an object — as evidence.",
+              },
+              {
+                prompt: "Hearsay is usually…",
+                choices: ["Required", "Kept out of court", "The strongest evidence"],
+                answerIndex: 1,
+                explain:
+                  "Hearsay — retelling what someone said outside court — is usually kept out, because the court prefers to hear people directly.",
+              },
+              {
+                prompt: "Lawyers argue sharply about a paper. That means…",
+                choices: [
+                  "They are arguing about rules, not about you",
+                  "You did something wrong",
+                  "The case is lost",
+                ],
+                answerIndex: 0,
+                explain:
+                  "Objections are arguments about the rules of evidence. They are aimed at the rules, not at you.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    close:
+      "The court's memory is careful on purpose. Every rule about what comes in exists to keep the record fair.",
+  },
+  {
+    slug: "being-heard",
+    index: "08",
+    title: "Being heard: impact statements",
+    cover: "A chance to tell the court how this affected you. Always a choice.",
+    tab: "Heard",
+    color: "rose",
+    minutes: 8,
+    vocab: [
+      {
+        term: "impact statement",
+        meaning: "A chance, at some hearings, to tell the court how the crime affected your life.",
+      },
+      {
+        term: "sentencing",
+        meaning:
+          "The step where the judge decides what happens after someone is found responsible.",
+      },
+    ],
+    steps: [
+      {
+        id: "in-short",
+        title: "In short",
+        blocks: [
+          {
+            kind: "summary",
+            points: [
+              "At some hearings, you can tell the court how this affected you.",
+              "You can speak, or write, or choose not to. All three are okay.",
+              "It is about your life, in your words — no one else's script.",
+              "Choosing quiet takes nothing from you.",
+            ],
+          },
+          {
+            kind: "intro",
+            body: "This guide describes what an impact statement is, the shapes it can take, and the choice around it.",
+            note: "This guide describes what an impact statement IS. It does not suggest what yours should say. Those words, if you ever want them, are only yours.",
+          },
+        ],
+      },
+      {
+        id: "what-it-is",
+        title: "What an impact statement is",
+        blocks: [
+          {
+            kind: "card",
+            title: "Your life, on the record",
+            body: "An [[impact statement]] is a chance, at certain hearings — often [[sentencing]] — to tell the court how the crime has affected your life. You might hear it called a “victim impact statement” — the official name on court forms. The judge listens to it as part of deciding what happens.",
+            ask: "You could ask the prosecutor's office whether and when your case allows one.",
+          },
+        ],
+      },
+      {
+        id: "the-forms",
+        title: "The forms it can take",
+        blocks: [
+          {
+            kind: "card",
+            title: "Spoken, written, or through someone",
+            body: "Courts usually accept different forms: speaking out loud, sending it in writing, or sometimes having someone read your words for you. Some places allow a letter or a recording. The weight is in the words, not in the delivery.",
+            ask: "You could ask victim-witness staff which forms your court accepts.",
+          },
+        ],
+      },
+      {
+        id: "always-a-choice",
+        title: "Always a choice",
+        blocks: [
+          {
+            kind: "card",
+            title: "Yes, no, and not yet",
+            body: "No one can require you to make an impact statement, and skipping it cannot be held against you. Some people find speaking healing. Some find writing safer. Some choose neither, and that choice is just as sound. You can also decide late — courts often allow the decision close to the hearing.",
+            ask: "You could ask your advocate how much time you have to decide, so the choice never feels forced.",
+          },
+        ],
+      },
+      {
+        id: "one-persons-choice",
+        title: "One person's choice",
+        blocks: [
+          {
+            kind: "story",
+            title: "The letter Ana didn't read out loud",
+            paragraphs: [
+              "Ana went back and forth for weeks. Speaking in the courtroom felt like too much. Saying nothing felt like too little. Her advocate told her there was a third door: writing.",
+              "She wrote it in the evenings, a little at a time, in her own first language before anything else. Nobody saw it until she was ready. At sentencing, the prosecutor handed it to the judge, and the judge read every page while the room waited.",
+              "Ana sat with her advocate and watched. Her words were in the room. Her voice stayed hers. Afterward, she said the strangest part was how quiet it felt — like setting something heavy down on a table, and leaving it there.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "something-to-sit-with",
+        title: "Something to sit with",
+        blocks: [
+          {
+            kind: "card",
+            title: "No answers needed today",
+            body: "There is nothing to decide while reading this guide. If it ever feels right, the people around you can help you learn your options — without pushing you toward any of them.",
+            ask: "You could ask your advocate, whenever you are ready: “What would each option look like, in this court, for me?”",
+          },
+        ],
+      },
+    ],
+    close: "Being heard has many shapes. Yours — including quiet — will be the right one.",
+  },
+  {
+    slug: "privacy-and-protection",
+    index: "09",
+    title: "Privacy and protection",
+    cover: "The quiet machinery that protects people in the process.",
+    tab: "Privacy",
+    color: "stone",
+    minutes: 8,
+    vocab: [
+      {
+        term: "sealed",
+        meaning: "Kept out of the public court file, so it is not open for anyone to read.",
+      },
+      {
+        term: "protective order",
+        meaning: "A court order made to protect a person. Stay-away rules are one kind.",
+      },
+      {
+        term: "no-contact order",
+        meaning: "An order that can forbid calls, texts, messages, gifts, and coming near you.",
+      },
+    ],
+    steps: [
+      {
+        id: "in-short",
+        title: "In short",
+        blocks: [
+          {
+            kind: "summary",
+            points: [
+              "Courts have tools to protect people and their privacy.",
+              "Rules limit questions about certain parts of your past.",
+              "Some records can be kept out of public files.",
+              "Orders can require the person to stay away from you.",
+            ],
+          },
+          {
+            kind: "intro",
+            body: "This guide is about the quiet machinery that protects people in the process — rules, seals, and orders. What exists varies by place; your advocate or lawyer knows which apply.",
+          },
+        ],
+      },
+      {
+        id: "limits-on-questions",
+        title: "Limits on questions",
+        blocks: [
+          {
+            kind: "card",
+            title: "Some doors stay closed",
+            body: "In cases like these, special rules usually limit questions about your past — including your sexual history. Lawyers must ask the judge privately, ahead of time, before going near those topics, and the judge often says no. If a question crosses a line, a lawyer can speak up for you.",
+            ask: "You could ask your lawyer or the prosecutor which of these rules apply in your case.",
+          },
+        ],
+      },
+      {
+        id: "quieter-files",
+        title: "Quieter public files",
+        blocks: [
+          {
+            kind: "card",
+            title: "Sealed papers, shorter names",
+            body: "Court files are usually public, but not everything in them has to be. Some papers can be [[sealed]] — kept out of the public file. In some cases, a person can appear in filings by initials instead of a full name. Whether that is possible depends on the court and the case.",
+            ask: "You could ask the prosecutor's office what parts of your case file are public, and what can be sealed.",
+          },
+        ],
+      },
+      {
+        id: "orders",
+        title: "Orders that create distance",
+        blocks: [
+          {
+            kind: "card",
+            title: "Stay-away rules the court enforces",
+            body: "A [[protective order]] is a court order made to protect a person. A [[no-contact order]] is one kind: it can forbid calls, texts, messages, gifts, and coming near you — sometimes including contact through other people. Breaking one has consequences the court takes seriously. If contact happens anyway, it goes to the proper people — never handled alone.",
+            ask: "You could ask victim-witness staff how to report contact that should not have happened, in the way that keeps you safest.",
+          },
+        ],
+      },
+      {
+        id: "safety-worries",
+        title: "Raising a safety worry",
+        blocks: [
+          {
+            kind: "card",
+            title: "Said early, handled better",
+            body: "If something makes you feel unsafe — a person, a hallway, a schedule — the courthouse has people whose job is exactly this. Separate waiting rooms, escorts to parking, leaving at different times: many courts can arrange these when asked ahead of time.",
+            ask: "You could ask your advocate to walk through the courthouse plan with you: where you enter, wait, and leave.",
+          },
+        ],
+      },
+      {
+        id: "check-in",
+        title: "A gentle check-in",
+        blocks: [
+          {
+            kind: "checkIn",
+            questions: [
+              {
+                prompt: "Questions about your sexual history are…",
+                choices: ["Always allowed", "Usually limited by special rules", "Required"],
+                answerIndex: 1,
+                explain:
+                  "Special rules usually limit those questions. Lawyers must ask the judge first, privately — and the judge often says no.",
+              },
+              {
+                prompt: "A sealed paper is…",
+                choices: ["Destroyed", "Kept out of the public file", "Mailed to you"],
+                answerIndex: 1,
+                explain:
+                  "Sealed means kept out of the public file, so it is not open for anyone to read.",
+              },
+              {
+                prompt: "The person contacts you despite a no-contact order. You…",
+                choices: [
+                  "Handle it alone",
+                  "Tell the proper people — like the prosecutor or victim-witness staff",
+                  "Wait and see",
+                ],
+                answerIndex: 1,
+                explain:
+                  "Contact that breaks an order goes to the proper people — the prosecutor's office, victim-witness staff, or police. It is never yours to handle alone.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    close:
+      "Privacy here is not hiding. It is the system agreeing that your safety outranks its paperwork.",
+  },
+  {
+    slug: "after-the-case",
+    index: "10",
+    title: "After the case ends",
+    cover: "Verdicts, sentencing, appeals — and what “over” can mean.",
+    tab: "After",
+    color: "sand",
+    minutes: 8,
+    vocab: [
+      {
+        term: "verdict",
+        meaning: "The decision, after a trial, about whether the charges were proven.",
+      },
+      {
+        term: "conviction",
+        meaning: "The court's formal decision that the person is responsible.",
+      },
+      {
+        term: "appeal",
+        meaning: "When a higher court is asked to check whether the trial followed the rules.",
+      },
+    ],
+    steps: [
+      {
+        id: "in-short",
+        title: "In short",
+        blocks: [
+          {
+            kind: "summary",
+            points: [
+              "Cases end in different ways: a deal, a verdict, sometimes a dismissal.",
+              "Sentencing usually comes a while after.",
+              "An appeal checks the rules — it does not re-try your word.",
+              "Support does not end when the case does.",
+            ],
+          },
+          {
+            kind: "intro",
+            body: "This guide is about the ending — what the words mean, what the timeline can look like, and what “over” can feel like.",
+          },
+        ],
+      },
+      {
+        id: "the-endings",
+        title: "The ways a case can end",
+        blocks: [
+          {
+            kind: "timeline",
+            steps: [
+              {
+                title: "A deal",
+                body: "The person agrees to plead guilty. Most cases end here. You can often still be heard at sentencing.",
+              },
+              {
+                title: "A verdict",
+                body: "After a trial, the [[verdict]] says whether the charges were proven: “guilty” or “not guilty.”",
+              },
+              {
+                title: "A dismissal",
+                body: "Sometimes charges are dropped for legal reasons. That is about evidence and rules — not about whether you were believed.",
+              },
+              {
+                title: "Sentencing",
+                body: "If there is a [[conviction]], the judge decides what happens — often weeks or months later.",
+              },
+              {
+                title: "Maybe an appeal",
+                body: "The person can ask a higher court to check the trial's rules. Many do.",
+              },
+              {
+                title: "Truly over",
+                body: "When appeals end, or the time for them runs out, the case closes.",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: "if-not-guilty",
+        title: "If the verdict is “not guilty”",
+        blocks: [
+          {
+            kind: "card",
+            title: "What it means — and what it does not",
+            body: "“Not guilty” means the charges were not proven to the very high level the law demands. It is a statement about evidence and proof. It is not a ruling that you were not believed, and it is not a ruling about what you lived. This outcome is heavy; the people around you can help you hold it.",
+            ask: "You could ask your advocate or counselor, ahead of time, for support built for every outcome — whatever happens.",
+          },
+        ],
+      },
+      {
+        id: "appeals",
+        title: "Why an appeal is not a redo",
+        blocks: [
+          {
+            kind: "card",
+            title: "A rules-check, on paper",
+            body: "An [[appeal]] asks a higher court one question: did the trial follow the rules? Judges read papers and listen to lawyers. There is no jury, and witnesses do not testify again. An appeal re-checks the trial — not your word. Appeals can take a long time, and news can arrive much later. Knowing that ahead of time makes it less of a shock.",
+            ask: "You could ask the prosecutor's office to keep you on the notice list, and to explain any appeal in plain words.",
+          },
+        ],
+      },
+      {
+        id: "support-after",
+        title: "Support after the ending",
+        blocks: [
+          {
+            kind: "card",
+            title: "Court ends. Care doesn't have to.",
+            body: "Court support has an end date. Healing does not need one. Advocates can still help after a case closes — with services, counseling referrals, safety planning, and paperwork like restitution. Whatever the ending was, using support afterward is not looking backward. It is building forward.",
+            ask: "You could ask your advocate which supports continue after the case, and how to reach them later.",
+          },
+        ],
+      },
+      {
+        id: "check-in",
+        title: "A gentle check-in",
+        blocks: [
+          {
+            kind: "checkIn",
+            questions: [
+              {
+                prompt: "An appeal means…",
+                choices: [
+                  "A new trial where you testify again",
+                  "A higher court checks whether the rules were followed",
+                  "The verdict did not count",
+                ],
+                answerIndex: 1,
+                explain:
+                  "An appeal re-checks the trial's rules, on paper. There is no jury, and witnesses do not testify again.",
+              },
+              {
+                prompt: "“Not guilty” is a ruling about…",
+                choices: [
+                  "Whether the charges were proven to a very high level",
+                  "Whether you were believed",
+                  "Your worth",
+                ],
+                answerIndex: 0,
+                explain:
+                  "It means the charges were not proven to the law's very high level of certainty. It is about proof — not about your truth, and not about your worth.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    close:
+      "However your case ends, it was one chapter — the system's chapter. The rest of the book is yours.",
+  },
 ] as const;
 
 export function studyGuideBySlug(slug: string): StudyGuide | undefined {

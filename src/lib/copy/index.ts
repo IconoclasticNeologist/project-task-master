@@ -57,13 +57,20 @@ export const copy = {
     safetyCta: "I understand — begin",
     notNow: "Not now",
     creating: "Setting up your space…",
+    stillWorking: "Still working — this can take a few seconds. You don’t need to do anything.",
     failed: "We couldn’t set that up just now. You can try again in a moment.",
+    tourCta: "See how it works",
+    tourCtaSub: "A two-minute interactive tour — nothing is created or saved.",
   },
 
   // Shown when a protected page sends someone back to the welcome screen
   // because this device holds no space yet. Silence there reads as a broken app.
   guard: {
     noSpaceHere: "We couldn’t find a saved space on this device. You can begin a new one below.",
+    noSpaceTitle: "No space on this device yet.",
+    noSpaceBody:
+      "A space lives on the device where it was made. You can begin a new one — it only takes a moment.",
+    noSpaceCta: "Go to the welcome page",
   },
 
   shell: {
@@ -133,6 +140,9 @@ export const copy = {
   home: {
     title: "Hello.",
     subtitle: "Take your time. There is no schedule here.",
+    finishSetupTitle: "Finish setting up your space",
+    finishSetupBody: "A couple of gentle steps — about two minutes. You can skip anything.",
+    finishSetupCta: "Continue setup",
     startSession: "Start a session",
     courtGuide: "Preparing for court",
     continueWhereLeft: "Continue your space",
@@ -269,10 +279,14 @@ export const copy = {
   session: {
     title: "Session",
     coachIntro: "Hi. I’m here. We can go slowly.",
+    beginSubtitle: "Talk or type with your Coach. Nothing is saved unless you choose.",
+    practiceSubtitle: "Rehearse being asked questions — with a stop word, at your pace.",
+    youSaid: "You said",
     pause: "I need a pause",
     end: "End the session",
     voice: "Talk",
     type: "Type",
+    handoffCarePlanEmpty: "You can add these any time, in Settings.",
     // Who is speaking, stated plainly on screen. The person always knows.
     persona: {
       coach: "Your Coach is with you.",
@@ -289,12 +303,15 @@ export const copy = {
       consentPoints: [
         "Your Coach stays nearby, and closes the practice with you.",
         "Say “stop” at any time, or tap “I need a pause.” Everything stops right away.",
-        "Practice lasts 8 minutes at most. A quiet clock shows the time.",
+        "Practice is short on purpose. A quiet clock shows today’s time once the room is ready.",
+        "You’ll see the practice person’s words as text on the screen, too.",
         "It is okay to say “I don’t know.” It is okay to stop.",
       ],
       begin: "Start the practice",
       notNow: "Not now",
       timerLabel: "Practice time left",
+      gettingReady: "Getting the practice room ready…",
+      upTo: "Up to {minutes} of practice today.",
       oneMinuteLeft: "About a minute left. We will wind down soon.",
       capReached: "That’s enough practice for now.",
       avatarNote: "This is a practice person — a computer picture. It is not a real person.",
@@ -705,6 +722,11 @@ export const copy = {
 
   settings: {
     title: "Settings",
+    nameSection: "What can I call you?",
+    nameLabel: "A name or a nickname — you can leave it empty",
+    nameNote: "Only used to greet you. You can change or remove it any time.",
+    nameSave: "Save name",
+    nameSaved: "Saved.",
     aftercareSection: "Your care plan",
     languageSection: "Language",
     languageNote:
@@ -718,7 +740,8 @@ export const copy = {
     motionLabel: "Gentle movement",
     motionNote:
       "Small fades and a little feedback when you tap, so things feel answered. You can turn it off for a completely still screen — some people find that calmer. Your device’s own reduce-motion setting is always respected.",
-    save: "Save",
+    save: "Save care plan, language & sharing",
+    saveScopeNote: "Movement and the app lock save on their own, right when you change them.",
     dataSection: "Your data",
     dataExport: "Download a copy of my data",
     dataExportBusy: "Preparing…",
@@ -732,6 +755,36 @@ export const copy = {
       "This removes your statements, timeline, documents, and care plan for good. It cannot be undone, and a code cannot be used twice — you would start fresh.",
     dataError: "We couldn’t do that just now. Please try again.",
     privacyLink: "How your information is handled",
+  },
+
+  notFound: {
+    title: "This page isn’t here.",
+    body: "The link may be old, or the address may have a typo. Nothing is lost.",
+    home: "Go home",
+  },
+
+  // The in-app guide chat. A concierge for the app itself — never a therapist,
+  // never a lawyer, never the Coach. Voice: warm, brief, plain. See
+  // docs/helper-rubric.md before editing tone.
+  helper: {
+    button: "Questions?",
+    buttonSr: "Open the app guide chat",
+    title: "Ask about this app",
+    intro: "I’m the guide for this app. Ask me how anything works, or where to find things.",
+    introNoSession:
+      "I can explain how this app works. For a full chat, begin a space first — it stays on this device.",
+    starterHeading: "You could ask…",
+    inputPlaceholder: "Ask anything about the app…",
+    send: "Send",
+    notSaved: "This chat isn’t saved. It disappears when you close it.",
+    navGo: "Take me there",
+    thinking: "One moment…",
+    offline: "You’re offline. The guide needs a connection — the app itself still works.",
+    resting: "The guide is resting for today. Everything in the app still works.",
+    error: "That didn’t go through. You can try again.",
+    stopAck: "Okay — stopping here. You can close this chat, or ask something else when you’re ready.",
+    crisisIntro: "That sounds heavy. You don’t have to carry it alone — real people answer these, any time:",
+    crisisSupportCta: "Open Support",
   },
 
   // Optional device-local app lock. See src/lib/appLock.ts.

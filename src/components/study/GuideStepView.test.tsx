@@ -42,4 +42,50 @@ describe("GuideStepView", () => {
     expect(screen.getByText("Words from this guide")).toBeInTheDocument();
     expect(screen.getByText("plea")).toBeInTheDocument();
   });
+
+  it("renders quote, story, and timeline blocks", () => {
+    const rich: StudyGuide = {
+      ...guide,
+      steps: [
+        {
+          id: "b",
+          title: "Rich",
+          blocks: [
+            { kind: "quote", text: "A saying.", meaning: "Its meaning." },
+            { kind: "story", title: "One person's day", paragraphs: ["It began quietly."] },
+            {
+              kind: "timeline",
+              steps: [
+                { title: "First stop", body: "The beginning." },
+                { title: "Second stop", body: "The middle." },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    render(<GuideStepView guide={rich} step={rich.steps[0]} isLast={false} />);
+    expect(screen.getByText(/A saying./)).toBeInTheDocument();
+    expect(
+      screen.getByText("A story, not a real person — to show what it can be like."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("It began quietly.")).toBeInTheDocument();
+    expect(screen.getByText("First stop")).toBeInTheDocument();
+    expect(screen.getByText("Second stop")).toBeInTheDocument();
+  });
+
+  it("renders marked terms as tappable vocabulary words", () => {
+    const marked: StudyGuide = {
+      ...guide,
+      steps: [
+        {
+          id: "c",
+          title: "Marked",
+          blocks: [{ kind: "card", title: "T", body: "Enter a [[plea]] here." }],
+        },
+      ],
+    };
+    render(<GuideStepView guide={marked} step={marked.steps[0]} isLast={false} />);
+    expect(screen.getByRole("button", { name: "plea" })).toBeInTheDocument();
+  });
 });

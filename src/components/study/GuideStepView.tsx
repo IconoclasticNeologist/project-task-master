@@ -1,24 +1,27 @@
 import { Info, MessageCircle } from "lucide-react";
+import { FlipCard } from "@/components/study/FlipCard";
+import { TimelineList } from "@/components/study/TimelineList";
+import { VocabText } from "@/components/study/VocabText";
 import { copy } from "@/lib/copy";
-import type { GuideBlock, GuideStep, StudyGuide } from "@/lib/copy/studyGuides";
+import type { GuideBlock, GuideStep, StudyGuide, VocabTerm } from "@/lib/copy/studyGuides";
 
 // Renders every block of one study-guide step inside the ruled page.
-// Interactive block kinds (quote, timeline, story, checkIn) are wired in as
-// their components land; until then they render nothing rather than break.
+// The checkIn block lands with its component; until then it renders nothing.
 
-// Temporary until VocabText lands: show marked terms as plain words.
-const plain = (t: string) => t.replace(/\[\[(.+?)\]\]/g, "$1");
-
-function BlockView({ block }: { block: GuideBlock }) {
+function BlockView({ block, vocab }: { block: GuideBlock; vocab: VocabTerm[] }) {
   switch (block.kind) {
     case "intro":
       return (
         <div className="space-y-3">
-          <p className="text-sm leading-relaxed text-foreground/85">{plain(block.body)}</p>
+          <p className="text-sm leading-relaxed text-foreground/85">
+            <VocabText text={block.body} vocab={vocab} />
+          </p>
           {block.note && (
             <div className="flex gap-2.5 rounded-md bg-secondary/70 px-4 py-3">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-foreground/55" strokeWidth={2} />
-              <p className="text-sm leading-relaxed text-foreground/85">{plain(block.note)}</p>
+              <p className="text-sm leading-relaxed text-foreground/85">
+                <VocabText text={block.note} vocab={vocab} />
+              </p>
             </div>
           )}
         </div>
@@ -32,7 +35,9 @@ function BlockView({ block }: { block: GuideBlock }) {
                 aria-hidden
                 className="mt-[0.55rem] h-1 w-1 shrink-0 rounded-full bg-foreground/40"
               />
-              <span>{plain(p)}</span>
+              <span>
+                <VocabText text={p} vocab={vocab} />
+              </span>
             </li>
           ))}
         </ul>
@@ -41,7 +46,9 @@ function BlockView({ block }: { block: GuideBlock }) {
       return (
         <article className="space-y-2">
           <h3 className="text-base font-normal text-foreground">{block.title}</h3>
-          <p className="text-sm leading-relaxed text-foreground/85">{plain(block.body)}</p>
+          <p className="text-sm leading-relaxed text-foreground/85">
+            <VocabText text={block.body} vocab={vocab} />
+          </p>
           {block.ask && (
             <div
               className="sticky-note mt-3 max-w-[26rem] rounded-md px-4 pb-3 pt-5"
@@ -53,12 +60,32 @@ function BlockView({ block }: { block: GuideBlock }) {
                   strokeWidth={2}
                   aria-hidden
                 />
-                <p className="text-sm leading-relaxed text-foreground/80">{plain(block.ask)}</p>
+                <p className="text-sm leading-relaxed text-foreground/80">
+                  <VocabText text={block.ask} vocab={vocab} />
+                </p>
               </div>
             </div>
           )}
         </article>
       );
+    case "quote":
+      return <FlipCard text={block.text} meaning={block.meaning} />;
+    case "story":
+      return (
+        <article className="space-y-3">
+          <p className="text-[0.7rem] uppercase tracking-[0.15em] text-foreground/50">
+            {copy.study.storyLabel}
+          </p>
+          <h3 className="text-base font-normal text-foreground">{block.title}</h3>
+          {block.paragraphs.map((p) => (
+            <p key={p} className="text-sm leading-relaxed text-foreground/85">
+              <VocabText text={p} vocab={vocab} />
+            </p>
+          ))}
+        </article>
+      );
+    case "timeline":
+      return <TimelineList steps={block.steps} vocab={vocab} />;
     default:
       return null;
   }
@@ -76,7 +103,7 @@ export function GuideStepView({
   return (
     <div className="space-y-7">
       {step.blocks.map((b, i) => (
-        <BlockView key={i} block={b} />
+        <BlockView key={i} block={b} vocab={guide.vocab} />
       ))}
 
       {isLast && (

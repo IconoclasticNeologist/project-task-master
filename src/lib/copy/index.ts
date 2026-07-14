@@ -282,6 +282,8 @@ export const copy = {
     nextLabel: "Next",
     listen: "Listen to this step",
     stopListening: "Stop listening",
+    flipHintFront: "Tap to see what it can mean",
+    flipHintBack: "Tap to see the saying again",
     checkInNothingSaved: "Want to try a few questions? Just for you — nothing is saved.",
     storyLabel: "A story, not a real person — to show what it can be like.",
     wordsHeading: "Words from this guide",

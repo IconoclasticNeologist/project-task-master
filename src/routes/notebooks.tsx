@@ -77,6 +77,12 @@ function NotebooksScreen() {
         </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
+          <Link to="/study" className="text-foreground underline underline-offset-2">
+            {copy.study.notebooksCrossLink}
+          </Link>
+        </p>
+
+        <p className="text-xs leading-relaxed text-muted-foreground">
           These are short, general guides — not legal advice. Your advocate or lawyer knows your
           court and your situation.
         </p>

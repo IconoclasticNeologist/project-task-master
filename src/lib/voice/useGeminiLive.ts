@@ -1,4 +1,4 @@
-// Gemini Live client hook for The Advocate.
+// Gemini Live client hook for Tend.
 //
 // PATTERN: mirrors MindCrafter's Liv voice path.
 //   - Supabase Edge Function `advocate-voice-token` reads GEMINI_API_KEY from

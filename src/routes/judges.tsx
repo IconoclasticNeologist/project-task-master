@@ -95,7 +95,7 @@ function JudgesScreen() {
             <DoorOpen className="h-4 w-4" strokeWidth={2} aria-hidden />
             For the judges
           </div>
-          <h1 className="text-2xl font-normal tracking-tight">{PRODUCT_NAME}</h1>
+          <h1 className="text-2xl font-normal tracking-tight">Project {PRODUCT_NAME}</h1>
           <p className="text-base leading-relaxed text-foreground">
             A trauma-informed, voice-first companion that helps adult survivors of human trafficking
             prepare — emotionally and practically — for criminal court.

@@ -146,7 +146,7 @@ function Stage({ index, p }: { index: number; p: number }) {
     case 0:
       return (
         <>
-          <h1 className="tour-h1">The Advocate.</h1>
+          <h1 className="tour-h1">{PRODUCT_NAME}.</h1>
           <p className="tour-p">A quiet place. You set the pace. You can stop at any time.</p>
           <div className={"tour-card " + revealed(p, 0.15)}>
             <div className="tour-stack">

@@ -1,4 +1,4 @@
-# The Advocate — Deploy & Go-Live Checklist
+# Tend — Deploy & Go-Live Checklist
 
 This is the single runbook to take the built app live and demo it. It assumes you're the dev,
 on this machine, with the Supabase CLI already logged in and the project linked

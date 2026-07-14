@@ -162,12 +162,27 @@ function SourcesScreen() {
           </p>
         </header>
 
-        {acks.data && acks.data.length > 0 && (
-          <section className="mt-10 space-y-4">
-            <h2 className="text-lg font-normal">Acknowledgements</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              With gratitude to the subject-matter experts who reviewed and shaped this work.
-            </p>
+        <section className="mt-10 space-y-4">
+          <h2 className="text-lg font-normal">Acknowledgements</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            With gratitude to the subject-matter experts who reviewed and shaped this work.
+          </p>
+          {acks.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading acknowledgements…</p>
+          ) : acks.isError ? (
+            <div className="space-y-3">
+              <p className="text-sm leading-relaxed text-foreground">
+                Couldn’t load acknowledgements just now.
+              </p>
+              <button
+                type="button"
+                onClick={() => void acks.refetch()}
+                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Try again
+              </button>
+            </div>
+          ) : acks.data && acks.data.length > 0 ? (
             <div className="space-y-4">
               {acks.data.map((a) => (
                 <div key={a.id} className="flex gap-4">
@@ -192,8 +207,10 @@ function SourcesScreen() {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground">Acknowledgements are being added.</p>
+          )}
+        </section>
 
         <section className="mt-10 space-y-6">
           <h2 className="text-lg font-normal">Sources</h2>
@@ -209,7 +226,7 @@ function SourcesScreen() {
                       href={s.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-foreground underline underline-offset-2 hover:text-muted-foreground"
+                      className="inline-block py-1.5 text-foreground underline underline-offset-2 hover:text-muted-foreground"
                     >
                       {s.name}
                     </a>

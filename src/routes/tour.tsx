@@ -321,6 +321,7 @@ function TourScreen() {
   const [reduced, setReduced] = useState(false);
   const [tryMode, setTryMode] = useState<null | "leave" | "stop">(null);
   const tryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
 
   // Client-only: reduce-motion / Stillness. Read after mount to avoid an SSR mismatch.
   useEffect(() => {
@@ -382,6 +383,20 @@ function TourScreen() {
     }
     stopAtRef.current = null;
     setPlaying(true);
+    // Stacked mobile layout puts Play above the phone frame — bring the demo
+    // screen into view so pressing it doesn't animate off-screen. Never on
+    // its own: only in direct response to this tap.
+    const phone = phoneRef.current;
+    if (phone) {
+      const rect = phone.getBoundingClientRect();
+      const offscreen = rect.top < 0 || rect.bottom > window.innerHeight;
+      if (offscreen) {
+        const motionOK =
+          document.documentElement.dataset.motion !== "off" &&
+          !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        phone.scrollIntoView({ behavior: motionOK ? "smooth" : "auto", block: "center" });
+      }
+    }
   };
   const pause = () => setPlaying(false);
   const restart = () => {
@@ -499,10 +514,12 @@ function TourScreen() {
                   {elapsed >= TOTAL ? "Replay" : elapsed > 0 ? "Resume" : "Play the walkthrough"}
                 </button>
               )}
-              <button type="button" onClick={restart} aria-label="Restart">
-                <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} /> Restart
-              </button>
-              <span className="pct">{pct}%</span>
+              <span className="tour-controls-meta">
+                <button type="button" onClick={restart} aria-label="Restart">
+                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} /> Restart
+                </button>
+                <span className="pct">{pct}%</span>
+              </span>
             </div>
             {reduced ? (
               <p className="tour-rm">
@@ -513,7 +530,7 @@ function TourScreen() {
           </div>
 
           <div className="tour-phonewrap">
-            <div className="tour-phone">
+            <div className="tour-phone" ref={phoneRef}>
               <div className="tour-screen">
                 <div className="tour-appbar">
                   <span className="tour-home" aria-hidden>
@@ -666,7 +683,7 @@ function TourScreen() {
 // wired to the app's own tokens (--background, --primary, --card, …) so the
 // mockups stay faithful. Kept out of the global stylesheet on purpose.
 const TOUR_CSS = `
-.tour-root { min-height: 100vh; }
+.tour-root { min-height: 100vh; background: var(--background); }
 .tour-wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 .tour-root p { max-width: none; }
 
@@ -711,7 +728,8 @@ const TOUR_CSS = `
 .tour-controls button:hover { border-color: var(--primary); }
 .tour-controls .primary { background: oklch(0.58 0.045 150); color: oklch(0.985 0.008 85); border-color: oklch(0.58 0.045 150); font-weight: 600; }
 .tour-controls .primary:hover { background: oklch(0.53 0.045 150); border-color: oklch(0.53 0.045 150); }
-.tour-controls .pct { margin-left: auto; font-size: 12px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.tour-controls-meta { display: flex; align-items: center; gap: 9px; margin-left: auto; }
+.tour-controls .pct { font-size: 12px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
 .tour-rm { font-size: 12.5px; color: var(--muted-foreground); margin: 13px 0 0; max-width: 42ch; }
 
 .tour-phonewrap { display: flex; flex-direction: column; align-items: center; }
@@ -782,7 +800,7 @@ const TOUR_CSS = `
 .tour-rv.tour-in { opacity: 1; transform: none; }
 
 .tour-tryit { display: flex; gap: 9px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
-.tour-tryit button { border: 1px solid var(--border); background: var(--card); color: var(--foreground); border-radius: 999px; padding: 8px 15px; font: inherit; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.tour-tryit button { border: 1px solid var(--border); background: var(--card); color: var(--foreground); border-radius: 999px; padding: 8px 15px; min-height: 44px; font: inherit; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
 .tour-tryit button:hover { border-color: var(--primary); }
 .tour-replay-note { font-size: 11.5px; color: var(--muted-foreground); max-width: 44ch; margin: 12px auto 0; text-align: center; line-height: 1.5; min-height: 34px; }
 

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
+import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { copy } from "@/lib/copy";
 import { notebooks, type NotebookCover } from "@/lib/copy/notebooks";
 import { pageTitle } from "@/lib/product";
@@ -80,6 +81,8 @@ function NotebooksScreen() {
           These are short, general guides — not legal advice. Your advocate or lawyer knows your
           court and your situation.
         </p>
+
+        <ReviewerFooter />
       </div>
     </Shell>
   );

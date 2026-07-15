@@ -63,6 +63,7 @@ export const copy = {
     failed: "We couldn’t set that up just now. You can try again in a moment.",
     tourCta: "See how it works",
     tourCtaSub: "A two-minute interactive tour — nothing is created or saved.",
+    demoButton: "Demo — see how it works",
   },
 
   // Shown when a protected page sends someone back to the welcome screen

@@ -21,7 +21,16 @@ function WelcomeScreen() {
   return (
     <Shell hideNav>
       <div className="flex flex-1 flex-col justify-between py-6">
-        <div className="space-y-8 pt-12 welcome-tight">
+        <div className="space-y-8 pt-6 welcome-tight">
+          {/* Demo button at the very top — owner-requested, judge-facing. A real
+              button, above the fold, linking the interactive tour. */}
+          <Link
+            to="/tour"
+            className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-card px-4 py-3 text-center text-sm font-medium text-foreground paper-shadow hover:bg-secondary/40"
+          >
+            <Play className="h-4 w-4" aria-hidden strokeWidth={2} />
+            {copy.begin.demoButton}
+          </Link>
           <h1 className="text-3xl font-normal leading-tight tracking-tight">{copy.appName}.</h1>
           <p className="text-base leading-relaxed text-foreground">
             A quiet place. You set the pace. You can stop at any time.

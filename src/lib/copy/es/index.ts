@@ -68,6 +68,7 @@ export const copyEs: CopyShape = {
     failed: "No pudimos prepararlo en este momento. Puede intentar de nuevo en un rato.",
     tourCta: "Vea cómo funciona",
     tourCtaSub: "Un recorrido interactivo de dos minutos — nada se crea ni se guarda.",
+    demoButton: "Demo — vea cómo funciona",
   },
 
   guard: {

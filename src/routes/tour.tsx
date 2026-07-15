@@ -16,7 +16,7 @@
 // judge-facing narration rail deliberately stays English, like /judges itself.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
 import {
   Play,
   Pause,
@@ -223,21 +223,17 @@ function Stage({
   p,
   t,
   narrating,
-  videoRef,
+  videoSlot,
   avatarClipOk,
   videoReady,
-  onVideoReady,
-  onVideoError,
 }: {
   index: number;
   p: number;
   t: TourCopy;
   narrating: boolean;
-  videoRef: (el: HTMLVideoElement | null) => void;
+  videoSlot: (el: HTMLDivElement | null) => void;
   avatarClipOk: boolean;
   videoReady: boolean;
-  onVideoReady: () => void;
-  onVideoError: () => void;
 }) {
   switch (index) {
     case 0:
@@ -478,19 +474,10 @@ function Stage({
           <div className="tour-coachrow" style={{ marginBottom: 8 }}>
             {t.witness.persona}
           </div>
-          <div className="tour-videowrap">
-            {avatarClipOk ? (
-              <video
-                ref={videoRef}
-                className="tour-video"
-                src="/tour/practice-person.mp4"
-                playsInline
-                preload="auto"
-                onLoadedData={onVideoReady}
-                onError={onVideoError}
-                style={videoReady ? undefined : { visibility: "hidden" }}
-              />
-            ) : null}
+          {/* The slot the persistent screen-level video floats over. The
+              silhouette holds the space (and the honest getting-ready state)
+              until frames are decodable. */}
+          <div className="tour-videowrap" ref={videoSlot}>
             {!avatarClipOk || !videoReady ? (
               <div className="tour-video tour-avatarfall" aria-hidden>
                 <span className="tour-avatarfall-head" />
@@ -602,9 +589,41 @@ function TourScreen() {
   const [videoReady, setVideoReady] = useState(false);
   const tryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
   const coachRef = useRef<HTMLAudioElement | null>(null);
   const narrRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoSlotRef = useRef<HTMLDivElement | null>(null);
+  const [soundBlocked, setSoundBlocked] = useState(false);
+  const soundBlockedRef = useRef(false);
+
+  // Browsers only allow sound that begins near a real tap — and this replay's
+  // clips begin MINUTES after the Play press (the Coach speaks 20s in). So the
+  // press itself briefly starts-and-parks every clip, which marks each element
+  // as user-approved for the rest of the visit. Without engagement history
+  // (fresh or private windows) this is the difference between a spoken tour
+  // and a silent one. A failure re-arms, so the next tap retries.
+  const primedRef = useRef(false);
+  const primeMedia = () => {
+    if (primedRef.current) return;
+    primedRef.current = true;
+    for (const el of [coachRef.current, narrRef.current, videoRef.current]) {
+      if (!el) continue;
+      void el
+        .play()
+        .then(() => {
+          el.pause();
+          el.currentTime = 0;
+          if (soundBlockedRef.current) {
+            soundBlockedRef.current = false;
+            setSoundBlocked(false);
+          }
+        })
+        .catch(() => {
+          primedRef.current = false;
+        });
+    }
+  };
 
   const t = tourCopy(es);
 
@@ -636,7 +655,24 @@ function TourScreen() {
         return;
       }
       if (Math.abs(el.currentTime - offset) > 0.45) el.currentTime = Math.max(0, offset);
-      if (el.paused) void el.play().catch(() => {});
+      if (el.paused) {
+        void el
+          .play()
+          .then(() => {
+            if (soundBlockedRef.current) {
+              soundBlockedRef.current = false;
+              setSoundBlocked(false);
+            }
+          })
+          .catch(() => {
+            // Autoplay policy refused — surface the app's own honest control
+            // instead of a silent tour ("Tap to turn the sound on").
+            if (!soundBlockedRef.current) {
+              soundBlockedRef.current = true;
+              setSoundBlocked(true);
+            }
+          });
+      }
     };
     const ok = isPlaying && !reduced && tryMode === null;
     drive(
@@ -747,6 +783,7 @@ function TourScreen() {
     tryMode === null;
 
   const play = () => {
+    primeMedia();
     if (elapsedRef.current >= TOTAL) {
       elapsedRef.current = 0;
     }
@@ -769,6 +806,7 @@ function TourScreen() {
   };
   const pause = () => setPlaying(false);
   const restart = () => {
+    primeMedia();
     elapsedRef.current = 0;
     stopAtRef.current = null;
     force();
@@ -779,6 +817,7 @@ function TourScreen() {
   // is one continuous replay, wherever you enter it. (Reduced motion still
   // holds each chapter's complete final frame instead of playing.)
   const jumpTo = (i: number) => {
+    primeMedia();
     elapsedRef.current = STARTS[i] + 1;
     stopAtRef.current = null;
     setPlaying(!reduced);
@@ -786,6 +825,7 @@ function TourScreen() {
   };
 
   const runTry = (mode: TryMode) => {
+    primeMedia();
     setPlaying(false);
     setTryMode(mode);
     if (tryTimer.current) clearTimeout(tryTimer.current);
@@ -793,6 +833,7 @@ function TourScreen() {
   };
 
   const setLang = (next: boolean) => {
+    primeMedia();
     setEs(next);
     setLangOpen(false);
   };
@@ -817,6 +858,30 @@ function TourScreen() {
 
   const pct = Math.round((elapsed / TOTAL) * 100);
   const note = tryMode ? t.tryIt.notes[tryMode] : t.tryIt.notes.idle;
+
+  // The persistent practice-person video floats over its chapter's slot,
+  // measured against the phone screen on each rendered frame. Living outside
+  // Stage keeps ONE element alive from page load — preloadable, and primeable
+  // by the first tap, long before its chapter arrives.
+  let videoFloat: CSSProperties = { visibility: "hidden", left: 8, top: 8, width: 2, height: 2 };
+  const videoLive =
+    active === CH_WITNESS &&
+    shown >= VIDEO_AT &&
+    shown < WITNESS_HALT_AT &&
+    avatarClipOk &&
+    videoReady &&
+    tryMode === null;
+  if (videoLive && videoSlotRef.current && screenRef.current) {
+    const slot = videoSlotRef.current.getBoundingClientRect();
+    const scr = screenRef.current.getBoundingClientRect();
+    videoFloat = {
+      visibility: "visible",
+      left: slot.left - scr.left,
+      top: slot.top - scr.top,
+      width: slot.width,
+      height: slot.height,
+    };
+  }
 
   return (
     <div className="tour-root">
@@ -912,7 +977,7 @@ function TourScreen() {
 
           <div className="tour-phonewrap">
             <div className="tour-phone" ref={phoneRef}>
-              <div className="tour-screen">
+              <div className="tour-screen" ref={screenRef}>
                 <div className="tour-appbar">
                   <span className="tour-home" aria-hidden>
                     <svg
@@ -969,13 +1034,40 @@ function TourScreen() {
                     p={shown}
                     t={t}
                     narrating={narrating}
-                    videoRef={(el) => (videoRef.current = el)}
+                    videoSlot={(el) => (videoSlotRef.current = el)}
                     avatarClipOk={avatarClipOk}
                     videoReady={videoReady}
-                    onVideoReady={() => setVideoReady(true)}
-                    onVideoError={() => setAvatarClipOk(false)}
                   />
                 </div>
+
+                {/* Persistent practice-person clip: alive (and preloading)
+                    from page open so the first tap can bless its sound, shown
+                    only over its chapter's slot. */}
+                <video
+                  ref={(el) => {
+                    videoRef.current = el;
+                  }}
+                  className="tour-video tour-video-float"
+                  src="/tour/practice-person.mp4"
+                  playsInline
+                  preload="auto"
+                  onLoadedData={() => setVideoReady(true)}
+                  onError={() => setAvatarClipOk(false)}
+                  style={videoFloat}
+                />
+
+                {soundBlocked && playing ? (
+                  <button
+                    type="button"
+                    className="tour-soundchip"
+                    onClick={() => {
+                      primedRef.current = false;
+                      primeMedia();
+                    }}
+                  >
+                    {t.witness.soundOn}
+                  </button>
+                ) : null}
 
                 {tryMode === "stop" ? (
                   <div className="tour-overlay">
@@ -1310,6 +1402,10 @@ const TOUR_CSS = `
 .tour-witness { display: flex; flex-direction: column; align-items: center; }
 .tour-videowrap { position: relative; width: 168px; aspect-ratio: 3 / 4; }
 .tour-videowrap .tour-video { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tour-video-float { position: absolute; z-index: 5; }
+.tour-soundchip { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 8;
+  border: 1px solid var(--border); background: var(--card); color: var(--foreground); border-radius: 999px;
+  padding: 9px 15px; font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 6px 16px -8px rgba(60,45,30,0.5); }
 .tour-video { width: 168px; aspect-ratio: 3 / 4; border-radius: 14px; background: #d8d2c6; object-fit: cover; box-shadow: 0 2px 5px rgba(60,45,30,0.12), 0 14px 30px -18px rgba(60,45,30,0.55); }
 .tour-avatarfall { position: relative; overflow: hidden; background: linear-gradient(180deg, #ded8cc, #cfc7b8); display: block; }
 .tour-avatarfall-head { position: absolute; left: 50%; top: 26%; width: 56px; height: 56px; border-radius: 50%; transform: translateX(-50%); background: oklch(0.62 0.03 70); }

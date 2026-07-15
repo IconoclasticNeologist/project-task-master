@@ -172,6 +172,7 @@ export function tourCopy(es: boolean) {
       avatarNote: app.session.witness.avatarNote,
       answer: app.session.witness.answer,
       answerHint: app.session.witness.answerHint,
+      soundOn: app.session.witness.soundOn,
       // Captions caption the AUDIO. The bundled clip is a real recorded
       // session (English-first practice), so this line stays verbatim-as-heard
       // in both UI languages — translating it would miscaption the recording.

@@ -305,7 +305,7 @@ Update (submission night): the practice-timer honesty fix, avatar captions, auth
 11. **What's next** — compensated survivor advisory board, SME sign-off, localized hotlines, pilots with advocate organizations. **[founder: your roadmap + ask]**
 12. **Close** — return to the quiet screen. "Your words belong to you."
 
-Live-demo pointers for the video/Loom: the `/tour` page is a self-running guided demo with two safe try-it moments (Leave now, "stop"); `/judges` and `/sources` are the receipts; the `/judges` Reviewer tools card lets a judge load the fictional example account on the live site themselves; and the "Questions?" helper is open for them to probe — asking it to break its own rules is a demo in itself. **[founder: insert live URL]**
+Live-demo pointers for the video/Loom: the `/tour` page is a self-running guided demo with two safe try-it moments (Leave now, "stop"); `/judges` and `/sources` are the receipts; the `/judges` Reviewer tools card lets a judge load the fictional example account on the live site themselves; and the "Questions?" helper is open for them to probe — asking it to break its own rules is a demo in itself. **Live:** https://project-tend.vercel.app (the same deployment also serves at project-task-master.vercel.app — use the tend URL in materials).
 
 ## 11. Numbers cheat-sheet (all verified)
 
@@ -315,7 +315,7 @@ Live-demo pointers for the video/Loom: the `/tour` page is a self-running guided
 
 - Hackathon name + judging criteria + pitch length (tour footer says "UN Human Rights & IBM Call for Code review" — confirm).
 - Team/founder story and why-me slide.
-- Live URL(s) for the deck and demo video.
+- Live URL: https://project-tend.vercel.app — verified serving tonight's full build (study guides, helper, Spanish, all audit fixes).
 - Any impact stats or personal hook for the problem slide.
 - Roadmap specifics + the ask (pilot partners? funding? mentorship?).
 - Narration: generated or not? (The only remaining §9 conditional — everything else is merged, tested, and in the production build.)

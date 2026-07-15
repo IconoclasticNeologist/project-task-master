@@ -71,7 +71,7 @@ describe("narration", () => {
       ...guide01,
       steps: [
         { ...guide01.steps[0], id: "s1", audio: true },
-        { ...guide01.steps[1], id: "s2" },
+        { ...guide01.steps[1], id: "s2", audio: undefined },
       ],
     };
     render(<GuidePlayerView guide={fixture} />);

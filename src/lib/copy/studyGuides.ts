@@ -113,6 +113,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -132,6 +133,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "how-it-starts",
+        audio: true,
         title: "How a case starts",
         blocks: [
           {
@@ -144,6 +146,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "first-court-dates",
+        audio: true,
         title: "The first court dates",
         blocks: [
           {
@@ -156,6 +159,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-quiet-middle",
+        audio: true,
         title: "The quiet middle",
         blocks: [
           {
@@ -168,6 +172,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-path-drawn-out",
+        audio: true,
         title: "The path, drawn out",
         blocks: [
           {
@@ -207,6 +212,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "two-ways-it-ends",
+        audio: true,
         title: "Two ways it can end",
         blocks: [
           {
@@ -225,6 +231,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -298,6 +305,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -317,6 +325,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-judge",
+        audio: true,
         title: "The judge",
         blocks: [
           {
@@ -329,6 +338,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-two-lawyers",
+        audio: true,
         title: "The two lawyers",
         blocks: [
           {
@@ -341,6 +351,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-jury",
+        audio: true,
         title: "The jury",
         blocks: [
           {
@@ -353,6 +364,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-quiet-helpers",
+        audio: true,
         title: "The quiet helpers",
         blocks: [
           {
@@ -365,6 +377,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "people-for-you",
+        audio: true,
         title: "People who are there for you",
         blocks: [
           {
@@ -377,6 +390,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -458,6 +472,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -477,6 +492,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "before-court",
+        audio: true,
         title: "Words from before court",
         blocks: [
           {
@@ -489,6 +505,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "speaking-words",
+        audio: true,
         title: "Words about speaking",
         blocks: [
           {
@@ -501,6 +518,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "objection-words",
+        audio: true,
         title: "Words that interrupt",
         blocks: [
           {
@@ -513,6 +531,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "room-words",
+        audio: true,
         title: "Words about the room",
         blocks: [
           {
@@ -525,6 +544,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "small-meanings",
+        audio: true,
         title: "Big words, small meanings",
         blocks: [
           {
@@ -537,6 +557,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -611,6 +632,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -631,6 +653,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "arriving",
+        audio: true,
         title: "Arriving and waiting",
         blocks: [
           {
@@ -643,6 +666,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "being-called",
+        audio: true,
         title: "Being called in",
         blocks: [
           {
@@ -655,6 +679,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-oath",
+        audio: true,
         title: "The oath",
         blocks: [
           {
@@ -667,6 +692,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "questions",
+        audio: true,
         title: "Questions, from each side",
         blocks: [
           {
@@ -679,6 +705,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "one-persons-day",
+        audio: true,
         title: "One person's day",
         blocks: [
           {
@@ -694,6 +721,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "stepping-down",
+        audio: true,
         title: "Stepping down, and after",
         blocks: [
           {
@@ -706,6 +734,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -778,6 +807,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -797,6 +827,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "why-they-push",
+        audio: true,
         title: "Why the other side pushes",
         blocks: [
           {
@@ -809,6 +840,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "leading-questions",
+        audio: true,
         title: "Yes-or-no questions",
         blocks: [
           {
@@ -821,6 +853,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "objections-protect",
+        audio: true,
         title: "How objections protect",
         blocks: [
           {
@@ -833,6 +866,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "your-pace",
+        audio: true,
         title: "Your pace still counts",
         blocks: [
           {
@@ -851,6 +885,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -919,6 +954,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -938,6 +974,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "to-be-told",
+        audio: true,
         title: "To be told",
         blocks: [
           {
@@ -950,6 +987,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "to-be-there",
+        audio: true,
         title: "To be there",
         blocks: [
           {
@@ -962,6 +1000,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "to-be-heard",
+        audio: true,
         title: "To be heard",
         blocks: [
           {
@@ -974,6 +1013,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "protection-and-privacy",
+        audio: true,
         title: "To protection and privacy",
         blocks: [
           {
@@ -986,6 +1026,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "restitution",
+        audio: true,
         title: "Money the judge can order",
         blocks: [
           {
@@ -998,6 +1039,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "people-make-rights-real",
+        audio: true,
         title: "People make rights real",
         blocks: [
           {
@@ -1010,6 +1052,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -1077,6 +1120,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -1096,6 +1140,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "what-counts",
+        audio: true,
         title: "What evidence is",
         blocks: [
           {
@@ -1108,6 +1153,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "what-stays-out",
+        audio: true,
         title: "Why some things stay out",
         blocks: [
           {
@@ -1120,6 +1166,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "why-lawyers-interrupt",
+        audio: true,
         title: "Why lawyers interrupt",
         blocks: [
           {
@@ -1138,6 +1185,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -1202,6 +1250,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -1222,6 +1271,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "what-it-is",
+        audio: true,
         title: "What an impact statement is",
         blocks: [
           {
@@ -1234,6 +1284,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-forms",
+        audio: true,
         title: "The forms it can take",
         blocks: [
           {
@@ -1246,6 +1297,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "always-a-choice",
+        audio: true,
         title: "Always a choice",
         blocks: [
           {
@@ -1258,6 +1310,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "one-persons-choice",
+        audio: true,
         title: "One person's choice",
         blocks: [
           {
@@ -1273,6 +1326,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "something-to-sit-with",
+        audio: true,
         title: "Something to sit with",
         blocks: [
           {
@@ -1311,6 +1365,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -1330,6 +1385,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "limits-on-questions",
+        audio: true,
         title: "Limits on questions",
         blocks: [
           {
@@ -1342,6 +1398,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "quieter-files",
+        audio: true,
         title: "Quieter public files",
         blocks: [
           {
@@ -1354,6 +1411,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "orders",
+        audio: true,
         title: "Orders that create distance",
         blocks: [
           {
@@ -1366,6 +1424,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "safety-worries",
+        audio: true,
         title: "Raising a safety worry",
         blocks: [
           {
@@ -1378,6 +1437,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {
@@ -1441,6 +1501,7 @@ export const studyGuides: readonly StudyGuide[] = [
     steps: [
       {
         id: "in-short",
+        audio: true,
         title: "In short",
         blocks: [
           {
@@ -1460,6 +1521,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "the-endings",
+        audio: true,
         title: "The ways a case can end",
         blocks: [
           {
@@ -1495,6 +1557,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "if-not-guilty",
+        audio: true,
         title: "If the verdict is “not guilty”",
         blocks: [
           {
@@ -1507,6 +1570,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "appeals",
+        audio: true,
         title: "Why an appeal is not a redo",
         blocks: [
           {
@@ -1519,6 +1583,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "support-after",
+        audio: true,
         title: "Support after the ending",
         blocks: [
           {
@@ -1531,6 +1596,7 @@ export const studyGuides: readonly StudyGuide[] = [
       },
       {
         id: "check-in",
+        audio: true,
         title: "A gentle check-in",
         blocks: [
           {

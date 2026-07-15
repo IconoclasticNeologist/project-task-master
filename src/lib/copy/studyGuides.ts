@@ -13,15 +13,7 @@
 // imports it directly under Node's TypeScript type-stripping.
 
 export type GuideColor =
-  | "sage"
-  | "sand"
-  | "clay"
-  | "sky"
-  | "ochre"
-  | "lav"
-  | "moss"
-  | "stone"
-  | "rose";
+  "sage" | "sand" | "clay" | "sky" | "ochre" | "lav" | "moss" | "stone" | "rose";
 
 export interface VocabTerm {
   term: string;

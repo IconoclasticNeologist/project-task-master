@@ -13,15 +13,7 @@
 // Cover colors — calm, desaturated oklch. Kept light so near-black text reads
 // easily. The route maps each key to a background + a slightly deeper spine.
 export type NotebookCover =
-  | "sage"
-  | "sand"
-  | "clay"
-  | "sky"
-  | "ochre"
-  | "lav"
-  | "moss"
-  | "stone"
-  | "rose";
+  "sage" | "sand" | "clay" | "sky" | "ochre" | "lav" | "moss" | "stone" | "rose";
 
 export interface NotebookCard {
   title: string;

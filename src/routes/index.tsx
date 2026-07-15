@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
 function WelcomeScreen() {
   return (
     <Shell hideNav>
-      <div className="flex flex-1 flex-col justify-between py-6">
+      <div className="flex flex-1 flex-col justify-between gap-10 py-6">
         <div className="space-y-8 pt-6 welcome-tight">
           {/* Demo button at the very top — owner-requested, judge-facing. A real
               button, above the fold, linking the interactive tour. */}

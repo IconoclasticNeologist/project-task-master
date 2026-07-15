@@ -12,7 +12,7 @@ import { sendAgentTelemetry } from "@/lib/agents/telemetry";
 import { parseHelperReply, type HelperReply } from "./parse";
 
 export type HelperTurn =
-  | { role: "user"; content: string }
+  | { role: "user"; content: string; kind?: "crisis" | "stop" }
   | {
       role: "assistant";
       content: string;
@@ -43,9 +43,11 @@ export function useHelperChat(opts: { route: string; language: "en" | "es" }) {
       // Deterministic safety first — crisis language never reaches the network.
       const sig = tripwire(text);
       if (sig?.kind === "crisis") {
+        // kind on BOTH turns: the history filter below drops them, so crisis
+        // text never reaches a model — not now, and not as later-turn context.
         setTurns((t) => [
           ...t,
-          { role: "user", content: text },
+          { role: "user", content: text, kind: "crisis" },
           { role: "assistant", content: "", suggestions: [], kind: "crisis" },
         ]);
         sendAgentTelemetry("helper", "text", "tripwire_stops");
@@ -54,7 +56,7 @@ export function useHelperChat(opts: { route: string; language: "en" | "es" }) {
       if (sig?.kind === "stop") {
         setTurns((t) => [
           ...t,
-          { role: "user", content: text },
+          { role: "user", content: text, kind: "stop" },
           { role: "assistant", content: "", suggestions: [], kind: "stop" },
         ]);
         return;

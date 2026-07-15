@@ -56,6 +56,14 @@ describe("useHelperChat", () => {
     expect(telemetry).toHaveBeenCalledWith("helper", "text", "tripwire_stops");
     const last = result.current.turns.at(-1);
     expect(last?.role === "assistant" && last.kind).toBe("crisis");
+
+    // The crisis text must not ride along as context on the NEXT send either.
+    functions.invoke.mockResolvedValue({ data: { reply: "ok" }, error: null });
+    await act(() => result.current.send("How do I open my plan?"));
+    const call = functions.invoke.mock.calls.at(-1)?.[1] as {
+      body: { input: { messages: Array<{ content: string }> } };
+    };
+    expect(JSON.stringify(call.body.input.messages)).not.toContain("kill myself");
   });
 
   it("acknowledges the stop word without a model call", async () => {

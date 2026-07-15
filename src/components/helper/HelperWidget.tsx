@@ -75,7 +75,8 @@ export function HelperWidget() {
   const listRef = useRef<HTMLDivElement | null>(null);
 
   const chat = useHelperChat({
-    route: pathname,
+    // Notebook pages ground as the shelf — the server only knows APP_MAP routes.
+    route: pathname.startsWith("/notebooks/") ? "/notebooks" : pathname,
     language: getLangPref() === "es" ? "es" : "en",
   });
 

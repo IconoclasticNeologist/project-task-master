@@ -1,9 +1,7 @@
 import { getSupabase } from "@/lib/supabase/client";
 
 export type ProfessionalSession =
-  | { kind: "signed_out" }
-  | { kind: "anonymous" }
-  | { kind: "professional"; email: string | null };
+  { kind: "signed_out" } | { kind: "anonymous" } | { kind: "professional"; email: string | null };
 
 export async function getProfessionalSession(): Promise<ProfessionalSession> {
   if (typeof window === "undefined") return { kind: "signed_out" };

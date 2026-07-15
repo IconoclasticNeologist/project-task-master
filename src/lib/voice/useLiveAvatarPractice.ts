@@ -51,6 +51,8 @@ interface UseLiveAvatarPracticeOptions {
    */
   onAvatarText?: (text: string) => void;
   onDistress?: (sig: DistressSignal) => void;
+  /** Preferred language — the practice questioner follows it. */
+  language?: "en" | "es";
 }
 
 async function fetchAvatarToken(): Promise<
@@ -124,6 +126,9 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   // OWNED CONVERSATION LOOP: we generate every line and the avatar speaks it
   // VERBATIM (their auto-voice loop never speaks user-triggered replies).
   const accountRef = useRef("");
+  const materialRef = useRef<"fictional" | "own">("fictional");
+  const languageRef = useRef<"en" | "es">(opts.language ?? "en");
+  languageRef.current = opts.language ?? "en";
   const historyRef = useRef<Array<{ role: "user" | "avatar"; text: string }>>([]);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const streamReadyRef = useRef(false);
@@ -210,6 +215,10 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
                 account: accountRef.current,
                 turns: historyRef.current,
                 opening,
+                // The material tier: the made-up story (server-side text) is
+                // the standard; "own" is the consent-heavy tier.
+                material: materialRef.current,
+                language: languageRef.current,
               },
             },
           },
@@ -236,133 +245,139 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     generateAndSpeakRef.current = generateAndSpeak;
   }, [generateAndSpeak]);
 
-  const connect = useCallback(async (): Promise<AvatarConnectResult> => {
-    setStatus("connecting");
-    setLastError(null);
-    transcriptTripRef.current.reset();
+  const connect = useCallback(
+    async (material: "fictional" | "own" = "fictional"): Promise<AvatarConnectResult> => {
+      materialRef.current = material;
+      setStatus("connecting");
+      setLastError(null);
+      transcriptTripRef.current.reset();
 
-    // Mic preflight: the SDK requests the microphone during start(), and a
-    // blocked mic surfaces there as an opaque failure. Checking first turns
-    // it into a precise, fixable message. Permission stays granted, so the
-    // SDK's own request is instant afterwards.
-    try {
-      const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
-      probe.getTracks().forEach((t) => t.stop());
-    } catch (e) {
-      setLastError(
-        `Microphone unavailable (${e instanceof Error ? e.name : "unknown"}) — allow the mic for this site and try again`,
-      );
-      setStatus("error");
-      return "error";
-    }
-
-    const attempt = async (account: string): Promise<AvatarConnectResult> => {
-      const tokenResult = await fetchAvatarToken();
-      if (tokenResult === "unavailable") return "unavailable";
-      setPracticeCapSec(tokenResult.practiceCapSec);
-      const ptt = tokenResult.interactivity === "PUSH_TO_TALK";
-      pttRef.current = ptt;
-      setIsAnswering(false);
-      accountRef.current = account;
-      historyRef.current = [];
-      answerBufRef.current = "";
-
-      // CONVERSATIONAL + muted-by-default: the working turn pipeline, with
-      // the mic gated by the answer button (unmute → speak → mute). PTT mode
-      // remains available via config for when their PTT pipeline works.
-      const session = new LiveAvatarSession(tokenResult.token, {
-        voiceChat: ptt ? { mode: SessionInteractivityMode.PUSH_TO_TALK } : { defaultMuted: true },
-      });
-      sessionRef.current = session;
-
-      session.on(SessionEvent.SESSION_STREAM_READY, () => {
-        streamReadyRef.current = true;
-        logEvent("stream ready");
-        const el = videoElRef.current;
-        if (el) {
-          session.attach(el);
-          el.muted = false;
-          void el.play().then(
-            () => {
-              if (el.muted) {
-                setNeedsSoundTap(true);
-                logEvent("audio blocked (muted) — needs sound tap");
-              } else {
-                logEvent("playing with sound");
-              }
-            },
-            () => {
-              // Autoplay-with-sound refused: fall back to muted playback and
-              // ask for one tap. Silent video is worse than an honest button.
-              el.muted = true;
-              void el.play().catch(() => undefined);
-              setNeedsSoundTap(true);
-              logEvent("audio blocked (autoplay) — needs sound tap");
-            },
-          );
-        }
-        setStatus("open");
-      });
-      // OWNED LOOP: once CONNECTED, WE generate the opener and the avatar
-      // speaks it verbatim. We never hand a turn to their auto-voice loop
-      // (it generates but never speaks user-triggered replies). Commands sent
-      // before CONNECTED throw and tear the session down, so we wait for it.
-      let openerDriven = false;
-      session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
-        if (state !== SessionState.CONNECTED || openerDriven) return;
-        openerDriven = true;
-        void generateAndSpeakRef.current(true);
-      });
-      session.on(SessionEvent.SESSION_DISCONNECTED, () => {
-        if (sessionRef.current !== session) return; // our own teardown
-        tearDown();
-        setStatus("closed");
-      });
-      session.on(AgentEventsEnum.SESSION_STOPPED, () => {
-        if (sessionRef.current !== session) return;
-        tearDown();
-        setStatus("closed");
-      });
-      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
-        setAvatarSpeaking(true);
-        logEvent("avatar speaking");
-      });
-      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
-        setAvatarSpeaking(false);
-        logEvent("avatar finished");
-      });
-      // Chunks give the stop word its lowest latency; full transcriptions are
-      // the safety net when a pipeline emits only one of the two.
-      session.on(AgentEventsEnum.USER_TRANSCRIPTION_CHUNK, (e) => pushTranscript(e.text));
-      session.on(AgentEventsEnum.USER_TRANSCRIPTION, (e) => {
-        if (!e.text.startsWith(ACCOUNT_SENTINEL)) {
-          logEvent(`heard you (${e.text.length} chars)`);
-        }
-        pushTranscript(e.text);
-      });
-
-      await session.start();
-      return "open";
-    };
-
-    try {
-      // Account context is fetched by the AUTHENTICATED client (RLS-scoped).
-      const account = await buildAccountContext();
+      // Mic preflight: the SDK requests the microphone during start(), and a
+      // blocked mic surfaces there as an opaque failure. Checking first turns
+      // it into a precise, fixable message. Permission stays granted, so the
+      // SDK's own request is instant afterwards.
       try {
-        return await attempt(account);
-      } catch {
-        // One bounded retry: a fresh token + session covers transient start
-        // failures (network blip, expired start window). No retry loops.
-        tearDown();
-        return await attempt(account);
+        const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+        probe.getTracks().forEach((t) => t.stop());
+      } catch (e) {
+        setLastError(
+          `Microphone unavailable (${e instanceof Error ? e.name : "unknown"}) — allow the mic for this site and try again`,
+        );
+        setStatus("error");
+        return "error";
       }
-    } catch (e) {
-      tearDown();
-      setLastError(e instanceof Error ? `${e.name}: ${e.message}` : "Unknown failure");
-      setStatus("error");
-      return "error";
-    }
-  }, [pushTranscript, tearDown, logEvent]);
+
+      const attempt = async (account: string): Promise<AvatarConnectResult> => {
+        const tokenResult = await fetchAvatarToken();
+        if (tokenResult === "unavailable") return "unavailable";
+        setPracticeCapSec(tokenResult.practiceCapSec);
+        const ptt = tokenResult.interactivity === "PUSH_TO_TALK";
+        pttRef.current = ptt;
+        setIsAnswering(false);
+        accountRef.current = account;
+        historyRef.current = [];
+        answerBufRef.current = "";
+
+        // CONVERSATIONAL + muted-by-default: the working turn pipeline, with
+        // the mic gated by the answer button (unmute → speak → mute). PTT mode
+        // remains available via config for when their PTT pipeline works.
+        const session = new LiveAvatarSession(tokenResult.token, {
+          voiceChat: ptt ? { mode: SessionInteractivityMode.PUSH_TO_TALK } : { defaultMuted: true },
+        });
+        sessionRef.current = session;
+
+        session.on(SessionEvent.SESSION_STREAM_READY, () => {
+          streamReadyRef.current = true;
+          logEvent("stream ready");
+          const el = videoElRef.current;
+          if (el) {
+            session.attach(el);
+            el.muted = false;
+            void el.play().then(
+              () => {
+                if (el.muted) {
+                  setNeedsSoundTap(true);
+                  logEvent("audio blocked (muted) — needs sound tap");
+                } else {
+                  logEvent("playing with sound");
+                }
+              },
+              () => {
+                // Autoplay-with-sound refused: fall back to muted playback and
+                // ask for one tap. Silent video is worse than an honest button.
+                el.muted = true;
+                void el.play().catch(() => undefined);
+                setNeedsSoundTap(true);
+                logEvent("audio blocked (autoplay) — needs sound tap");
+              },
+            );
+          }
+          setStatus("open");
+        });
+        // OWNED LOOP: once CONNECTED, WE generate the opener and the avatar
+        // speaks it verbatim. We never hand a turn to their auto-voice loop
+        // (it generates but never speaks user-triggered replies). Commands sent
+        // before CONNECTED throw and tear the session down, so we wait for it.
+        let openerDriven = false;
+        session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
+          if (state !== SessionState.CONNECTED || openerDriven) return;
+          openerDriven = true;
+          void generateAndSpeakRef.current(true);
+        });
+        session.on(SessionEvent.SESSION_DISCONNECTED, () => {
+          if (sessionRef.current !== session) return; // our own teardown
+          tearDown();
+          setStatus("closed");
+        });
+        session.on(AgentEventsEnum.SESSION_STOPPED, () => {
+          if (sessionRef.current !== session) return;
+          tearDown();
+          setStatus("closed");
+        });
+        session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => {
+          setAvatarSpeaking(true);
+          logEvent("avatar speaking");
+        });
+        session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => {
+          setAvatarSpeaking(false);
+          logEvent("avatar finished");
+        });
+        // Chunks give the stop word its lowest latency; full transcriptions are
+        // the safety net when a pipeline emits only one of the two.
+        session.on(AgentEventsEnum.USER_TRANSCRIPTION_CHUNK, (e) => pushTranscript(e.text));
+        session.on(AgentEventsEnum.USER_TRANSCRIPTION, (e) => {
+          if (!e.text.startsWith(ACCOUNT_SENTINEL)) {
+            logEvent(`heard you (${e.text.length} chars)`);
+          }
+          pushTranscript(e.text);
+        });
+
+        await session.start();
+        return "open";
+      };
+
+      try {
+        // "own" material only: shareable excerpts fetched by the AUTHENTICATED
+        // client (RLS-scoped). The fictional story lives server-side — nothing
+        // personal is read or sent on the standard tier.
+        const account = material === "own" ? await buildAccountContext() : "";
+        try {
+          return await attempt(account);
+        } catch {
+          // One bounded retry: a fresh token + session covers transient start
+          // failures (network blip, expired start window). No retry loops.
+          tearDown();
+          return await attempt(account);
+        }
+      } catch (e) {
+        tearDown();
+        setLastError(e instanceof Error ? `${e.name}: ${e.message}` : "Unknown failure");
+        setStatus("error");
+        return "error";
+      }
+    },
+    [pushTranscript, tearDown, logEvent],
+  );
 
   /** Typed practice answers — text-or-voice everywhere. */
   const sendText = useCallback((text: string) => {

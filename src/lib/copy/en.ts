@@ -356,6 +356,23 @@ export const copy = {
       answerHint: "Your microphone is only on while you answer.",
       answering: "I can hear you. Tap again when you finish.",
       soundOn: "Tap to turn the sound on",
+      // Practice material: a made-up story is the standard tier — real
+      // pressure, nothing from the person's real life. Their own shared
+      // words are the opt-in tier (docs/sme-research-needed.md gates it).
+      materialTitle: "What should the questions be about?",
+      materialStory: "A made-up story",
+      materialStoryHint:
+        "You read a short made-up story, then practice being questioned about it. Nothing about your real life.",
+      materialOwn: "Your own shared words",
+      materialOwnHint: "Questions can touch only what you marked “okay to share.”",
+      materialOwnEmpty:
+        "Nothing is marked “okay to share” yet, so practice uses the made-up story.",
+      storyTitle: "A made-up story — just for practice.",
+      story:
+        "You were waiting outside a laundromat on a Tuesday afternoon, a little after four o’clock. It had just started to rain. A white delivery van backed up and bumped a parked blue car. The bump knocked the car’s side mirror loose. The driver got out, looked at the car, and stood there for a moment. Then he wrote something on a piece of paper and put it under the blue car’s windshield wiper. He drove away going the same direction the bus goes, past the bakery. You told the car’s owner what you saw when she came out about ten minutes later.",
+      storyNote:
+        "The practice person will ask about this story, as if you saw it happen. It is not about you or your life.",
+      storyBegin: "I’ve read it — start the practice",
     },
     permissionNeeded: "I need permission to use your microphone to listen.",
     permissionDenied:
@@ -384,6 +401,21 @@ export const copy = {
     closingTitle: "Thank you for trusting me with that.",
     closingBody:
       "You named something today. That took something. Your care plan is here when you need it.",
+    // Session closes. The containment close is owed after hard material; the
+    // gentle close ends every other session by naming one real thing the
+    // person did — felt progress without scores or streaks.
+    close: {
+      gentleTitle: "A good place to pause.",
+      containmentNamed: "You named something today: {moment}. That took something.",
+      containmentShowedUp: "You showed up today. That took something.",
+      containmentAftercare:
+        "Your care plan is right here: {person} is who helps you feel safe; {thing} is what helps you feel calm.",
+      containmentAftercareEmpty: "When you are ready, take a few minutes for yourself.",
+      staysHere:
+        "Nothing we said out loud is saved anywhere. The words you chose to keep are in Your space, and they will be there when you come back.",
+      gentleTalked: "You put some things into words today. That counts.",
+      gentleShowedUp: "You showed up today. That counts.",
+    },
   },
 
   account: {
@@ -761,6 +793,13 @@ export const copy = {
     nameSave: "Save name",
     nameSaved: "Saved.",
     aftercareSection: "Your care plan",
+    coachNoteSection: "A note to your Coach",
+    coachNoteExplain:
+      "Your Coach reads this at the start of a session — things you want it to keep in mind, in your words. It is yours: change it or clear it any time. It is never shown to professionals, and the practice questioner never sees it.",
+    coachNotePlaceholder:
+      "For example: my hearing is in March. Loud voices are hard for me. I want to practice taking pauses.",
+    coachNoteSave: "Save the note",
+    coachNoteSaved: "Saved.",
     languageSection: "Language",
     languageNote:
       "The app's menus and guides use this language, and the Coach speaks it with you. You can also switch from the globe at the top of any page.",

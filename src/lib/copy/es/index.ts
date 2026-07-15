@@ -357,6 +357,20 @@ export const copyEs: CopyShape = {
       answerHint: "Su micrófono solo está encendido mientras contesta.",
       answering: "Le escucho. Toque de nuevo cuando termine.",
       soundOn: "Toque para encender el sonido",
+      materialTitle: "¿Sobre qué serán las preguntas?",
+      materialStory: "Una historia inventada",
+      materialStoryHint:
+        "Usted lee una historia corta e inventada, y después practica que le pregunten sobre ella. Nada sobre su vida real.",
+      materialOwn: "Sus propias palabras compartidas",
+      materialOwnHint: "Las preguntas solo pueden tocar lo que usted marcó “se puede compartir”.",
+      materialOwnEmpty:
+        "Todavía no hay nada marcado “se puede compartir”, así que la práctica usa la historia inventada.",
+      storyTitle: "Una historia inventada — solo para practicar.",
+      story:
+        "Usted estaba esperando afuera de una lavandería un martes por la tarde, un poco después de las cuatro. Acababa de empezar a llover. Una camioneta blanca de reparto retrocedió y golpeó un carro azul estacionado. El golpe aflojó el espejo lateral del carro. El conductor bajó, miró el carro y se quedó parado un momento. Después escribió algo en un papel y lo puso bajo el limpiaparabrisas del carro azul. Se fue manejando en la misma dirección que va el autobús, pasando la panadería. Usted le contó a la dueña del carro lo que vio cuando ella salió unos diez minutos después.",
+      storyNote:
+        "La persona de práctica preguntará sobre esta historia, como si usted la hubiera visto pasar. No es sobre usted ni sobre su vida.",
+      storyBegin: "Ya la leí — empezar la práctica",
     },
     permissionNeeded: "Necesito permiso para usar su micrófono y poder escucharle.",
     permissionDenied:
@@ -379,6 +393,18 @@ export const copyEs: CopyShape = {
     typePlaceholder: "Escriba lo que quiera. Corto está bien.",
     send: "Enviar",
     connectError: "No pudimos conectar en este momento. Puede intentar de nuevo en un rato.",
+    close: {
+      gentleTitle: "Un buen momento para pausar.",
+      containmentNamed: "Hoy usted nombró algo: {moment}. Eso pide valor.",
+      containmentShowedUp: "Hoy usted se presentó. Eso pide valor.",
+      containmentAftercare:
+        "Su plan de cuidado está aquí: {person} es quien le ayuda a sentirse a salvo; {thing} es lo que le ayuda a sentir calma.",
+      containmentAftercareEmpty: "Cuando esté a punto, tome unos minutos para usted.",
+      staysHere:
+        "Nada de lo que dijimos en voz alta se guarda en ningún lugar. Las palabras que usted eligió conservar están en Su espacio, y ahí estarán cuando regrese.",
+      gentleTalked: "Hoy usted puso algunas cosas en palabras. Eso cuenta.",
+      gentleShowedUp: "Hoy usted se presentó. Eso cuenta.",
+    },
     aftercareTitle: "Hagamos una pausa juntos.",
     aftercareBody:
       "Algo de lo que salió fue pesado. Antes de cerrar, volvamos a su plan de cuidado.",
@@ -605,6 +631,13 @@ export const copyEs: CopyShape = {
     nameSave: "Guardar nombre",
     nameSaved: "Guardado.",
     aftercareSection: "Su plan de cuidado",
+    coachNoteSection: "Una nota para su Coach",
+    coachNoteExplain:
+      "Su Coach lee esta nota al empezar una sesión — cosas que usted quiere que tenga presente, en sus palabras. Es suya: puede cambiarla o borrarla cuando quiera. Nunca se muestra a profesionales, y la persona de práctica nunca la ve.",
+    coachNotePlaceholder:
+      "Por ejemplo: mi audiencia es en marzo. Las voces fuertes me cuestan. Quiero practicar hacer pausas.",
+    coachNoteSave: "Guardar la nota",
+    coachNoteSaved: "Guardado.",
     languageSection: "Idioma",
     languageNote:
       "Los menús y las guías de la app usan este idioma, y el Coach lo habla con usted. También puede cambiarlo desde el globo, arriba en cualquier página.",

@@ -37,6 +37,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { deriveShimKey } from "../_shared/liveavatar.ts";
 import { resolvePrompt } from "../_shared/promptRegistry.ts";
+import { practiceStoryBlock } from "../_shared/practiceStory.ts";
 import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
 import { loadOps } from "../_shared/agentConfig.ts";
 import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
@@ -292,13 +293,20 @@ serve(async (req) => {
       loadOps(admin),
       loadGuardrails(admin),
     ]);
+    // With no excerpts in the conversation, ground any shim-generated line in
+    // the same made-up practice story the owned loop uses — never improvised.
+    const materialBlock = account
+      ? [
+          "",
+          "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",
+          account,
+        ].join("\n")
+      : practiceStoryBlock("en");
     const systemText = [
       defensePrompt,
       buildGuardrailsBlock(guardrails, "defense.practice"),
       knowledge,
-      "",
-      "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",
-      account || "(none provided — warm-up questions only)",
+      materialBlock,
     ].join("\n");
 
     // Scriptwriter: dashboard-configurable (auto/claude/gemini). "auto" uses

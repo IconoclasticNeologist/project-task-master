@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { requireSurvivor } from "@/lib/auth/guard";
 import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
@@ -18,6 +18,8 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { copy } from "@/lib/copy";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import type { SurvivorSettings } from "@/lib/data/settings";
+import { loadCoachNote, saveCoachNote } from "@/lib/data/settings";
+import { Textarea } from "@/components/ui/textarea";
 import { downloadMySpace, deleteMySpace } from "@/lib/data/accountLifecycle";
 import { getMotionPref, setMotionPref } from "@/lib/motion";
 import { setLangPref } from "@/lib/lang";
@@ -89,6 +91,20 @@ function SettingsScreen() {
 
   const navigate = useNavigate();
   const [dataBusy, setDataBusy] = useState<false | "export" | "delete">(false);
+
+  // "A note to your Coach" — survivor-authored session context (encrypted at rest).
+  const noteQuery = useQuery({ queryKey: ["coachNote"], queryFn: loadCoachNote });
+  const [noteForm, setNoteForm] = useState<string | null>(null);
+  const [noteSaved, setNoteSaved] = useState(false);
+  const noteValue = noteForm ?? noteQuery.data ?? "";
+  const saveNote = useMutation({
+    mutationFn: (n: string) => saveCoachNote(n),
+    onError: () => toast(copy.settings.dataError),
+    onSuccess: () => {
+      setNoteSaved(true);
+      void queryClient.invalidateQueries({ queryKey: ["coachNote"] });
+    },
+  });
 
   // Optional app lock (device-local). Read the current state after mount (localStorage).
   const [lockOn, setLockOn] = useState(false);
@@ -247,6 +263,42 @@ function SettingsScreen() {
                       onChange={(e) => setForm((f) => ({ ...f, calmingAnchor: e.target.value }))}
                     />
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base font-normal">
+                    {copy.settings.coachNoteSection}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {copy.settings.coachNoteExplain}
+                  </p>
+                  <Textarea
+                    value={noteValue}
+                    maxLength={600}
+                    placeholder={copy.settings.coachNotePlaceholder}
+                    onChange={(e) => {
+                      setNoteForm(e.target.value);
+                      setNoteSaved(false);
+                    }}
+                    className="min-h-24"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => saveNote.mutate(noteValue)}
+                    disabled={saveNote.isPending || noteQuery.isLoading}
+                    className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-40"
+                  >
+                    {copy.settings.coachNoteSave}
+                  </button>
+                  {noteSaved && (
+                    <p aria-live="polite" className="text-xs text-muted-foreground">
+                      {copy.settings.coachNoteSaved}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 

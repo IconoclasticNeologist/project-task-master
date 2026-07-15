@@ -40,6 +40,19 @@ export async function saveSurvivorSettings(input: SurvivorSettings): Promise<voi
   if (error) throw new Error(error.message);
 }
 
+/** "A note to your Coach" — survivor-authored, survivor-visible, survivor-erasable.
+ *  Encrypted at rest; read by the Coach at session start (never by practice modes). */
+export async function loadCoachNote(): Promise<string> {
+  const { data, error } = await getSupabase().rpc("app_get_coach_note");
+  if (error) throw new Error(error.message);
+  return data ?? "";
+}
+
+export async function saveCoachNote(note: string): Promise<void> {
+  const { error } = await getSupabase().rpc("app_set_coach_note", { p_note: note });
+  if (error) throw new Error(error.message);
+}
+
 /** Partial aftercare write (support person + calming anchor only) — used by the emotional onboarding. */
 export async function saveAftercare(input: {
   supportPerson: string;

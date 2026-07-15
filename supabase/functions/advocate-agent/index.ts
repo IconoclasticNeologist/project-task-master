@@ -20,6 +20,7 @@ import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
 import { callerSubject, capFromEnv, enforceUsage } from "../_shared/usage.ts";
 import { appMapBlock, isAllowedRoute } from "../_shared/appMap.ts";
 import { languageLineFor } from "../_shared/advocatePrompts.ts";
+import { practiceStoryBlock } from "../_shared/practiceStory.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 1024;
@@ -209,14 +210,23 @@ serve(async (req) => {
     // Witness Stand practice turn — the browser drives the avatar's script
     // itself (their auto-voice loop generates but never speaks user-triggered
     // replies). We generate here, JWT-gated, under the RAG-locked defense
-    // prompt + the person's shareable-only account, and the client speaks the
-    // returned text VERBATIM via avatar.speak_text.
+    // prompt + the chosen MATERIAL, and the client speaks the returned text
+    // VERBATIM via avatar.speak_text.
+    //
+    // Material tiers: "fictional" (default — the server-canonical made-up
+    // story; the client's account text is IGNORED, so nothing personal can
+    // reach this path by accident) or "own" (the person's shareable-only
+    // excerpts, the consent-heavy tier).
     //
     // input: { account: string, turns: [{ role: "user"|"avatar", text }],
-    //          opening?: boolean }
+    //          opening?: boolean, material?: "fictional"|"own",
+    //          language?: "en"|"es" }
     if (body && typeof body === "object" && body.agent === "defense_turn") {
       const input = (body.input ?? {}) as Record<string, unknown>;
-      const account = typeof input.account === "string" ? input.account.slice(0, 4000) : "";
+      const material = input.material === "own" ? "own" : "fictional";
+      const language = input.language === "es" ? "es" : "en";
+      const account =
+        material === "own" && typeof input.account === "string" ? input.account.slice(0, 4000) : "";
       const rawTurns = Array.isArray(input.turns) ? input.turns : [];
       const contents = rawTurns
         .map((t) => {
@@ -264,13 +274,20 @@ serve(async (req) => {
         loadOps(admin),
         loadGuardrails(admin),
       ]);
+      const materialBlock =
+        material === "fictional"
+          ? practiceStoryBlock(language)
+          : [
+              "",
+              "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",
+              account || "(none provided — warm-up questions only)",
+            ].join("\n");
       const systemText = [
         defensePrompt,
         buildGuardrailsBlock(guardrails, "defense.practice"),
         knowledge,
-        "",
-        "ACCOUNT EXCERPTS (the person's own words — the ONLY source you may question from):",
-        account || "(none provided — warm-up questions only)",
+        materialBlock,
+        languageLineFor(language),
       ].join("\n");
 
       const reply = await generateReply(apiKey, systemText, merged, 200, ops.scriptwriter);

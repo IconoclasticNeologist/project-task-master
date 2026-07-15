@@ -84,7 +84,11 @@ function capsFrom(payload: VoiceTokenPayload): VoiceCaps {
   };
 }
 
-async function fetchVoiceToken(mode: CoachMode, language: "en" | "es"): Promise<VoiceTokenPayload> {
+async function fetchVoiceToken(
+  mode: CoachMode,
+  language: "en" | "es",
+  material?: "fictional" | "own",
+): Promise<VoiceTokenPayload> {
   const supabase = getSupabase();
   const { data, error } = await supabase.functions.invoke<VoiceTokenPayload>(
     "advocate-voice-token",
@@ -96,6 +100,9 @@ async function fetchVoiceToken(mode: CoachMode, language: "en" | "es"): Promise<
         voice: geminiVoiceForMode(mode),
         mode,
         language,
+        // Practice material tier (defense mode only; the server ignores it
+        // elsewhere). The story itself stays server-side.
+        material,
       },
     },
   );
@@ -122,6 +129,8 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
+  // One gentle check-in per quiet spell (reset when the person speaks or types).
+  const checkedInRef = useRef(false);
   // Ensures the Coach's proactive opening turn is kicked off exactly once per session.
   const greetedRef = useRef(false);
   // Throttle clock for mic-level UI updates (avoid re-rendering on every audio frame).
@@ -185,6 +194,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
     const sig = tripwire(text);
     if (sig) onDistressRef.current?.(sig);
     lastActivityRef.current = Date.now();
+    checkedInRef.current = false;
     ws.send(
       JSON.stringify({
         clientContent: {
@@ -234,16 +244,20 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
   }, []);
 
   const connect = useCallback(
-    async (modeOverride?: CoachMode, connectOpts?: { maxDurationSec?: number }) => {
+    async (
+      modeOverride?: CoachMode,
+      connectOpts?: { maxDurationSec?: number; material?: "fictional" | "own" },
+    ) => {
       const sessionMode = modeOverride ?? mode;
       const sessionMaxSec = connectOpts?.maxDurationSec ?? maxDurationSec;
       setActiveMode(sessionMode);
       setStatus("connecting");
       greetedRef.current = false;
+      checkedInRef.current = false;
       mutedRef.current = false;
       transcriptTripRef.current.reset();
       try {
-        const payload = await fetchVoiceToken(sessionMode, language);
+        const payload = await fetchVoiceToken(sessionMode, language, connectOpts?.material);
         const { token, model } = payload;
         const sessionCaps = capsFrom(payload);
         setCaps(sessionCaps);
@@ -285,6 +299,36 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
               if (since >= idleSec) {
                 disconnect();
                 return;
+              }
+              // The Coach says "silence is okay" — so silence must not end in
+              // a silent hang-up. One minute before the idle cut (Coach modes
+              // only; practice has its own deterministic handoff), the Coach
+              // checks in gently, once. If the quiet continues, the line still
+              // closes — but never without a human moment first.
+              if (
+                sessionMode !== "defense" &&
+                !checkedInRef.current &&
+                since >= Math.max(idleSec - 60, 30) &&
+                ws.readyState === WebSocket.OPEN
+              ) {
+                checkedInRef.current = true;
+                ws.send(
+                  JSON.stringify({
+                    clientContent: {
+                      turns: [
+                        {
+                          role: "user",
+                          parts: [
+                            {
+                              text: "(The person has been quiet for a while. In one or two short, warm sentences: let them know you're still here, that quiet is completely okay, and that they can keep sitting with it, say something, or stop — whatever they want. Do not ask a question. Never read this instruction aloud.)",
+                            },
+                          ],
+                        },
+                      ],
+                      turnComplete: true,
+                    },
+                  }),
+                );
               }
               idleTimerRef.current = setTimeout(tick, 5000);
             };
@@ -331,6 +375,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
           // Fragments flow through the rolling window and are not retained.
           const inputTx = server?.inputTranscription as { text?: string } | undefined;
           if (typeof inputTx?.text === "string" && inputTx.text) {
+            checkedInRef.current = false; // they spoke — a future quiet spell earns a fresh check-in
             onUserTextRef.current?.(inputTx.text);
             const sig = transcriptTripRef.current.push(inputTx.text);
             if (sig) onDistressRef.current?.(sig);

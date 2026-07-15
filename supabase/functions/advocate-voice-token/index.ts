@@ -30,6 +30,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { languageLineFor, promptKeyForMode, type Mode } from "../_shared/advocatePrompts.ts";
+import { practiceStoryBlock } from "../_shared/practiceStory.ts";
 import { loadOps, VOICE_ALLOWLIST } from "../_shared/agentConfig.ts";
 import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
@@ -128,11 +129,13 @@ serve(async (req) => {
     let mode: Mode = "base";
     let language: "en" | "es" = "en";
     let requestedVoice: string | null = null;
+    let material: "fictional" | "own" = "fictional";
     try {
       const body = await req.json().catch(() => null);
       if (body && typeof body === "object") {
         mode = pickMode(body.mode);
         if (body.language === "es") language = "es";
+        if (body.material === "own") material = "own";
         if (typeof body.voice === "string" && VOICE_ALLOWLIST.includes(body.voice)) {
           requestedVoice = body.voice;
         }
@@ -174,8 +177,41 @@ serve(async (req) => {
       resolvePrompt(admin, modeKey as PromptKey),
       loadGuardrails(admin),
     ]);
+    // Voice practice questions from the made-up story (the standard tier) —
+    // locked into the token like everything else. "own" has no voice path
+    // yet, so it degrades to format-only practice.
+    const storyBlock =
+      mode === "defense" && material === "fictional" ? practiceStoryBlock(language) : "";
+
+    // "A note to your Coach": survivor-authored context, COACH MODES ONLY —
+    // the practice questioner never sees anything personal. Best-effort: a
+    // read failure just means a session without the note.
+    let noteBlock = "";
+    if (mode !== "defense" && admin) {
+      try {
+        const sub = callerSubject(req);
+        if (sub && sub !== "anon") {
+          const { data } = await admin.rpc("coach_note_for_auth_user", { p_auth: sub });
+          const note = typeof data === "string" ? data.trim().slice(0, 600) : "";
+          if (note) {
+            noteBlock = [
+              "",
+              "THE PERSON ASKED YOU TO REMEMBER (they wrote this themselves and can change it in Settings; let it quietly shape how you help — never read it back verbatim, never probe beyond it, and never treat it as their account of what happened):",
+              note,
+            ].join("\n");
+          }
+        }
+      } catch {
+        /* the session simply proceeds without the note */
+      }
+    }
+
     const systemText =
-      basePrompt + buildGuardrailsBlock(guardrails, modeKey) + languageLineFor(language);
+      basePrompt +
+      buildGuardrailsBlock(guardrails, modeKey) +
+      storyBlock +
+      noteBlock +
+      languageLineFor(language);
 
     // Mint with the primary model; retry ONCE with the fallback if configured.
     let model = ops.model.primary;

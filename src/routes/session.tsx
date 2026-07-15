@@ -15,6 +15,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { Mic } from "lucide-react";
 import { requireSurvivor } from "@/lib/auth/guard";
 import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
 import { NoSpacePanel } from "@/components/NoSpacePanel";
@@ -32,12 +33,14 @@ import { useLiveAvatarPractice } from "@/lib/voice/useLiveAvatarPractice";
 import { makeCaptionStream } from "@/lib/voice/captions";
 import {
   generateContainmentClose,
+  generateGentleClose,
   requiresContainment,
   type SessionState,
 } from "@/lib/agents/safety/containment";
 import type { DistressSignal } from "@/lib/agents/safety/distress";
 import { sendAgentTelemetry, type TelemetryAgent } from "@/lib/agents/telemetry";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
+import { listStatements } from "@/lib/data/statements";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/session")({
@@ -47,10 +50,14 @@ export const Route = createFileRoute("/session")({
 });
 
 type ScreenMode = "voice" | "type";
-type Stage = "start" | "consent" | "live" | "handoff" | "paused" | "closing";
+type Stage = "start" | "consent" | "story" | "live" | "handoff" | "paused" | "closing";
 type HandoffReason = "stopped" | "crisis" | "timer" | "dropped";
 /** What is carrying the live audio/video right now. */
 type Medium = "gemini" | "avatar";
+/** What the practice questions from: the made-up story (standard, safe
+ *  default) or the person's own shared words (the consent-heavy tier —
+ *  docs/sme-research-needed.md gates it). */
+type PracticeMaterial = "fictional" | "own";
 
 // The person has to have SAID something substantive before a close is owed —
 // a one-word reply to the greeting shouldn't trigger the containment ritual.
@@ -61,6 +68,10 @@ function SessionScreen() {
   const [stage, setStage] = useState<Stage>("start");
   const [screenMode, setScreenMode] = useState<ScreenMode>("voice");
   const [witnessStand, setWitnessStand] = useState(false);
+  const [material, setMaterial] = useState<PracticeMaterial>("fictional");
+  // Whether the "own shared words" tier has anything to question from —
+  // resolved when the consent gate opens, never before.
+  const [hasShareable, setHasShareable] = useState(false);
   const [handoff, setHandoff] = useState<{ reason: HandoffReason; fromPractice: boolean } | null>(
     null,
   );
@@ -171,7 +182,25 @@ function SessionScreen() {
       setCaption(t);
     },
     onDistress: (sig) => handleDistressRef.current(sig),
+    language: settings.query.data?.language ?? "en",
   });
+
+  // Resolve whether "your own shared words" has anything in it, exactly when
+  // the consent gate opens. Failure lands on the safe side (fictional only).
+  useEffect(() => {
+    if (stage !== "consent") return;
+    let cancelled = false;
+    void listStatements()
+      .then((rows) => {
+        if (!cancelled) setHasShareable(rows.some((s) => s.visibility === "shareable"));
+      })
+      .catch(() => {
+        if (!cancelled) setHasShareable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [stage]);
 
   const activeModeRef = useRef(activeMode);
   useEffect(() => {
@@ -289,14 +318,15 @@ function SessionScreen() {
     setSessionState((s) => ({ ...s, hardMaterialTouched: true }));
     setStage("live");
     // The practice person (LiveAvatar) is the preferred medium; the voice-only
-    // practice path is the automatic, quietly-noted fallback.
+    // practice path is the automatic, quietly-noted fallback. Both question
+    // from the same material tier the person chose.
     setMedium("avatar");
-    const result = await avatar.connect();
+    const result = await avatar.connect(material);
     if (result !== "open") {
       if (stageRef.current !== "live") return; // person already stopped/left
       setMedium("gemini");
       setAvatarFellBack(true);
-      void connect("defense"); // backstop cap comes from the token payload
+      void connect("defense", { material }); // backstop cap comes from the token payload
     }
   };
 
@@ -324,7 +354,11 @@ function SessionScreen() {
       setHandoff(null);
       setStage("closing");
     } else {
-      resetToStart();
+      // Light sessions still close by naming one real thing — never a
+      // silent reset to the start screen.
+      setClosing(generateGentleClose(sessionState));
+      setHandoff(null);
+      setStage("closing");
     }
   };
 
@@ -412,7 +446,11 @@ function SessionScreen() {
         {stage === "closing" && closing && (
           <Card>
             <CardContent className="space-y-4 py-6">
-              <h2 className="text-xl font-normal">{copy.session.closingTitle}</h2>
+              <h2 className="text-xl font-normal">
+                {requiresContainment(sessionState)
+                  ? copy.session.closingTitle
+                  : copy.session.close.gentleTitle}
+              </h2>
               <p className="leading-relaxed text-foreground">{closing}</p>
               <AftercareCard plan={sessionState.aftercare} title="Your care plan" />
               <button
@@ -481,13 +519,91 @@ function SessionScreen() {
                   </li>
                 ))}
               </ul>
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {copy.session.witness.materialTitle}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setMaterial("fictional")}
+                  aria-pressed={material === "fictional"}
+                  className={
+                    material === "fictional"
+                      ? "w-full rounded-md border-2 border-primary px-4 py-3 text-left"
+                      : "w-full rounded-md border border-border px-4 py-3 text-left"
+                  }
+                >
+                  <span className="block text-sm text-foreground">
+                    {copy.session.witness.materialStory}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                    {copy.session.witness.materialStoryHint}
+                  </span>
+                </button>
+                {hasShareable ? (
+                  <button
+                    type="button"
+                    onClick={() => setMaterial("own")}
+                    aria-pressed={material === "own"}
+                    className={
+                      material === "own"
+                        ? "w-full rounded-md border-2 border-primary px-4 py-3 text-left"
+                        : "w-full rounded-md border border-border px-4 py-3 text-left"
+                    }
+                  >
+                    <span className="block text-sm text-foreground">
+                      {copy.session.witness.materialOwn}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                      {copy.session.witness.materialOwnHint}
+                    </span>
+                  </button>
+                ) : (
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {copy.session.witness.materialOwnEmpty}
+                  </p>
+                )}
+              </div>
+
               <div className="flex flex-col gap-2">
                 <button
                   type="button"
-                  onClick={beginPractice}
+                  onClick={() => {
+                    if (material === "fictional") setStage("story");
+                    else void beginPractice();
+                  }}
                   className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
                 >
                   {copy.session.witness.begin}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStage("start")}
+                  className="w-full rounded-md border border-border px-4 py-3 text-sm text-muted-foreground"
+                >
+                  {copy.session.witness.notNow}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {stage === "story" && (
+          <Card>
+            <CardContent className="space-y-4 py-6">
+              <h2 className="text-xl font-normal">{copy.session.witness.storyTitle}</h2>
+              <p className="leading-relaxed text-foreground">{copy.session.witness.story}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {copy.session.witness.storyNote}
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => void beginPractice()}
+                  className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                >
+                  {copy.session.witness.storyBegin}
                 </button>
                 <button
                   type="button"
@@ -543,6 +659,37 @@ function SessionScreen() {
                       {copy.session.witness.soundOn}
                     </button>
                   )}
+                  {/* The answer button lives DIRECTLY under the practice
+                      person, with a mic icon — how to speak should never
+                      need discovering. */}
+                  {screenMode === "voice" && (
+                    <div className="space-y-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void (avatar.isAnswering ? avatar.endAnswer() : avatar.startAnswer())
+                        }
+                        className={
+                          avatar.isAnswering
+                            ? "flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-4 text-sm font-medium text-primary-foreground"
+                            : "flex w-full items-center justify-center gap-2 rounded-md border border-border px-4 py-4 text-sm text-foreground"
+                        }
+                      >
+                        <Mic className="h-4 w-4" strokeWidth={2} aria-hidden />
+                        {avatar.isAnswering
+                          ? copy.session.witness.answerDone
+                          : copy.session.witness.answer}
+                      </button>
+                      <p
+                        className="text-xs leading-relaxed text-muted-foreground"
+                        aria-live="polite"
+                      >
+                        {avatar.isAnswering
+                          ? copy.session.witness.answering
+                          : copy.session.witness.answerHint}
+                      </p>
+                    </div>
+                  )}
                   <p className="text-center text-xs leading-relaxed text-muted-foreground">
                     {copy.session.witness.avatarNote}
                   </p>
@@ -582,41 +729,7 @@ function SessionScreen() {
               )}
             </div>
 
-            {medium === "avatar" ? (
-              screenMode === "voice" &&
-              (avatar.pushToTalk ? (
-                <div className="mx-auto w-full max-w-xs space-y-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void (avatar.isAnswering ? avatar.endAnswer() : avatar.startAnswer())
-                    }
-                    className={
-                      avatar.isAnswering
-                        ? "w-full rounded-md bg-primary px-4 py-4 text-sm font-medium text-primary-foreground"
-                        : "w-full rounded-md border border-border px-4 py-4 text-sm text-foreground"
-                    }
-                  >
-                    {avatar.isAnswering
-                      ? copy.session.witness.answerDone
-                      : copy.session.witness.answer}
-                  </button>
-                  <p className="text-xs leading-relaxed text-muted-foreground" aria-live="polite">
-                    {avatar.isAnswering
-                      ? copy.session.witness.answering
-                      : copy.session.witness.answerHint}
-                  </p>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void avatar.toggleMic()}
-                  className="mx-auto rounded-md border border-border px-4 py-2 text-sm text-muted-foreground"
-                >
-                  {avatar.micMuted ? copy.session.mic.unmute : copy.session.mic.mute}
-                </button>
-              ))
-            ) : screenMode === "voice" ? (
+            {medium === "avatar" ? null : screenMode === "voice" ? (
               <MicSetup
                 micState={micState}
                 micLevel={micLevel}

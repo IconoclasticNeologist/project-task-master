@@ -221,6 +221,8 @@ function Stage({
   narrating,
   videoRef,
   avatarClipOk,
+  videoReady,
+  onVideoReady,
   onVideoError,
 }: {
   index: number;
@@ -229,6 +231,8 @@ function Stage({
   narrating: boolean;
   videoRef: (el: HTMLVideoElement | null) => void;
   avatarClipOk: boolean;
+  videoReady: boolean;
+  onVideoReady: () => void;
   onVideoError: () => void;
 }) {
   switch (index) {
@@ -460,28 +464,36 @@ function Stage({
           </div>
         );
       }
-      const ready = p >= VIDEO_AT + 0.06;
+      // "Ready" needs the beat AND decodable frames — until both, the room is
+      // honestly still getting ready (exactly what the live app shows), so a
+      // slow first fetch can never leave a silent blank box on screen.
+      const ready = p >= VIDEO_AT + 0.06 && (videoReady || !avatarClipOk);
       const saidStop = p >= 0.78;
       return (
         <div className="tour-witness">
           <div className="tour-coachrow" style={{ marginBottom: 8 }}>
             {t.witness.persona}
           </div>
-          {avatarClipOk ? (
-            <video
-              ref={videoRef}
-              className="tour-video"
-              src="/tour/practice-person.mp4"
-              playsInline
-              preload="auto"
-              onError={onVideoError}
-            />
-          ) : (
-            <div className="tour-video tour-avatarfall" aria-hidden>
-              <span className="tour-avatarfall-head" />
-              <span className="tour-avatarfall-body" />
-            </div>
-          )}
+          <div className="tour-videowrap">
+            {avatarClipOk ? (
+              <video
+                ref={videoRef}
+                className="tour-video"
+                src="/tour/practice-person.mp4"
+                playsInline
+                preload="auto"
+                onLoadedData={onVideoReady}
+                onError={onVideoError}
+                style={videoReady ? undefined : { visibility: "hidden" }}
+              />
+            ) : null}
+            {!avatarClipOk || !videoReady ? (
+              <div className="tour-video tour-avatarfall" aria-hidden>
+                <span className="tour-avatarfall-head" />
+                <span className="tour-avatarfall-body" />
+              </div>
+            ) : null}
+          </div>
           <p className="tour-avnote">{t.witness.avatarNote}</p>
           <div className="tour-caption sm">{ready ? t.witness.question : ""}</div>
           <div className="tour-timerchip">
@@ -583,6 +595,7 @@ function TourScreen() {
   const [tryMode, setTryMode] = useState<null | TryMode>(null);
   const [coachClipOk, setCoachClipOk] = useState(true);
   const [avatarClipOk, setAvatarClipOk] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
   const tryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
   const coachRef = useRef<HTMLAudioElement | null>(null);
@@ -596,6 +609,13 @@ function TourScreen() {
     const m = window.matchMedia("(prefers-reduced-motion: reduce)");
     const off = document.documentElement.getAttribute("data-motion") === "off";
     setReduced(m.matches || off);
+  }, []);
+
+  // Warm the practice-person clip while the visitor reads the hero, so the
+  // chapter never waits on the network — the deployed site's first fetch of
+  // the file can be slow enough to hold frames back for seconds otherwise.
+  useEffect(() => {
+    fetch("/tour/practice-person.mp4").catch(() => {});
   }, []);
 
   // ---- Media rig -----------------------------------------------------------
@@ -925,6 +945,8 @@ function TourScreen() {
                     narrating={narrating}
                     videoRef={(el) => (videoRef.current = el)}
                     avatarClipOk={avatarClipOk}
+                    videoReady={videoReady}
+                    onVideoReady={() => setVideoReady(true)}
                     onVideoError={() => setAvatarClipOk(false)}
                   />
                 </div>
@@ -1260,6 +1282,8 @@ const TOUR_CSS = `
 @media (prefers-reduced-motion: reduce) { .tour-eq.on i { animation: none; } }
 
 .tour-witness { display: flex; flex-direction: column; align-items: center; }
+.tour-videowrap { position: relative; width: 168px; aspect-ratio: 3 / 4; }
+.tour-videowrap .tour-video { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tour-video { width: 168px; aspect-ratio: 3 / 4; border-radius: 14px; background: #d8d2c6; object-fit: cover; box-shadow: 0 2px 5px rgba(60,45,30,0.12), 0 14px 30px -18px rgba(60,45,30,0.55); }
 .tour-avatarfall { position: relative; overflow: hidden; background: linear-gradient(180deg, #ded8cc, #cfc7b8); display: block; }
 .tour-avatarfall-head { position: absolute; left: 50%; top: 26%; width: 56px; height: 56px; border-radius: 50%; transform: translateX(-50%); background: oklch(0.62 0.03 70); }

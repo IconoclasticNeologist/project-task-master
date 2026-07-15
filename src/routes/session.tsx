@@ -16,6 +16,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { requireSurvivor } from "@/lib/auth/guard";
+import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
+import { NoSpacePanel } from "@/components/NoSpacePanel";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +57,7 @@ type Medium = "gemini" | "avatar";
 const HARD_MATERIAL_USER_CHARS = 80;
 
 function SessionScreen() {
+  const gate = useRequireSurvivor();
   const [stage, setStage] = useState<Stage>("start");
   const [screenMode, setScreenMode] = useState<ScreenMode>("voice");
   const [witnessStand, setWitnessStand] = useState(false);
@@ -90,6 +93,9 @@ function SessionScreen() {
   useEffect(() => {
     mediumRef.current = medium;
   }, [medium]);
+  useEffect(() => {
+    screenModeRef.current = screenMode;
+  }, [screenMode]);
 
   const settings = useSurvivorSettings();
   useEffect(() => {
@@ -123,6 +129,12 @@ function SessionScreen() {
   const captionsRef = useRef(makeCaptionStream());
   const [caption, setCaption] = useState("");
 
+  // The CURRENT typed exchange only — what you sent, and the Coach's full
+  // reply to it. Replaced on the next send, wiped with the captions. Still
+  // never a transcript: one turn, in memory, gone on end/stop.
+  const [typedTurn, setTypedTurn] = useState<{ you: string; coach: string } | null>(null);
+  const screenModeRef = useRef<ScreenMode>("voice");
+
   const {
     status,
     micState,
@@ -140,12 +152,24 @@ function SessionScreen() {
     mode: "base",
     language: settings.query.data?.language ?? "en",
     onUserText: markUserContent,
-    onCoachText: (t) => setCaption(captionsRef.current.push(t)),
+    onCoachText: (t) => {
+      setCaption(captionsRef.current.push(t));
+      // In Type mode the same words also build the full, readable reply.
+      if (screenModeRef.current === "type") {
+        setTypedTurn((turn) => (turn ? { ...turn, coach: turn.coach + t } : turn));
+      }
+    },
     onDistress: (sig) => handleDistressRef.current(sig),
   });
 
   const avatar = useLiveAvatarPractice({
     onUserText: markUserContent,
+    // We author every practice line, so the caption is verbatim — shown under
+    // the video so the question can be read as (or instead of) heard.
+    onAvatarText: (t) => {
+      captionsRef.current.clear();
+      setCaption(t);
+    },
     onDistress: (sig) => handleDistressRef.current(sig),
   });
 
@@ -164,6 +188,7 @@ function SessionScreen() {
   const stopActiveMedia = () => {
     captionsRef.current.clear();
     setCaption("");
+    setTypedTurn(null);
     if (mediumRef.current === "avatar") {
       avatar.interrupt();
       avatar.disconnect();
@@ -343,6 +368,7 @@ function SessionScreen() {
     } else {
       sendText(text);
     }
+    setTypedTurn({ you: text, coach: "" });
     markUserContent(text);
     setSessionState((s) => ({
       ...s,
@@ -364,11 +390,21 @@ function SessionScreen() {
   const mediumConnecting =
     medium === "avatar" ? avatar.status === "connecting" : status === "connecting";
   const mediumOpen = medium === "avatar" ? avatar.status === "open" : status === "open";
-  // Dashboard-configured practice cap (single source with the server backstop).
-  const practiceTotalSec =
-    medium === "avatar" ? (avatar.practiceCapSec ?? caps.practiceSec) : caps.practiceSec;
+  // Today's practice cap — null until the session mint actually reports it, so
+  // the timer can never promise minutes the tier won't grant (audit P0-1). The
+  // voice fallback's cap comes with its token, which has arrived by "open".
+  const practiceCapKnownSec =
+    medium === "avatar" ? avatar.practiceCapSec : mediumOpen ? caps.practiceSec : null;
 
   const sessionActive = stage === "live" || stage === "handoff" || stage === "paused";
+
+  if (gate.status !== "ok") {
+    return (
+      <Shell>
+        <NoSpacePanel />
+      </Shell>
+    );
+  }
 
   return (
     <Shell hideNav={sessionActive}>
@@ -411,6 +447,9 @@ function SessionScreen() {
                   className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
                 >
                   Begin
+                  <span className="mt-0.5 block text-xs font-normal text-primary-foreground/85">
+                    {copy.session.beginSubtitle}
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -418,6 +457,9 @@ function SessionScreen() {
                   className="w-full rounded-md border border-border px-4 py-3 text-xs text-muted-foreground"
                 >
                   Practice (Witness Stand)
+                  <span className="mt-0.5 block text-xs text-muted-foreground/90">
+                    {copy.session.practiceSubtitle}
+                  </span>
                 </button>
               </CardContent>
             </Card>
@@ -511,7 +553,7 @@ function SessionScreen() {
               <p className="text-center text-sm text-muted-foreground" role="status">
                 {mediumConnecting ? "Connecting…" : personaLine}
               </p>
-              {caption && medium !== "avatar" && (
+              {caption && (medium === "avatar" || screenMode === "voice") && (
                 <p
                   aria-live="polite"
                   className="mx-auto max-w-md text-center text-sm leading-relaxed text-foreground/80"
@@ -526,8 +568,8 @@ function SessionScreen() {
               )}
               {witnessStand && (
                 <PracticeTimer
-                  totalSec={practiceTotalSec}
-                  running={mediumOpen}
+                  capSec={practiceCapKnownSec}
+                  mediaLive={mediumOpen}
                   onElapsed={() => {
                     if (stageRef.current !== "live") return;
                     intentionalStopRef.current = true;
@@ -586,6 +628,17 @@ function SessionScreen() {
             {screenMode === "type" && (
               <Card>
                 <CardContent className="space-y-3 py-4">
+                  {typedTurn && medium !== "avatar" && (
+                    <div aria-live="polite" className="space-y-2 border-b border-border pb-3">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        <span className="font-medium">{copy.session.youSaid}: </span>
+                        {typedTurn.you}
+                      </p>
+                      {typedTurn.coach && (
+                        <p className="text-sm leading-relaxed text-foreground">{typedTurn.coach}</p>
+                      )}
+                    </div>
+                  )}
                   <Textarea
                     value={composer}
                     onChange={(e) => setComposer(e.target.value)}

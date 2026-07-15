@@ -44,6 +44,12 @@ const MAX_ACCOUNT_CHARS = 3500;
 interface UseLiveAvatarPracticeOptions {
   /** The person's spoken words (live transcription). Never retained. */
   onUserText?: (text: string) => void;
+  /**
+   * The exact line the practice person is about to speak — we generate every
+   * line ourselves, so captions are known-verbatim, not transcribed. Ephemeral:
+   * same lifecycle as the caption stream, never persisted.
+   */
+  onAvatarText?: (text: string) => void;
   onDistress?: (sig: DistressSignal) => void;
 }
 
@@ -124,11 +130,13 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const transcriptTripRef = useRef(makeTranscriptTripwire());
 
   const onUserTextRef = useRef(opts.onUserText);
+  const onAvatarTextRef = useRef(opts.onAvatarText);
   const onDistressRef = useRef(opts.onDistress);
   useEffect(() => {
     onUserTextRef.current = opts.onUserText;
+    onAvatarTextRef.current = opts.onAvatarText;
     onDistressRef.current = opts.onDistress;
-  }, [opts.onUserText, opts.onDistress]);
+  }, [opts.onUserText, opts.onAvatarText, opts.onDistress]);
 
   /** Bind the <video> element; attaches now or when the stream is ready. */
   const attachVideo = useCallback((el: HTMLVideoElement | null) => {
@@ -214,6 +222,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         }
         if (sessionRef.current !== session) return; // stopped while generating
         historyRef.current.push({ role: "avatar", text });
+        onAvatarTextRef.current?.(text); // caption first — deaf/HoH read as it speaks
         session.repeat(text); // avatar.speak_text — VERBATIM, proven reliable
         logEvent(`speaking (${text.length} chars)`);
       } catch (e) {

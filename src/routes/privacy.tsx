@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
+import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/privacy")({
@@ -94,6 +95,8 @@ function PrivacyScreen() {
             </Section>
           </CardContent>
         </Card>
+
+        <ReviewerFooter />
       </div>
     </Shell>
   );

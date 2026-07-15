@@ -14,28 +14,52 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerSW } from "../pwa/registerSW";
 import { InstallPrompt } from "../components/InstallPrompt";
 import { LockGate } from "@/components/LockGate";
+import { HelperWidget } from "@/components/helper/HelperWidget";
 import { Toaster } from "@/components/ui/sonner";
 import { PRODUCT_NAME } from "@/lib/product";
 import { MOTION_HEAD_SCRIPT } from "@/lib/motion";
 import { LANG_HEAD_SCRIPT } from "@/lib/lang";
+import { copy } from "@/lib/copy";
+import { leaveQuickly } from "@/lib/leaveNow";
 
+// A mistyped or stale URL is the one page load that can land ANYONE — including
+// a survivor mid-session — outside the normal Shell. It still needs the same
+// safety affordances as every other screen, so this header row mirrors Shell's
+// header markup (same classes, same enlarged tap targets) without importing
+// Shell itself, since Shell also brings bottom nav assumptions that don't apply
+// here.
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-4 border-b border-border">
+          <button
+            type="button"
+            onClick={() => leaveQuickly()}
+            className="-mx-1.5 -my-3 px-1.5 py-3 text-sm text-muted-foreground hover:text-foreground"
           >
-            Go home
+            {copy.shell.leaveNow}
+          </button>
+          <Link
+            to="/break"
+            className="-mx-1.5 -my-3 px-1.5 py-3 text-sm text-muted-foreground hover:text-foreground"
+          >
+            {copy.shell.iNeedABreak}
           </Link>
-        </div>
+        </header>
+
+        <main className="flex flex-1 flex-col items-center justify-center text-center">
+          <h1 className="text-2xl font-normal tracking-tight">{copy.notFound.title}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{copy.notFound.body}</p>
+          <div className="mt-6">
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {copy.notFound.home}
+            </Link>
+          </div>
+        </main>
       </div>
     </div>
   );
@@ -139,6 +163,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <InstallPrompt />
+      <HelperWidget />
       <LockGate />
       <Toaster />
     </QueryClientProvider>

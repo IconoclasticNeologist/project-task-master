@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { copy } from "@/lib/copy";
 import { pageTitle } from "@/lib/product";
 
@@ -29,7 +30,7 @@ function ResourceCard({ entry }: { entry: ResourceEntry }) {
         <p>
           <a
             href={`tel:${dial}`}
-            className="font-medium text-foreground underline underline-offset-2"
+            className="inline-block py-2 font-medium text-foreground underline underline-offset-2"
           >
             {entry.number}
           </a>
@@ -67,6 +68,8 @@ function ResourcesScreen() {
             ))}
           </section>
         ))}
+
+        <ReviewerFooter />
       </div>
     </Shell>
   );

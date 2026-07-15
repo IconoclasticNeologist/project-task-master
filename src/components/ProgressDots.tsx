@@ -1,6 +1,7 @@
 export function ProgressDots({ step, total }: { step: number; total: number }) {
   return (
     <div
+      role="group"
       className="flex items-center justify-center gap-2"
       aria-label={`Step ${step + 1} of ${total}`}
     >

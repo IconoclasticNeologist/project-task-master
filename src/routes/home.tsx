@@ -1,11 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
+import { NoSpacePanel } from "@/components/NoSpacePanel";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { copy } from "@/lib/copy";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { useSurvivor } from "@/lib/auth/useSurvivor";
+import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
 import { loadExampleData } from "@/lib/data/demoSeed";
 import { isDemoToolsEnabled } from "@/lib/data/demoTools";
 import { AftercareCard } from "@/components/AftercareCard";
@@ -19,6 +22,7 @@ export const Route = createFileRoute("/home")({
 });
 
 function HomeScreen() {
+  const { status } = useRequireSurvivor();
   const { query } = useSurvivorSettings();
   const survivor = useSurvivor();
   // They chose this name at the door — use it, or the greeting rings hollow.
@@ -42,80 +46,111 @@ function HomeScreen() {
     : null;
   return (
     <Shell>
-      <div className="space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-normal tracking-tight">
-            {chosenName ? `Hello, ${chosenName}.` : copy.home.title}
-          </h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
-        </header>
+      {status !== "ok" ? (
+        <NoSpacePanel />
+      ) : (
+        <div className="space-y-8">
+          <header className="space-y-2">
+            <h1 className="text-2xl font-normal tracking-tight">
+              {survivor.isLoading ? (
+                <Skeleton className="h-7 w-40" />
+              ) : chosenName ? (
+                `Hello, ${chosenName}.`
+              ) : (
+                copy.home.title
+              )}
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
+          </header>
 
-        {/* Presenter aid, never survivor-facing. Shown only when demo tools are
+          {survivor.isSuccess && survivor.data?.onboarded_at == null && (
+            <Card className="paper-shadow">
+              <CardContent className="space-y-3 py-5">
+                <p className="text-base text-foreground">{copy.home.finishSetupTitle}</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {copy.home.finishSetupBody}
+                </p>
+                <Link
+                  to="/onboarding"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-4 text-sm text-foreground hover:bg-accent"
+                >
+                  {copy.home.finishSetupCta}
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Presenter aid, never survivor-facing. Shown only when demo tools are
             enabled here — a dev/VITE_DEMO_TOOLS build, or this device's /dev flag.
             Loading replaces the account's current content with the example, so
             confirm first. */}
-        {demoVisible && (
-          <div className="space-y-1">
-            <button
-              type="button"
-              disabled={seed.isPending}
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Load the demo example? This clears anything currently in this account and replaces it with the example.",
-                  )
-                ) {
-                  seed.mutate();
-                }
-              }}
-              className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
-            >
-              {seed.isPending ? "Loading an example…" : "Load an example (demo)"}
-            </button>
-            {seed.isError && (
-              <p className="text-xs text-destructive">
-                Couldn’t load the example: {seed.error?.message}
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 gap-4">
-          <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
-          <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
-          <Tile
-            to="/notebooks"
-            label={copy.guide.moreGuidesLabel}
-            hint={copy.guide.moreGuidesHint}
-          />
-          <Tile to="/study" label={copy.study.title} hint={copy.study.homeTileHint} />
-          <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
-          <Tile
-            to="/account"
-            hash="timeline"
-            label={copy.home.seeTimeline}
-            hint="What happened, in your order."
-          />
-          <Tile to="/resources" label={copy.home.findSupport} hint="People you can talk to now." />
-        </div>
-
-        {query.isError ? (
-          <Card className="paper-shadow">
-            <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
-              <p className="text-foreground">{copy.account.loadError}</p>
+          {demoVisible && (
+            <div className="space-y-1">
               <button
                 type="button"
-                onClick={() => void query.refetch()}
-                className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                disabled={seed.isPending}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Load the demo example? This clears anything currently in this account and replaces it with the example.",
+                    )
+                  ) {
+                    seed.mutate();
+                  }
+                }}
+                className="w-full rounded-md border border-dashed border-border px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
               >
-                {copy.account.retry}
+                {seed.isPending ? "Loading an example…" : "Load an example (demo)"}
               </button>
-            </CardContent>
-          </Card>
-        ) : (
-          <AftercareCard plan={plan} title="Your care plan" />
-        )}
-      </div>
+              {seed.isError && (
+                <p className="text-xs text-destructive">
+                  Couldn’t load the example: {seed.error?.message}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4">
+            <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
+            <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
+            <Tile
+              to="/notebooks"
+              label={copy.guide.moreGuidesLabel}
+              hint={copy.guide.moreGuidesHint}
+            />
+            <Tile to="/study" label={copy.study.title} hint={copy.study.homeTileHint} />
+            <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
+            <Tile
+              to="/account"
+              hash="timeline"
+              label={copy.home.seeTimeline}
+              hint="What happened, in your order."
+            />
+            <Tile
+              to="/resources"
+              label={copy.home.findSupport}
+              hint="People you can talk to now."
+            />
+          </div>
+
+          {query.isError ? (
+            <Card className="paper-shadow">
+              <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
+                <p className="text-foreground">{copy.account.loadError}</p>
+                <button
+                  type="button"
+                  onClick={() => void query.refetch()}
+                  className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {copy.account.retry}
+                </button>
+              </CardContent>
+            </Card>
+          ) : (
+            <AftercareCard plan={plan} title="Your care plan" />
+          )}
+        </div>
+      )}
     </Shell>
   );
 }

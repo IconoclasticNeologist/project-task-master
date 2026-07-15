@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
+import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { copy } from "@/lib/copy";
 import { pageTitle } from "@/lib/product";
 
@@ -121,6 +122,8 @@ function GuideScreen() {
         </Link>
 
         <p className="text-xs leading-relaxed text-muted-foreground">{copy.guide.sourceNote}</p>
+
+        <ReviewerFooter />
       </div>
     </Shell>
   );

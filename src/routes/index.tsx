@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Play } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReviewerFooter } from "@/components/ReviewerFooter";
@@ -20,7 +21,7 @@ function WelcomeScreen() {
   return (
     <Shell hideNav>
       <div className="flex flex-1 flex-col justify-between py-6">
-        <div className="space-y-8 pt-12">
+        <div className="space-y-8 pt-12 welcome-tight">
           <h1 className="text-3xl font-normal leading-tight tracking-tight">{copy.appName}.</h1>
           <p className="text-base leading-relaxed text-foreground">
             A quiet place. You set the pace. You can stop at any time.
@@ -57,6 +58,18 @@ function WelcomeScreen() {
               className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
             >
               I’ve been here before
+            </Link>
+            <Link
+              to="/tour"
+              className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <Play className="h-3.5 w-3.5" aria-hidden strokeWidth={2} />
+                {copy.begin.tourCta}
+              </span>
+              <span className="mt-1 block text-xs text-muted-foreground">
+                {copy.begin.tourCtaSub}
+              </span>
             </Link>
             <Link
               to="/resources"

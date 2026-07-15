@@ -18,6 +18,8 @@ import { buildKnowledgeBlock } from "../_shared/knowledge.ts";
 import { loadOps } from "../_shared/agentConfig.ts";
 import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
 import { callerSubject, capFromEnv, enforceUsage } from "../_shared/usage.ts";
+import { appMapBlock, isAllowedRoute } from "../_shared/appMap.ts";
+import { languageLineFor } from "../_shared/advocatePrompts.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 1024;
@@ -27,6 +29,10 @@ const MAX_OUTPUT_TOKENS = 1024;
 // never blocked; low enough that scripted abuse hits a wall.
 const AGENT_CAP_PER_USER = capFromEnv("AGENT_DAILY_CAP_PER_USER", 120);
 const AGENT_CAP_GLOBAL = capFromEnv("AGENT_DAILY_CAP_GLOBAL", 5000);
+// The guide widget gets its own bucket: chattier than the one-shot agents,
+// still bounded. Anonymous (pre-space) visitors share the "anon" subject.
+const HELPER_CAP_PER_USER = capFromEnv("HELPER_DAILY_CAP_PER_USER", 80);
+const HELPER_CAP_GLOBAL = capFromEnv("HELPER_DAILY_CAP_GLOBAL", 4000);
 const LIMIT_MESSAGE = "You've reached today's limit for this feature. Please try again tomorrow.";
 
 // All agent prompts now resolve through _shared/promptRegistry.ts (git default
@@ -185,9 +191,9 @@ serve(async (req) => {
       if (
         supabaseUrl &&
         serviceKey &&
-        ["base", "regulator", "interview", "defense"].includes(agentName) &&
+        ["base", "regulator", "interview", "defense", "helper"].includes(agentName) &&
         ["voice", "avatar", "text"].includes(medium) &&
-        ["ended_clean", "tripwire_stops", "errors"].includes(event)
+        ["started", "ended_clean", "tripwire_stops", "errors"].includes(event)
       ) {
         const admin = createClient(supabaseUrl, serviceKey, {
           auth: { persistSession: false, autoRefreshToken: false },
@@ -270,6 +276,110 @@ serve(async (req) => {
       const reply = await generateReply(apiKey, systemText, merged, 200, ops.scriptwriter);
       if (!reply) return json(502, { error: "Practice reply failed" });
       return json(200, { text: reply });
+    }
+
+    // The in-app guide chat ("Questions?" widget). Multi-turn, app-scoped,
+    // grounded in the canonical app map; returns a validated JSON contract:
+    //   input:  { messages: [{role:"user"|"assistant", content}], route, language }
+    //   output: { reply, suggestions?: string[], navigate?: {to, label} }
+    // Navigation targets are allowlisted HERE (and again on the client).
+    if (body && typeof body === "object" && body.agent === "helper") {
+      const input = (body.input ?? {}) as Record<string, unknown>;
+      const rawMessages = Array.isArray(input.messages) ? input.messages.slice(-12) : [];
+      const contents = rawMessages
+        .map((m) => {
+          const msg = m as { role?: unknown; content?: unknown };
+          const text = typeof msg.content === "string" ? msg.content.trim().slice(0, 600) : "";
+          if (!text) return null;
+          return {
+            role: msg.role === "assistant" ? "model" : "user",
+            parts: [{ text }],
+          };
+        })
+        .filter(Boolean) as Array<{ role: "user" | "model"; parts: [{ text: string }] }>;
+      if (contents.length === 0) return json(400, { error: "Empty input" });
+      // Model contract: user-first, alternating-ish — merge consecutive roles.
+      if (contents[0].role === "model") {
+        contents.unshift({ role: "user", parts: [{ text: "(The person opened the guide.)" }] });
+      }
+      const merged: typeof contents = [];
+      for (const turn of contents) {
+        const last = merged[merged.length - 1];
+        if (last && last.role === turn.role) last.parts[0].text += `\n${turn.parts[0].text}`;
+        else merged.push(turn);
+      }
+      const route = isAllowedRoute(input.route) ? (input.route as string) : "/";
+      const language = input.language === "es" ? "es" : "en";
+
+      const admin = adminClient();
+      const usage = await enforceUsage(
+        admin,
+        "helper",
+        callerSubject(req),
+        HELPER_CAP_PER_USER,
+        HELPER_CAP_GLOBAL,
+      );
+      if (!usage.ok && usage.limited) return json(429, { error: LIMIT_MESSAGE });
+
+      const [helperPrompt, guardrails] = await Promise.all([
+        resolvePrompt(admin, "helper"),
+        loadGuardrails(admin),
+      ]);
+      const systemText = [
+        helperPrompt,
+        buildGuardrailsBlock(guardrails, "helper"),
+        "",
+        appMapBlock(),
+        "",
+        `The person is currently on the page: ${route}`,
+        languageLineFor(language),
+      ].join("\n");
+
+      const raw = await generateReply(apiKey, systemText, merged, 500);
+      if (!raw) return json(502, { error: "Guide reply failed" });
+
+      // Server-side validation of the JSON contract (the client re-validates).
+      let reply = raw.trim();
+      let suggestions: string[] = [];
+      let navigate: { to: string; label: string } | undefined;
+      try {
+        const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(reply);
+        const candidate = (fenced ? fenced[1] : reply).trim();
+        const parsed = JSON.parse(candidate) as Record<string, unknown>;
+        if (typeof parsed.reply === "string" && parsed.reply.trim()) reply = parsed.reply.trim();
+        if (Array.isArray(parsed.suggestions)) {
+          suggestions = parsed.suggestions
+            .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+            .map((s) => s.trim().slice(0, 80))
+            .slice(0, 3);
+        }
+        const nav = parsed.navigate as Record<string, unknown> | undefined;
+        if (nav && isAllowedRoute(nav.to)) {
+          navigate = {
+            to: nav.to as string,
+            label:
+              typeof nav.label === "string" && nav.label.trim()
+                ? nav.label.trim().slice(0, 40)
+                : (nav.to as string),
+          };
+        }
+      } catch {
+        /* prose fallback: reply stays as the raw text */
+      }
+      if (navigate && admin) {
+        // Count navigation offers (aggregate only) — the success metric for
+        // "the guide takes people where they need to go".
+        await admin
+          .rpc("bump_usage", {
+            _scope: "helper_nav",
+            _subject: "*",
+            _per_user_cap: 1000000,
+            _global_cap: 1000000,
+          })
+          .then(() => undefined)
+          .catch(() => undefined);
+      }
+      return json(200, { reply, suggestions, navigate });
     }
 
     const agent = (body && typeof body === "object" && body.agent) as AgentName;

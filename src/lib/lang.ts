@@ -11,6 +11,16 @@ const KEY = "advocate-lang";
 
 export type Lang = "en" | "es";
 
+/** The device-mirrored language, defaulting to English. */
+export function getLangPref(): Lang {
+  try {
+    const l = localStorage.getItem(KEY);
+    return l === "es" ? "es" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 /** Persist the language and apply it to <html lang> immediately. */
 export function setLangPref(lang: Lang): void {
   try {

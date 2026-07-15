@@ -4,6 +4,7 @@
 // calm voice. Deliberately credible, not flashy.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   DoorOpen,
   ShieldCheck,
@@ -12,10 +13,12 @@ import {
   Scale,
   NotebookPen,
   MonitorPlay,
+  FlaskConical,
   type LucideIcon,
 } from "lucide-react";
 import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
+import { isDemoToolsEnabled, setDemoToolsEnabled } from "@/lib/data/demoTools";
 
 export const Route = createFileRoute("/judges")({
   head: () => ({ meta: [{ title: pageTitle("For judges") }] }),
@@ -87,8 +90,20 @@ const PILLARS: Pillar[] = [
 ];
 
 function JudgesScreen() {
+  // Per-device only — flips a localStorage flag, never touches survivor data.
+  // Reflect an already-on flag (build-time demo build, or a previous visit
+  // that flipped it) so the button doesn't claim "off" when it's already on.
+  const [demoEnabled, setDemoEnabled] = useState(false);
+  useEffect(() => {
+    setDemoEnabled(isDemoToolsEnabled());
+  }, []);
+  const enableDemoTools = () => {
+    setDemoToolsEnabled(true);
+    setDemoEnabled(true);
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground [&_p]:max-w-[60ch]">
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6 py-10">
         <header className="space-y-4">
           <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
@@ -125,6 +140,40 @@ function JudgesScreen() {
             →
           </span>
         </Link>
+
+        <section className="mt-4 rounded-lg border border-border bg-card p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[oklch(0.92_0.05_150)] text-[oklch(0.36_0.07_150)]">
+              <FlaskConical className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </span>
+            <div className="space-y-1">
+              <h2 className="text-base font-normal text-foreground">Reviewer tools</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Sample data can be loaded on this device only — turning it on here never touches a
+                real survivor’s account. Once it’s on, Home offers “Load an example (demo)” to fill
+                the space with a fictional case.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-4" aria-live="polite">
+            <button
+              type="button"
+              onClick={enableDemoTools}
+              disabled={demoEnabled}
+              className="rounded-md border border-border px-4 py-2.5 text-sm text-foreground hover:bg-background disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
+            >
+              {demoEnabled
+                ? "Enabled — open the app, Home → “Load an example (demo)”"
+                : "Enable sample data on this device"}
+            </button>
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Open the live app
+            </Link>
+          </div>
+        </section>
 
         <div className="mt-10 space-y-5">
           {PILLARS.map((p) => {

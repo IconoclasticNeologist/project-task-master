@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { copy } from "@/lib/copy";
 import { useStatements } from "@/lib/data/useStatements";
 import type { StatementRow } from "@/lib/data/statements";
@@ -71,7 +72,12 @@ export function StatementList({
   };
 
   if (query.isLoading) {
-    return <p className="text-sm text-muted-foreground">…</p>;
+    return (
+      <div className="space-y-3" aria-busy="true">
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    );
   }
   if (query.isError) {
     return (

@@ -106,7 +106,7 @@ Interactive elements, all user-initiated, none scored: **47 tap-a-word vocabular
 
 Plus: **9 mini-guide notebooks** (27 cards — "Questions that feel unfair," "Memory and your story," "If you are from another country" (T/U visas), "Ways court can be gentler," "Calming tools for court days"…), each card with a sticky-note "You could ask your advocate…" prompt; and a one-page court primer with a 13-term glossary.
 
-An optional **Listen button** plays warm pre-generated narration per step (OpenAI TTS, instructions pinned in code: "like reading to a friend who is tired. Never energetic, never dramatic") — (not yet generated as of submission night; the buttons stay invisible until the audio ships, so nothing looks broken).
+An optional **Listen button** plays warm pre-generated narration per step (OpenAI TTS, instructions pinned in code: "like reading to a friend who is tired. Never energetic, never dramatic") — **shipped**: all 66 steps narrated (generated once from the approved text, no runtime AI; English first — Spanish narration deliberately waits until the es copy passes native-speaker review).
 
 ### 4.6 Your space — the survivor's material, theirs alone
 Three tabs: **Your words** (statements), **Your timeline** (fuzzy dates welcome: "'after the move', 'around last winter'"), **Your papers** (documents, **encrypted in the browser with AES-256-GCM before upload — including the filename**). Everything is **Private by default** with a per-item "Okay to share" toggle and a plain banner: "Anything you mark 'okay to share' is read by a real person who is helping you."
@@ -288,7 +288,7 @@ The deck gains credibility by precision. Use the left column, not the right:
 | "Built and tested in 3.5 weeks; 166 automated tests; CI green" | Any implication of a completed clinical trial, legal review, or live pilot |
 | "Fully bilingual English/Español (usted register, es-419), with parity enforced by tests; native-speaker review queued" | "Professionally translated" or "reviewed by native speakers" (that review is queued via the expert channel, not done) |
 
-Update (submission night): the practice-timer honesty fix, avatar captions, auth-guard fix, typed-turn display, AA contrast, 44px tap targets, the Helper widget, and full Spanish are **merged to main, tested (166/166), and in tonight's production build**. The one remaining conditional: study-guide narration ("Listen") is not generated (English or Spanish) — leave it out of the deck unless it ships.
+Update (submission night): the practice-timer honesty fix, avatar captions, auth-guard fix, typed-turn display, AA contrast, 44px tap targets, the Helper widget, and full Spanish are **merged to main, tested (166/166), and in tonight's production build**. Narration shipped as well: every English guide step now has a Listen button (66 clips, calm register by design). Spanish narration is deliberately deferred until the Spanish copy passes native-speaker review — frame it exactly that way if asked.
 
 ## 10. Suggested deck skeleton (restructure freely)
 
@@ -309,7 +309,7 @@ Live-demo pointers for the video/Loom: the `/tour` page is a self-running guided
 
 ## 11. Numbers cheat-sheet (all verified)
 
-~3.5 weeks (first commit 2026-06-20) · 211+ commits · ~38,500 lines · 166/166 tests · 38 test files · 37 migrations · 33 tables · 27 routes · 8 edge functions · 79 components · 10 study guides · 66 guide steps · ~80 min of guide content · 47 tap-a-word terms · 9 check-ins / 27 questions · 9 notebooks / 27 cards · 25 cited sources · 5 hotlines · 6 consent scopes · 11 org roles · 2 languages · 2 practice mediums · 5 text agents + an app-guide helper · 8-min practice cap · 45-min session cap · 53 distinct safety measures (§5).
+~3.5 weeks (first commit 2026-06-20) · 211+ commits · ~38,500 lines · 166/166 tests · 38 test files · 37 migrations · 33 tables · 27 routes · 8 edge functions · 79 components · 10 study guides · 66 guide steps, every one narrated (Listen) · ~80 min of guide content · 47 tap-a-word terms · 9 check-ins / 27 questions · 9 notebooks / 27 cards · 25 cited sources · 5 hotlines · 6 consent scopes · 11 org roles · 2 languages · 2 practice mediums · 5 text agents + an app-guide helper · 8-min practice cap · 45-min session cap · 53 distinct safety measures (§5).
 
 ## 12. Placeholders the founder must fill
 
@@ -318,4 +318,3 @@ Live-demo pointers for the video/Loom: the `/tour` page is a self-running guided
 - Live URL: https://project-tend.vercel.app — verified serving tonight's full build (study guides, helper, Spanish, all audit fixes).
 - Any impact stats or personal hook for the problem slide.
 - Roadmap specifics + the ask (pilot partners? funding? mentorship?).
-- Narration: generated or not? (The only remaining §9 conditional — everything else is merged, tested, and in the production build.)

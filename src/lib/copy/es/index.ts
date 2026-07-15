@@ -429,6 +429,25 @@ export const copyEs: CopyShape = {
       timeline: "Su línea de tiempo",
       documents: "Sus papeles",
     },
+    timelineLede:
+      "Un lugar para poner en orden lo que pasó — en sus palabras. Fechas aproximadas como “después de la mudanza” son bienvenidas.",
+    timelineHelper: {
+      title: "Ponerlo en orden",
+      intro:
+        "Escriba lo que pasó en cualquier orden — desordenado está bien. La ayuda organiza solo sus palabras en un borrador de línea de tiempo. Nada se guarda a menos que usted lo conserve.",
+      placeholder:
+        "Está todo revuelto — la mudanza, el trabajo nuevo, cuando me quitaron los papeles…",
+      run: "Ordenar mis palabras",
+      running: "Ordenando…",
+      draftLabel: "Un borrador, en sus palabras",
+      keep: "Conservar",
+      kept: "Conservado ✓",
+      skip: "Saltar esta pregunta",
+      replyPlaceholder: "Puede contestar, agregar más o corregir algo.",
+      send: "Enviar",
+      notSaved: "Esta conversación de ayuda no se guarda. Desaparece cuando usted sale.",
+      error: "Eso no se envió. Puede intentar de nuevo.",
+    },
     statement: {
       addCta: "Agregue algo que quiera decir",
       placeholder: "Escriba poco o mucho. Lo que se sienta bien.",

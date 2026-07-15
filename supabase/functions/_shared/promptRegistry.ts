@@ -19,6 +19,7 @@ import {
   COACH_REGULATOR,
   DEFENSE_PRACTICE_PROMPT,
   HELPER_GUIDE,
+  TIMELINE_BUILDER_PROMPT,
 } from "./advocatePrompts.ts";
 
 const TRANSLATOR_PROMPT = [
@@ -81,6 +82,7 @@ export type PromptKey =
   | "reframer"
   | "recognition"
   | "interviewer"
+  | "timeline.builder"
   | "helper";
 
 export interface PromptMeta {
@@ -162,6 +164,13 @@ export const PROMPT_CATALOG: PromptMeta[] = [
     group: "Reflect",
     note: "One gentle open invitation to start sharing.",
     default: INTERVIEWER_PROMPT,
+  },
+  {
+    key: "timeline.builder",
+    title: "Timeline helper",
+    group: "Account tools",
+    note: "Turns scattered words into a draft timeline of the person's own events; may ask ≤2 skippable ordering questions. Draft-only.",
+    default: TIMELINE_BUILDER_PROMPT,
   },
   {
     key: "helper",

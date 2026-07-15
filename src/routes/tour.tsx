@@ -105,10 +105,13 @@ const CHAPTERS: Chapter[] = [
   {
     n: "05",
     label: "Her words, her locks",
-    title: "Encrypted before they are ever stored.",
-    desc: "Statements, a timeline where fuzzy dates are welcome, papers encrypted in her browser — filename included. A draft for her lawyer gathers only what she chose to share.",
-    dur: 12500,
-    pointer: [{ p: 0.24, x: 0.42, y: 0.4, click: true }],
+    title: "Encrypted — then put in order, her way.",
+    desc: "Everything she writes is encrypted before it is stored. Then a helper arranges her scattered words into a draft timeline — asking at most one gentle, skippable question — and nothing is kept unless she says so.",
+    dur: 15000,
+    pointer: [
+      { p: 0.14, x: 0.42, y: 0.35, click: true },
+      { p: 0.5, x: 0.5, y: 0.185, click: true },
+    ],
   },
   {
     n: "06",
@@ -381,43 +384,71 @@ function Stage({
       );
     }
     case 4: {
+      const onTimelineTab = p >= 0.5;
+      if (!onTimelineTab) {
+        return (
+          <>
+            <h2 className="tour-h2">{t.ch5.title}</h2>
+            <div className="tour-tabs">
+              <span className="on">{t.ch5.tabs.statements}</span>
+              <span>{t.ch5.tabs.timeline}</span>
+              <span>{t.ch5.tabs.documents}</span>
+            </div>
+            <div className="tour-card">
+              <div className="tour-statement sm">{t.ch5.statement}</div>
+              <div className="tour-pills">
+                <span className="tour-pill priv">{t.ch5.privatePill}</span>
+                <span className={"tour-pill " + revealed(p, 0.16)}>{t.ch5.sharePill}</span>
+              </div>
+            </div>
+            <div className={"tour-enc " + revealed(p, 0.26)}>
+              <div className="tour-tile plain">
+                <div className="tour-tile-lbl">{t.ch5.plainLabel}</div>
+                {t.ch5.statement.slice(0, 54)}…
+              </div>
+              <div className="tour-tile cipher">
+                <div className="tour-tile-lbl">{t.ch5.cipherLabel}</div>
+                {CIPHER.slice(0, 64)}
+              </div>
+            </div>
+            <div className={"tour-row " + revealed(p, 0.4)}>
+              <span className="tour-row-when mono">
+                <Lock className="h-3 w-3" strokeWidth={2} aria-hidden /> {t.ch5.paperName}
+              </span>
+              <span className="tour-row-note">{t.ch5.paperNote}</span>
+            </div>
+          </>
+        );
+      }
+      // The timeline helper: her scattered words assemble into a draft — and
+      // the helper asks one gentle, skippable ordering question.
       return (
         <>
           <h2 className="tour-h2">{t.ch5.title}</h2>
           <div className="tour-tabs">
-            <span className="on">{t.ch5.tabs.statements}</span>
-            <span>{t.ch5.tabs.timeline}</span>
+            <span>{t.ch5.tabs.statements}</span>
+            <span className="on">{t.ch5.tabs.timeline}</span>
             <span>{t.ch5.tabs.documents}</span>
           </div>
-          <div className="tour-card">
-            <div className="tour-statement sm">{t.ch5.statement}</div>
-            <div className="tour-pills">
-              <span className="tour-pill priv">{t.ch5.privatePill}</span>
-              <span className={"tour-pill " + revealed(p, 0.24)}>{t.ch5.sharePill}</span>
-            </div>
+          <p className="tour-mut lbl" style={{ margin: "2px 0 4px" }}>
+            {t.ch5.helperLabel}
+          </p>
+          <p className="tour-mut" style={{ fontStyle: "italic" }}>
+            “{t.ch5.messy}”
+          </p>
+          <div className={"tour-row " + revealed(p, 0.6)}>
+            <span className="tour-row-when">{t.ch5.draftWhen1}</span>
+            <span className="tour-row-what">{t.ch5.draftWhat1}</span>
           </div>
-          <div className={"tour-row " + revealed(p, 0.36)}>
+          <div className={"tour-row " + revealed(p, 0.68)}>
             <span className="tour-row-when">{t.ch5.timelineWhen}</span>
             <span className="tour-row-what">{t.ch5.timelineWhat}</span>
             <span className="tour-row-note">{t.ch5.timelineNote}</span>
           </div>
-          <div className={"tour-row " + revealed(p, 0.48)}>
-            <span className="tour-row-when mono">
-              <Lock className="h-3 w-3" strokeWidth={2} aria-hidden /> {t.ch5.paperName}
-            </span>
-            <span className="tour-row-note">{t.ch5.paperNote}</span>
+          <div className={"tour-pop " + revealed(p, 0.76)}>
+            <span>{t.ch5.helperQuestion}</span>
           </div>
-          <div className={"tour-enc " + revealed(p, 0.62)}>
-            <div className="tour-tile plain">
-              <div className="tour-tile-lbl">{t.ch5.plainLabel}</div>
-              {t.ch5.statement.slice(0, 54)}…
-            </div>
-            <div className="tour-tile cipher">
-              <div className="tour-tile-lbl">{t.ch5.cipherLabel}</div>
-              {CIPHER.slice(0, 64)}
-            </div>
-          </div>
-          <div className={"tour-draft " + revealed(p, 0.82)}>
+          <div className={"tour-draft " + revealed(p, 0.88)}>
             <span className="tour-draft-h">{t.ch5.draftHeading}</span>
             <span className="tour-mut">{t.ch5.draftSub}</span>
           </div>

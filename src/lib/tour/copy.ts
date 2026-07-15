@@ -141,6 +141,15 @@ export function tourCopy(es: boolean) {
         : "I wasn’t allowed to keep my own papers. He held my passport and told me I’d be in trouble with the police if I didn’t have it.",
       privatePill: es ? "Privado" : "Private",
       sharePill: es ? "Se puede compartir" : "Okay to share",
+      // The timeline helper beat: messy words in (the app's real placeholder
+      // example), an ordered draft out, one gentle skippable question.
+      helperLabel: app.account.timelineHelper.title,
+      messy: app.account.timelineHelper.placeholder,
+      draftWhen1: es ? "después de la mudanza" : "after the move",
+      draftWhat1: es ? "Empezó el trabajo nuevo." : "The new job started.",
+      helperQuestion: es
+        ? "¿Qué pasó primero — la mudanza o el trabajo nuevo? Está bien saltar esta pregunta."
+        : "Which came first — the move, or the new job? It’s okay to skip this.",
       timelineWhen: es ? "cerca del invierno pasado" : "around last winter",
       timelineWhat: es ? "Me quitaron el pasaporte." : "My passport was taken.",
       timelineNote: es ? "Las fechas aproximadas están bien." : "Fuzzy dates are welcome.",

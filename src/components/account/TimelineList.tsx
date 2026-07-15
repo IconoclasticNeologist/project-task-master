@@ -7,6 +7,7 @@ import { copy } from "@/lib/copy";
 import { useTimeline } from "@/lib/data/useTimeline";
 import { VisibilityToggle } from "@/components/account/VisibilityToggle";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { TimelineHelper } from "@/components/account/TimelineHelper";
 
 export function TimelineList({
   defaultVisibility,
@@ -60,6 +61,8 @@ export function TimelineList({
 
   return (
     <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-muted-foreground">{copy.account.timelineLede}</p>
+      <TimelineHelper defaultVisibility={defaultVisibility} />
       {!drafting && (
         <button
           type="button"

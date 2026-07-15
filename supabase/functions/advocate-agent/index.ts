@@ -295,6 +295,100 @@ serve(async (req) => {
       return json(200, { text: reply });
     }
 
+    // Timeline helper — turns the person's scattered words into a PROPOSED
+    // draft timeline (their words, their events), with ≤2 skippable ordering
+    // questions. Stateless; the thread lives in the client's memory only.
+    //   input:  { turns: [{role:"user"|"helper", content}], language }
+    //   output: { entries: [{when, what}], questions: string[], note }
+    if (body && typeof body === "object" && body.agent === "timeline_builder") {
+      const input = (body.input ?? {}) as Record<string, unknown>;
+      const language = input.language === "es" ? "es" : "en";
+      const rawTurns = Array.isArray(input.turns) ? input.turns.slice(-12) : [];
+      const contents = rawTurns
+        .map((t) => {
+          const turn = t as { role?: unknown; content?: unknown };
+          const text = typeof turn.content === "string" ? turn.content.trim().slice(0, 4000) : "";
+          if (!text) return null;
+          return {
+            role: turn.role === "helper" ? "model" : "user",
+            parts: [{ text }],
+          };
+        })
+        .filter(Boolean) as Array<{ role: "user" | "model"; parts: [{ text: string }] }>;
+      if (contents.length === 0) return json(400, { error: "Empty input" });
+      if (contents[0].role === "model") {
+        contents.unshift({ role: "user", parts: [{ text: "(The person opened the helper.)" }] });
+      }
+      const mergedTl: typeof contents = [];
+      for (const turn of contents) {
+        const last = mergedTl[mergedTl.length - 1];
+        if (last && last.role === turn.role) last.parts[0].text += `\n${turn.parts[0].text}`;
+        else mergedTl.push(turn);
+      }
+
+      const admin = adminClient();
+      const usage = await enforceUsage(
+        admin,
+        "agent",
+        callerSubject(req),
+        AGENT_CAP_PER_USER,
+        AGENT_CAP_GLOBAL,
+      );
+      if (!usage.ok && usage.limited) return json(429, { error: LIMIT_MESSAGE });
+
+      const [tlPrompt, tlGuardrails] = await Promise.all([
+        resolvePrompt(admin, "timeline.builder"),
+        loadGuardrails(admin),
+      ]);
+      const systemText = [
+        tlPrompt,
+        buildGuardrailsBlock(tlGuardrails, "timeline.builder"),
+        languageLineFor(language),
+        "",
+        'OUTPUT — STRICT JSON, nothing else (no code fences, no prose around it): {"entries": [{"when": string, "what": string}], "questions": string[], "note": string}.',
+        '"when" is the person\'s own rough anchor or date, or "" if they gave none. "what" is the event in their words. "questions" has AT MOST two entries. "note" is one warm plain sentence.',
+      ].join("\n");
+
+      const parse = (raw: string) => {
+        const cleaned = raw
+          .trim()
+          .replace(/^```(?:json)?/i, "")
+          .replace(/```$/, "")
+          .trim();
+        const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+        const entries = (Array.isArray(parsed.entries) ? parsed.entries : [])
+          .map((e) => {
+            if (!e || typeof e !== "object") return null;
+            const row = e as { when?: unknown; what?: unknown };
+            const what = typeof row.what === "string" ? row.what.trim().slice(0, 300) : "";
+            const when = typeof row.when === "string" ? row.when.trim().slice(0, 80) : "";
+            return what ? { when, what } : null;
+          })
+          .filter(Boolean)
+          .slice(0, 12);
+        const questions = (Array.isArray(parsed.questions) ? parsed.questions : [])
+          .map((q) => (typeof q === "string" ? q.trim().slice(0, 200) : ""))
+          .filter(Boolean)
+          .slice(0, 2);
+        const note = typeof parsed.note === "string" ? parsed.note.trim().slice(0, 200) : "";
+        if (entries.length === 0 && questions.length === 0 && !note) throw new Error("empty");
+        return { entries, questions, note };
+      };
+
+      let result: { entries: unknown[]; questions: string[]; note: string } | null = null;
+      for (let attempt = 0; attempt < 2 && !result; attempt++) {
+        const raw = await generateReply(apiKey, systemText, mergedTl, 1024);
+        if (!raw) continue;
+        try {
+          result = parse(raw);
+        } catch {
+          result = null;
+        }
+      }
+      if (!result) return json(502, { error: "Timeline helper reply failed" });
+      return json(200, result);
+    }
+
     // The in-app guide chat ("Questions?" widget). Multi-turn, app-scoped,
     // grounded in the canonical app map; returns a validated JSON contract:
     //   input:  { messages: [{role:"user"|"assistant", content}], route, language }

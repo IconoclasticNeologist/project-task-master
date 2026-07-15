@@ -24,11 +24,14 @@ function WelcomeScreen() {
         <div className="space-y-8 pt-6 welcome-tight">
           {/* Demo button at the very top — owner-requested, judge-facing. A real
               button, above the fold, linking the interactive tour. */}
+          {/* Deep warm amber — the one non-sage control on the page, so a
+              reviewer's eye lands here first. From the paper palette's ochre
+              family; calm, not alarm. Text/fill pass AA. */}
           <Link
             to="/tour"
-            className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-card px-4 py-3 text-center text-sm font-medium text-foreground paper-shadow hover:bg-secondary/40"
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-[oklch(0.5_0.09_70)] px-4 py-3 text-center text-sm font-medium text-[oklch(0.985_0.01_85)] paper-shadow hover:bg-[oklch(0.45_0.09_70)]"
           >
-            <Play className="h-4 w-4" aria-hidden strokeWidth={2} />
+            <Play className="h-4 w-4" aria-hidden strokeWidth={2} fill="currentColor" />
             {copy.begin.demoButton}
           </Link>
           <h1 className="text-3xl font-normal leading-tight tracking-tight">{copy.appName}.</h1>

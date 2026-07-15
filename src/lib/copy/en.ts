@@ -433,6 +433,26 @@ export const copy = {
       timeline: "Your timeline",
       documents: "Your papers",
     },
+    timelineLede:
+      "A place to put what happened in order — in your words. Rough dates like “after the move” are welcome.",
+    // The timeline helper: the founding idea — messy words in, an organized
+    // draft out, with at most two gentle, skippable ordering questions.
+    timelineHelper: {
+      title: "Put it in order",
+      intro:
+        "Write what happened in any order — messy is fine. The helper arranges only your words into a draft timeline. Nothing is saved unless you keep it.",
+      placeholder: "It’s all jumbled — the move, the new job, when my papers were taken…",
+      run: "Arrange my words",
+      running: "Arranging…",
+      draftLabel: "A draft, in your words",
+      keep: "Keep",
+      kept: "Kept ✓",
+      skip: "Skip this question",
+      replyPlaceholder: "You can answer, add more, or fix anything.",
+      send: "Send",
+      notSaved: "This helper chat isn’t saved. It disappears when you leave.",
+      error: "That didn’t go through. You can try again.",
+    },
     statement: {
       addCta: "Add something you want to say",
       placeholder: "Write a little or a lot. Whatever feels right.",

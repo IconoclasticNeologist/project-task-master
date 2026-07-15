@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Info, MessageCircle } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { copy } from "@/lib/copy";
-import { NOTEBOOK_DISCLAIMER, notebookBySlug, notebooks } from "@/lib/copy/notebooks";
+import { notebookBySlug } from "@/lib/copy/notebooks";
+import { useNotebooks } from "@/lib/lang-context";
 import { pageTitle } from "@/lib/product";
 
 // A single opened notebook: ruled-paper interior with entries and gentle
@@ -16,7 +17,8 @@ export const Route = createFileRoute("/notebooks/$slug")({
 
 function NotebookScreen() {
   const { slug } = Route.useParams();
-  const n = notebookBySlug(slug);
+  const notebooks = useNotebooks();
+  const n = notebooks.find((x) => x.slug === slug);
 
   if (!n) {
     return (
@@ -97,7 +99,7 @@ function NotebookScreen() {
         </div>
 
         <p className="text-xs leading-relaxed text-muted-foreground">
-          {NOTEBOOK_DISCLAIMER}{" "}
+          {copy.notebooks.disclaimer}{" "}
           <Link to="/sources" className="text-foreground underline underline-offset-2">
             See our sources
           </Link>

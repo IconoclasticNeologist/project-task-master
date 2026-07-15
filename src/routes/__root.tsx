@@ -20,6 +20,7 @@ import { PRODUCT_NAME } from "@/lib/product";
 import { MOTION_HEAD_SCRIPT } from "@/lib/motion";
 import { LANG_HEAD_SCRIPT } from "@/lib/lang";
 import { copy } from "@/lib/copy";
+import { LangProvider } from "@/lib/lang-context";
 import { leaveQuickly } from "@/lib/leaveNow";
 
 // A mistyped or stale URL is the one page load that can land ANYONE — including
@@ -160,12 +161,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <InstallPrompt />
-      <HelperWidget />
-      <LockGate />
-      <Toaster />
+      {/* LangProvider remounts everything inside on language switch, so all
+          surfaces re-read the language-aware copy proxy. */}
+      <LangProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <InstallPrompt />
+        <HelperWidget />
+        <LockGate />
+        <Toaster />
+      </LangProvider>
     </QueryClientProvider>
   );
 }

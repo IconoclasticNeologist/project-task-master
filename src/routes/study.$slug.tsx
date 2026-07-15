@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { GuideStepView } from "@/components/study/GuideStepView";
 import { ListenButton } from "@/components/study/ListenButton";
 import { copy } from "@/lib/copy";
-import { STUDY_GUIDE_DISCLAIMER, studyGuideBySlug, type StudyGuide } from "@/lib/copy/studyGuides";
+import { studyGuideBySlug, type StudyGuide } from "@/lib/copy/studyGuides";
+import { useStudyGuides } from "@/lib/lang-context";
 import { pageTitle } from "@/lib/product";
 
 // One opened study guide: a paged, one-step-at-a-time player. Page changes
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/study/$slug")({
 
 function GuidePlayer() {
   const { slug } = Route.useParams();
-  const guide = studyGuideBySlug(slug);
+  const guide = useStudyGuides().find((g) => g.slug === slug);
   if (!guide) return <GuideNotFound />;
   return <GuidePlayerView guide={guide} />;
 }
@@ -142,7 +143,7 @@ export function GuidePlayerView({ guide }: { guide: StudyGuide }) {
         )}
 
         <p className="text-xs leading-relaxed text-muted-foreground">
-          {STUDY_GUIDE_DISCLAIMER}{" "}
+          {copy.study.disclaimer}{" "}
           <Link to="/sources" className="text-foreground underline underline-offset-2">
             See our sources
           </Link>

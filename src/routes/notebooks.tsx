@@ -3,7 +3,8 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { Shell } from "@/components/Shell";
 import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { copy } from "@/lib/copy";
-import { notebooks, type NotebookCover } from "@/lib/copy/notebooks";
+import { type NotebookCover } from "@/lib/copy/notebooks";
+import { useNotebooks } from "@/lib/lang-context";
 import { pageTitle } from "@/lib/product";
 
 // Mini-guide shelf. A grid of notebook covers that "open" — by navigating to
@@ -30,6 +31,7 @@ const COVER: Record<NotebookCover, { cover: string; spine: string }> = {
 };
 
 function NotebooksScreen() {
+  const notebooks = useNotebooks();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // On a child route (an open notebook), render the child instead of the shelf.
   if (pathname !== "/notebooks") return <Outlet />;

@@ -2,7 +2,8 @@ import type { CSSProperties } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { copy } from "@/lib/copy";
-import { studyGuides, type GuideColor } from "@/lib/copy/studyGuides";
+import { type GuideColor } from "@/lib/copy/studyGuides";
+import { useStudyGuides } from "@/lib/lang-context";
 import { pageTitle } from "@/lib/product";
 
 // Study-guide shelf. Bigger, paged guides that open — by navigating to
@@ -29,6 +30,7 @@ const COVER: Record<GuideColor, { cover: string; spine: string }> = {
 };
 
 export function StudyShelf() {
+  const studyGuides = useStudyGuides();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // On a child route (an open guide), render the child instead of the shelf.
   if (pathname !== "/study") return <Outlet />;

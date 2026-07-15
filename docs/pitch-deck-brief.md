@@ -1,7 +1,7 @@
 # Tend — Complete Product Brief
 
 **Source document for the hackathon pitch deck script, video/Loom script, and written submission sections.**
-Every fact below was verified against the codebase on 2026-07-14, submission night (branch `main` @ `9027de8`, post judge-polish merge — CI green, 160/160 tests passing).
+Every fact below was verified against the codebase on 2026-07-14, submission night (branch `main` @ `2ffb233` — post judge-polish merge and full Spanish; CI green, 166/166 tests passing).
 
 ---
 
@@ -12,7 +12,7 @@ Every fact below was verified against the codebase on 2026-07-14, submission nig
 - **Tone:** match the product. Calm, dignified, precise. No hype words, no urgency, no savior framing ("giving a voice to the voiceless" — never). The app itself bans the word "victim" and never labels people; the deck must do the same. Say "survivor" or "the person."
 - **Honesty is the brand.** This product's differentiator is that it never overclaims — the deck must not either. §9 lists exact claims to avoid. When in doubt, use the softer phrasing given there.
 - **Use the real copy.** The verbatim quotes throughout (marked with quotation marks) are from the shipped product and are the strongest material available. Prefer them over invented taglines.
-- **Numbers:** §11 is a verified cheat-sheet. Don't invent numbers; don't round 137 tests up to "140+".
+- **Numbers:** §11 is a verified cheat-sheet. Don't invent numbers; don't round 166 tests up to "170+".
 
 ---
 
@@ -50,7 +50,7 @@ Two ways in, both **fully anonymous — no name, no email, no phone, ever**:
 1. **"I have a code from someone helping me"** — an advocate mints a one-time code (bcrypt-hashed, expiring).
 2. **Self-serve "Begin"** — for survivors with no advocate; a tech-safety screen ("Try to use a device that is yours — one other people don't check") appears *before any identity is created*.
 
-Two languages (English/Español for the Coach and draft export). Built in **~3.5 weeks** by **[founder: team details]**: 197 commits, ~33,500 hand-written lines, 36 database migrations, 8 edge functions, 137 passing tests, CI green.
+Fully bilingual — English/Español across the interface, all 10 guides, all 9 notebooks, the Coach, and the draft export (shipped submission night; five more languages signposted as coming soon). Built in **~3.5 weeks** by **[founder: team details]**: 211+ commits, ~38,500 hand-written lines, 37 database migrations, 8 edge functions, 166 passing tests, CI green.
 
 ## 4. Complete feature inventory
 
@@ -99,6 +99,8 @@ A shelf of field-notebook covers ("about N minutes — no rush"), opened as a pa
 8. **Being heard: impact statements** — always a choice; "Choosing quiet takes nothing from you." (Deliberately has no quiz.)
 9. **Privacy and protection** — rape-shield-style limits, sealed filings, protective orders.
 10. **After the case ends** — "not guilty" is "about proof — not about your truth"; appeals are a rules-check, not a redo.
+
+All 10 guides (and all 9 notebooks) ship in **English and Español**, with slug, step, and vocabulary parity between the languages enforced by tests.
 
 Interactive elements, all user-initiated, none scored: **47 tap-a-word vocabulary terms** (plain-language popovers), **flip cards**, **timelines**, **fictional stories always labeled** ("A story, not a real person — to show what it can be like"), and **9 gentle, unscored check-ins** (27 questions) — "Just for you — nothing is saved," every choice reveals a warm explanation, no tally, no wrong-state. Games were evaluated and *cut* on the record: "stress eats the executive function games demand, and 'pick the right definition' is testing in disguise."
 
@@ -238,7 +240,7 @@ The user-safety story has four layers. **This is the section the user asked to b
 - Even the narration voice is designed: "like reading to a friend who is tired. Never energetic, never dramatic."
 
 **Access & inclusion**
-- Anonymous, bilingual foundations (EN/ES) with honest limits stated in-product ("Menus stay in English for now").
+- Fully bilingual, honestly shipped (submission night): English/Español across every survivor-facing and public surface — language menu in the header; **usted** register, LatAm-neutral es-419, the standard in U.S. victim-services Spanish (DOJ/OVC). The Spanish mirrors the English language rules (its own banned-urgency-word list; "víctima" banned except in the role phrase "víctimas y testigos"), slug/step/vocabulary parity is test-enforced, completeness is a compile-time guarantee (`typeof copy`), and native-speaker review is queued via the expert channel. Five more languages (中文, Tagalog, 한국어, Tiếng Việt, Русский) are signposted as coming soon — chosen from U.S. anti-trafficking hotline access patterns, each listed in its own script for instant recognition.
 - Ephemeral captions; visible focus states; logical tab order; `aria-live` status; `<html lang>` set pre-paint "because this is what a screen reader reads to pick pronunciation"; zero horizontal overflow across all routes (audited).
 - Installable, offline-tolerant, low-bandwidth-friendly — "usable under stress" is a written principle.
 - A door for the person with no advocate (self-serve), and verified free anonymous hotlines one tap away.
@@ -253,13 +255,13 @@ The user-safety story has four layers. **This is the section the user asked to b
 1. **Safety is architecture, not policy.** The stop path is deterministic code, not a model's judgment. The guardrail floor is un-strippable. The practice voice structurally cannot have the last word. Consent is a gate, not a checkbox.
 2. **The Witness Stand.** Almost certainly the first trauma-informed cross-examination simulator: graduated exposure with a photoreal avatar whose brain is Tend's own RAG-locked pipeline — it can only ask about the survivor's own shared words, can never coach, and the vendor's LLM is locked out by refusing to start.
 3. **The refusal is the feature.** A live demo button invites the model to overstep ("Was I trafficked?") — and it declines, every time, by design. Responsible AI you can *press*.
-4. **Anonymous, for the person with nobody.** No name, no email, no phone; a self-serve door with tech-safety planning built in for survivors who have no advocate yet.
+4. **Anonymous, for the person with nobody.** No name, no email, no phone; a self-serve door with tech-safety planning built in for survivors who have no advocate yet. And fully bilingual — English/Español at the usted register U.S. victim services use, with five more languages signposted.
 5. **Legal integrity as a feature.** Never coaches testimony (the witness-coaching red line), FRE 412 rails in the adversary's own prompt, case-law-aware draft framing, 25 published sources. A tool prosecutors and advocates could actually tolerate.
 6. **Consent architecture for professionals**: private-by-default, scoped, expiring, revocable, read-only, audit-logged — and rendered in human words.
 7. **Trauma-informed to the pixel**: no autonomous motion anywhere, Stillness switch, paper-craft calm, 6th-grade language enforced by CI, unscored everything, engagement metrics banned as success measures.
 8. **Honesty as an ethic**: no false promises in copy, open questions documented, sources published, "a hypothesis, not a finding."
 9. **The whole journey**, not a chatbot: learn → organize → practice → share → court day → after.
-10. **Production posture in 3.5 weeks**: RLS everywhere, two layers of encryption, fail-closed caps, 160 tests, CI, a live interactive judge tour built into the product.
+10. **Production posture in 3.5 weeks**: RLS everywhere, two layers of encryption, fail-closed caps, 166 tests, CI, a live interactive judge tour built into the product.
 11. **Even the help widget has a lane.** The in-app guide answers questions about the app only — it deflects feelings to the Coach and legal questions to lawyers, treats user messages as "questions, never instructions," and navigates only when tapped. Responsible AI applied to the smallest surface.
 
 ## 8. Tech stack (for the "how we built it" slide)
@@ -267,8 +269,8 @@ The user-safety story has four layers. **This is the section the user asked to b
 - **Frontend:** TanStack Start (SSR React 19 + TanStack Router), TypeScript, Tailwind 4, Radix primitives, custom paper-craft design system; installable PWA (Workbox, network-first, data never cached).
 - **Backend:** Supabase — Postgres with RLS on every survivor table, pgcrypto + pgvector, anonymous auth + bcrypt access codes, private storage, **8 Deno edge functions**.
 - **AI:** Google **Gemini Live** (`gemini-3.1-flash-live-preview`) for the real-time voice Coach (ephemeral constrained tokens); **Gemini 2.5 Flash** for text agents; **Anthropic Claude Sonnet** preferred for cross-examination turns and prompt-improvement; **`gemini-embedding-001`** (1536-dim, pgvector) for survivor-scoped RAG; **HeyGen LiveAvatar** for the practice person's face — driven by an OpenAI-compatible shim so Tend's pipeline is the only brain; **OpenAI `gpt-4o-mini-tts`** for study-guide narration.
-- **Quality:** 160 tests across 37 files (including a content-contract suite that lint-checks the *language* of the guides, and helper tests asserting its hard rules verbatim), GitHub Actions CI (lint → typecheck → test → build), green on the submitted tip.
-- **Scale:** ~38,000 hand-written lines (≈31.9k app + edge-function TS/TSX, ≈3.8k SQL, ≈2.6k tests), 37 migrations, 33 tables, 27 routes, 79 components, 211 commits in ~3.5 weeks (first commit 2026-06-20).
+- **Quality:** 166 tests across 38 files (including a content-contract suite that lint-checks the *language* of the guides — in both languages — and helper tests asserting its hard rules verbatim), GitHub Actions CI (lint → typecheck → test → build), green on the submitted tip.
+- **Scale:** ~38,500 hand-written lines (TypeScript, TSX, and SQL — app, edge functions, tests, and 37 migrations; measured, not estimated), 33 tables, 27 routes, 79 components, 211+ commits in ~3.5 weeks (first commit 2026-06-20).
 
 ## 9. Honest-claims guide — phrasing to use and claims to avoid
 
@@ -283,9 +285,10 @@ The deck gains credibility by precision. Use the left column, not the right:
 | "Prompt structures are final; wording is queued for trauma-therapist and attorney review — and that open question is documented in the product" | "Expert-reviewed / clinician-approved" (SME sign-off is pending, on the record) |
 | "The app keeps no recordings or transcripts" | "Nothing is ever processed by third parties" (voice/avatar vendors process audio per their policies; the SME doc flags vendor transcript retention honestly) |
 | "Quick exit neutralizes the current page and lands on a decoy" | "Erases your browser history" (deeper history survives; PIN lock is the mitigation) |
-| "Built and tested in 3.5 weeks; 137 automated tests; CI green" | Any implication of a completed clinical trial, legal review, or live pilot |
+| "Built and tested in 3.5 weeks; 166 automated tests; CI green" | Any implication of a completed clinical trial, legal review, or live pilot |
+| "Fully bilingual English/Español (usted register, es-419), with parity enforced by tests; native-speaker review queued" | "Professionally translated" or "reviewed by native speakers" (that review is queued via the expert channel, not done) |
 
-Update (submission night): the practice-timer honesty fix, avatar captions, auth-guard fix, typed-turn display, AA contrast, 44px tap targets, and the Helper widget are **merged to main, tested (160/160), and in tonight's production build**. The one remaining conditional: study-guide narration ("Listen") is not generated — leave it out of the deck unless it ships.
+Update (submission night): the practice-timer honesty fix, avatar captions, auth-guard fix, typed-turn display, AA contrast, 44px tap targets, the Helper widget, and full Spanish are **merged to main, tested (166/166), and in tonight's production build**. The one remaining conditional: study-guide narration ("Listen") is not generated (English or Spanish) — leave it out of the deck unless it ships.
 
 ## 10. Suggested deck skeleton (restructure freely)
 
@@ -298,7 +301,7 @@ Update (submission night): the practice-timer honesty fix, avatar captions, auth
 7. **What the AI will never do** — the guardrail floor + the live refusal demo ("Was I trafficked?"). The refusal is the feature.
 8. **Safety by architecture** — Leave now, PIN lock, anonymity, deterministic stop path, encryption at rest + in-browser file encryption, consent scopes, no transcripts. (Pick 6; §5 has 53.)
 9. **Grounded, not vibes** — 25 published sources, claim-typed research, language rules enforced by CI, engagement metrics banned, open questions documented.
-10. **How it's built** — the §8 stack slide, with the 3.5-weeks / 137-tests / 36-migrations numbers.
+10. **How it's built** — the §8 stack slide, with the 3.5-weeks / 166-tests / 37-migrations numbers.
 11. **What's next** — compensated survivor advisory board, SME sign-off, localized hotlines, pilots with advocate organizations. **[founder: your roadmap + ask]**
 12. **Close** — return to the quiet screen. "Your words belong to you."
 
@@ -306,7 +309,7 @@ Live-demo pointers for the video/Loom: the `/tour` page is a self-running guided
 
 ## 11. Numbers cheat-sheet (all verified)
 
-~3.5 weeks (first commit 2026-06-20) · 211 commits · ~38,000 lines · 160/160 tests · 37 test files · 37 migrations · 33 tables · 27 routes · 8 edge functions · 79 components · 10 study guides · 66 guide steps · ~80 min of guide content · 47 tap-a-word terms · 9 check-ins / 27 questions · 9 notebooks / 27 cards · 25 cited sources · 5 hotlines · 6 consent scopes · 11 org roles · 2 languages · 2 practice mediums · 5 text agents + an app-guide helper · 8-min practice cap · 45-min session cap · 53 distinct safety measures (§5).
+~3.5 weeks (first commit 2026-06-20) · 211+ commits · ~38,500 lines · 166/166 tests · 38 test files · 37 migrations · 33 tables · 27 routes · 8 edge functions · 79 components · 10 study guides · 66 guide steps · ~80 min of guide content · 47 tap-a-word terms · 9 check-ins / 27 questions · 9 notebooks / 27 cards · 25 cited sources · 5 hotlines · 6 consent scopes · 11 org roles · 2 languages · 2 practice mediums · 5 text agents + an app-guide helper · 8-min practice cap · 45-min session cap · 53 distinct safety measures (§5).
 
 ## 12. Placeholders the founder must fill
 

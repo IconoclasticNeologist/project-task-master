@@ -373,11 +373,11 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       onDistressRef.current?.(sig);
       return; // a stop is a stop — don't also send it to the practice
     }
-    try {
-      session.message(text);
-    } catch {
-      /* not connected yet — dropping a turn beats crashing the session */
-    }
+    // OWNED LOOP for typed turns too. session.message() hands the turn to
+    // their auto-voice loop, which generates but never voices — typed answers
+    // in avatar mode used to vanish into it without a reply.
+    historyRef.current.push({ role: "user", text });
+    void generateAndSpeakRef.current(false);
   }, []);
 
   const toggleMic = useCallback(async () => {
@@ -429,28 +429,30 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
     const session = sessionRef.current;
     if (!session) return;
     try {
+      // Close the floor so their ASR stops (mechanism differs per mode).
       if (pttRef.current) {
         await session.voiceChat.stopPushToTalk();
-        logEvent("answer mic closed");
       } else {
-        // Close the floor and mute so their ASR stops. Then WE generate the
-        // reply and the avatar speaks it verbatim.
         session.stopListening();
         await session.voiceChat.mute();
-        logEvent("answer mic closed");
-        const answer = answerBufRef.current.trim();
-        answerBufRef.current = "";
-        if (!answer) {
-          logEvent("no answer captured");
-        } else {
-          historyRef.current.push({ role: "user", text: answer });
-          logEvent(`your answer (${answer.length} chars)`);
-          void generateAndSpeak(false);
-        }
       }
+      logEvent("answer mic closed");
     } catch {
       /* already closed */
     }
+    // OWNED LOOP in EVERY mode: their pipelines never voice a reply (the PTT
+    // one never even calls the LLM), so the reply is always generated and
+    // spoken by us. An empty answer still earns a line — during the 2026-07-14
+    // incident the old silent no-op here read as "the avatar never responds".
+    const answer = answerBufRef.current.trim();
+    answerBufRef.current = "";
+    if (answer) {
+      historyRef.current.push({ role: "user", text: answer });
+      logEvent(`your answer (${answer.length} chars)`);
+    } else {
+      logEvent("no answer captured — the questioner carries the turn");
+    }
+    void generateAndSpeak(false);
     setIsAnswering(false);
   }, [logEvent, generateAndSpeak]);
 

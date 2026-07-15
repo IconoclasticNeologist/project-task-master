@@ -1012,7 +1012,9 @@ function AvatarSection({
               })
             }
           />
-          Push to talk (recommended — an open mic lets ambient sound cut the avatar off)
+          Push to talk (experimental — LiveAvatar&apos;s PTT transcription has been unreliable and
+          left the practice person silent on 2026-07-14; leave OFF. The answer button already gates
+          the mic in conversational mode.)
         </label>
         <div className="w-full space-y-1">
           <p className="text-xs text-muted-foreground">

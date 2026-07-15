@@ -25,7 +25,11 @@ export interface OrganizerInput {
   text: string;
 }
 export type AgentInput =
-  TranslatorInput | ReframerInput | RecognitionInput | InterviewerInput | OrganizerInput;
+  | TranslatorInput
+  | ReframerInput
+  | RecognitionInput
+  | InterviewerInput
+  | OrganizerInput;
 
 export async function runAgent(agent: AgentName, input: AgentInput): Promise<string> {
   const { data, error } = await getSupabase().functions.invoke("advocate-agent", {

@@ -443,7 +443,12 @@ serve(async (req) => {
       const value =
         clean[
           section as
-            "voice" | "caps" | "model" | "avatar" | "scriptwriter" | "knowledgeRequireReview"
+            | "voice"
+            | "caps"
+            | "model"
+            | "avatar"
+            | "scriptwriter"
+            | "knowledgeRequireReview"
         ];
       const { error } = await admin
         .from("agent_config")

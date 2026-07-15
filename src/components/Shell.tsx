@@ -105,7 +105,11 @@ export function Shell({ children, hideNav = false }: { children: ReactNode; hide
         <main className="flex flex-1 flex-col py-8">{children}</main>
 
         {!hideNav && (
-          <footer className="flex h-16 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border">
+          <footer
+            // gap-y must be ≥ the links' enlarged hit boxes (py-3 each side = 24px)
+            // or wrapped rows' tap targets overlap and taps land on the wrong item.
+            className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-6 border-t border-border py-2"
+          >
             {navItems.map((item) => {
               const isActive = pathname === item.to;
               return (

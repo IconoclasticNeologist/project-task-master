@@ -9,12 +9,14 @@ export const HELPER_ROUTES = [
   "/home",
   "/session",
   "/guide",
+  "/study",
   "/notebooks",
   "/resources",
   "/account",
   "/team",
   "/plan",
   "/settings",
+  "/recover",
   "/break",
   "/privacy",
   "/tour",
@@ -37,6 +39,7 @@ export const WIDGET_ROUTES: readonly string[] = [
   "/team",
   "/settings",
   "/guide",
+  "/study",
   "/resources",
   "/notebooks",
   "/privacy",
@@ -46,8 +49,8 @@ export const WIDGET_ROUTES: readonly string[] = [
 
 export function widgetAllowedOn(pathname: string): boolean {
   if (WIDGET_ROUTES.includes(pathname)) return true;
-  // Notebook pages share the shelf's chrome.
-  return pathname.startsWith("/notebooks/");
+  // Notebook and study-guide pages share their shelves' chrome.
+  return pathname.startsWith("/notebooks/") || pathname.startsWith("/study/");
 }
 
 /** Page-aware starter chips — instant, free, no model call. */
@@ -83,6 +86,11 @@ const CHIPS: Record<string, string[]> = {
     "Where can I practice being asked questions?",
     "Is this legal advice?",
   ],
+  "/study": [
+    "Can I listen instead of read?",
+    "Which guide explains cross-examination?",
+    "Is any of this scored?",
+  ],
   "/resources": [
     "Can I call without giving my name?",
     "Which number is for right now?",
@@ -115,5 +123,6 @@ const DEFAULT_CHIPS = [
 export function pageChips(pathname: string): string[] {
   if (CHIPS[pathname]) return CHIPS[pathname];
   if (pathname.startsWith("/notebooks/")) return CHIPS["/notebooks"];
+  if (pathname.startsWith("/study/")) return CHIPS["/study"];
   return DEFAULT_CHIPS;
 }

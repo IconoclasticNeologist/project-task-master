@@ -56,6 +56,12 @@ export const APP_MAP: AppPlace[] = [
     how: "Read in any order; nothing is required.",
   },
   {
+    route: "/study",
+    name: "Study guides",
+    what: "Ten bigger guides, one small step at a time: the path of a case, who's who in court, court words, the day you testify, cross-examination, your rights, evidence, impact statements, privacy protections, and after the case ends.",
+    how: "Open any cover; read in order or tap any step. Every step has a Listen button with calm narration (English first). Nothing is scored.",
+  },
+  {
     route: "/notebooks",
     name: "Guides you can open",
     what: "Nine short notebook guides — pleas and deals, your own lawyer, hard questions, memory, phones and posts, protections for non-citizens, gentler-court options, delays, calming tools.",
@@ -88,8 +94,14 @@ export const APP_MAP: AppPlace[] = [
   {
     route: "/settings",
     name: "Settings",
-    what: "Name, care plan, language (English/Español), movement, sharing default, an optional PIN lock, and data download/delete.",
-    how: "The PIN stays on the device and cannot be recovered. Download gives a file of everything; delete removes it all for good.",
+    what: "Name, care plan, language (English/Español), movement, sharing default, an optional PIN lock, recovery words ('A way back in'), and data download/delete.",
+    how: "The PIN itself stays on the device and cannot be recovered. 'A way back in' creates six optional words that can reopen the space on another device. Download gives a file of everything; delete removes it all for good.",
+  },
+  {
+    route: "/recover",
+    name: "A way back in",
+    what: "Where a person types their six recovery words to reopen their space on a new device.",
+    how: "Works only if recovery words were created in Settings first. A successful recovery moves the space to this device.",
   },
   {
     route: "/break",
@@ -131,8 +143,10 @@ export const APP_FACTS: string[] = [
   "Nothing a person writes is shared unless they mark it 'okay to share'; access can be ended any time on Your team.",
   "In a session, saying or typing 'stop' stops everything immediately. The Coach never tells anyone what to say — it never scripts or rehearses testimony.",
   "The app never gives legal advice. For legal questions, the person's own lawyer or advocate is the right place — Support lists free, private hotlines.",
-  "Language: the Coach and drafts can work in English or Español (set in Settings); menus are English for now.",
-  "An optional PIN lock (Settings) keeps the space closed on this device; it cannot be recovered if forgotten.",
+  "Language: the whole app is in English and Español — the globe menu at the top switches instantly, and the study guides, notebooks, Coach, and drafts all follow. More languages are marked coming soon.",
+  "Every study-guide step has an optional Listen button with calm recorded narration (English first; Spanish narration is in review).",
+  "An optional PIN lock (Settings) keeps the space closed on this device; the PIN itself cannot be recovered if forgotten.",
+  "Losing a device does not have to mean losing the space: Settings offers 'A way back in' — six simple words, shown once, that can reopen the space on a new device (and stop the old one from opening it).",
 ];
 
 /** The grounding block injected into the helper's system prompt. */

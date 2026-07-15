@@ -53,8 +53,13 @@ const { count, size, warnings } = await generateSW({
   // Instead we handle navigations network-first below and fall back to the shell only
   // when the network genuinely fails.
   cleanupOutdatedCaches: true,
-  clientsClaim: true,
-  skipWaiting: true,
+  // NO skipWaiting / clientsClaim: a new worker must never seize a RUNNING
+  // page. Seizing control mid-session cleaned up the old precache under the
+  // old page — whose hashed chunks are already gone from the newest Vercel
+  // deployment — leaving open tabs half-broken after every deploy (and the
+  // old "fix" for that was a forced reload mid-moment). Waiting instead means
+  // every open page keeps its own complete, consistent world until it closes;
+  // fresh sessions activate the new worker cleanly.
   runtimeCaching: [
     {
       // NEVER cache Supabase or any data API — survivor data must not persist on device.

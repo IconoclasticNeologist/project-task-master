@@ -841,6 +841,56 @@ export const copy = {
     cancel: "Cancel",
   },
 
+  // Recovery words — the opt-in way back into a space if this device is ever
+  // lost or cleared (spec: 2026-07-14-recovery-words-design.md). Honest about
+  // the tradeoff in both directions: the words are the only way back in, and
+  // anyone holding them could open the space.
+  recovery: {
+    sectionTitle: "A way back in",
+    explain:
+      "Your space lives on this device. If this device were ever lost or cleared, six simple words can bring your space back on another one. The words are the only way back in — without them, no one can recover your space, and anyone who has them could open it. Keep them somewhere safe.",
+    createCta: "Create my recovery words",
+    replaceCta: "Make new words",
+    replaceNote: "Making new words turns off the old ones.",
+    removeCta: "Remove the words",
+    removeConfirm: "Remove them? The words you wrote down will stop working.",
+    removeYes: "Yes, remove them",
+    removeNo: "Keep them",
+    working: "Working…",
+    dialogTitle: "Your six words.",
+    dialogBody:
+      "Write these somewhere safe, in this order. They will not be shown again. Anyone with these words could open your space, so treat them like a key.",
+    confirmWrote: "I wrote them down",
+    statusSet: "Recovery words are set for this space.",
+    statusNotSet: "No recovery words yet.",
+    error: "We couldn't do that just now. You can try again.",
+    entryLink: "I have recovery words",
+    entryTitle: "Welcome back.",
+    entryBody: "Type your six words, with spaces between them. Capital letters don't matter.",
+    entryLabel: "Your six words",
+    entryPlaceholder: "six small words",
+    entryCta: "Open my space",
+    entryWorking: "Looking…",
+    entryNoMatch: "Those words didn't open a space. You can check the order and try again.",
+    entryRateLimited:
+      "That was a few tries in a row. The door rests for a while — you can try again in an hour.",
+    entryHasSpace:
+      "This device already holds a space. To recover a different one, that space would need to be deleted first, in Settings.",
+  },
+
+  // The install prompt. Honest about why installing matters: the space lives
+  // in this browser's storage.
+  install: {
+    body: "Add {app} to your home screen for a private, full-screen space.",
+    livesHere:
+      "Your space lives in this browser — installing helps keep it from being cleared by accident.",
+    add: "Add",
+    notNow: "Not now",
+    iosBefore: "Tap the Share icon",
+    iosAfter: "in the toolbar, then choose “Add to Home Screen.”",
+    gotIt: "Got it",
+  },
+
   recognition: {
     intro: `These are ways the law sometimes names what people have lived through. None of this is a legal conclusion about you — it’s language you can recognize or set aside.`,
     item: (n: number) => `Recognition statement #${n}`,

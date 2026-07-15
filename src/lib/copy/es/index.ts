@@ -682,6 +682,52 @@ export const copyEs: CopyShape = {
     cancel: "Cancelar",
   },
 
+  recovery: {
+    sectionTitle: "Una puerta de regreso",
+    explain:
+      "Su espacio vive en este aparato. Si este aparato se perdiera o se borrara, seis palabras sencillas pueden traer su espacio de vuelta en otro. Las palabras son la única puerta de regreso — sin ellas, nadie puede recuperar su espacio, y cualquier persona que las tenga podría abrirlo. Guárdelas en un lugar seguro.",
+    createCta: "Crear mis palabras de regreso",
+    replaceCta: "Hacer palabras nuevas",
+    replaceNote: "Hacer palabras nuevas apaga las anteriores.",
+    removeCta: "Quitar las palabras",
+    removeConfirm: "¿Quitarlas? Las palabras que escribió dejarán de funcionar.",
+    removeYes: "Sí, quitarlas",
+    removeNo: "Conservarlas",
+    working: "Trabajando…",
+    dialogTitle: "Sus seis palabras.",
+    dialogBody:
+      "Escríbalas en un lugar seguro, en este orden. No se mostrarán otra vez. Cualquier persona con estas palabras podría abrir su espacio, así que trátelas como una llave. Las palabras están en inglés — escríbalas tal como aparecen.",
+    confirmWrote: "Ya las escribí",
+    statusSet: "Este espacio tiene palabras de regreso.",
+    statusNotSet: "Todavía no hay palabras de regreso.",
+    error: "No pudimos hacerlo en este momento. Puede intentar de nuevo.",
+    entryLink: "Tengo palabras de regreso",
+    entryTitle: "Bienvenida de nuevo. Bienvenido de nuevo.",
+    entryBody:
+      "Escriba sus seis palabras, con espacios entre ellas. Las mayúsculas no importan. Las palabras están en inglés, tal como se le mostraron.",
+    entryLabel: "Sus seis palabras",
+    entryPlaceholder: "seis palabras pequeñas",
+    entryCta: "Abrir mi espacio",
+    entryWorking: "Buscando…",
+    entryNoMatch:
+      "Esas palabras no abrieron un espacio. Puede revisar el orden e intentar de nuevo.",
+    entryRateLimited:
+      "Fueron varios intentos seguidos. La puerta descansa un rato — puede intentar de nuevo en una hora.",
+    entryHasSpace:
+      "Este aparato ya tiene un espacio. Para recuperar otro, primero habría que borrar este, en Ajustes.",
+  },
+
+  install: {
+    body: "Agregue {app} a su pantalla de inicio para un espacio privado, a pantalla completa.",
+    livesHere:
+      "Su espacio vive en este navegador — instalar la app ayuda a que no se borre por accidente.",
+    add: "Agregar",
+    notNow: "Todavía no",
+    iosBefore: "Toque el ícono de Compartir",
+    iosAfter: "en la barra, y elija “Agregar a pantalla de inicio”.",
+    gotIt: "Entendido",
+  },
+
   recognition: {
     intro:
       "Estas son maneras en que la ley a veces nombra lo que las personas han vivido. Nada de esto es una conclusión legal sobre usted — es lenguaje que puede reconocer o dejar a un lado.",

@@ -60,6 +60,12 @@ function WelcomeScreen() {
               I’ve been here before
             </Link>
             <Link
+              to="/recover"
+              className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
+            >
+              {copy.recovery.entryLink}
+            </Link>
+            <Link
               to="/tour"
               className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
             >

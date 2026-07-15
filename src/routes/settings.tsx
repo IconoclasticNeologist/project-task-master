@@ -8,6 +8,7 @@ import { useSurvivor } from "@/lib/auth/useSurvivor";
 import { updateProfile } from "@/lib/auth/session";
 import { Shell } from "@/components/Shell";
 import { NoSpacePanel } from "@/components/NoSpacePanel";
+import { RecoveryWordsCard } from "@/components/RecoveryWordsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -436,6 +437,8 @@ function SettingsScreen() {
                   )}
                 </CardContent>
               </Card>
+
+              <RecoveryWordsCard />
 
               <Card>
                 <CardHeader>

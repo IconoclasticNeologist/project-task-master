@@ -16,6 +16,7 @@ import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SessionRouteImport } from './routes/session'
 import { Route as ResourcesRouteImport } from './routes/resources'
+import { Route as RecoverRouteImport } from './routes/recover'
 import { Route as ProfessionalRouteImport } from './routes/professional'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PlanRouteImport } from './routes/plan'
@@ -70,6 +71,11 @@ const SessionRoute = SessionRouteImport.update({
 const ResourcesRoute = ResourcesRouteImport.update({
   id: '/resources',
   path: '/resources',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecoverRoute = RecoverRouteImport.update({
+  id: '/recover',
+  path: '/recover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfessionalRoute = ProfessionalRouteImport.update({
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/plan': typeof PlanRoute
   '/privacy': typeof PrivacyRoute
   '/professional': typeof ProfessionalRouteWithChildren
+  '/recover': typeof RecoverRoute
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/plan': typeof PlanRoute
   '/privacy': typeof PrivacyRoute
   '/professional': typeof ProfessionalRouteWithChildren
+  '/recover': typeof RecoverRoute
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/plan': typeof PlanRoute
   '/privacy': typeof PrivacyRoute
   '/professional': typeof ProfessionalRouteWithChildren
+  '/recover': typeof RecoverRoute
   '/resources': typeof ResourcesRoute
   '/session': typeof SessionRoute
   '/settings': typeof SettingsRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/plan'
     | '/privacy'
     | '/professional'
+    | '/recover'
     | '/resources'
     | '/session'
     | '/settings'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/plan'
     | '/privacy'
     | '/professional'
+    | '/recover'
     | '/resources'
     | '/session'
     | '/settings'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/plan'
     | '/privacy'
     | '/professional'
+    | '/recover'
     | '/resources'
     | '/session'
     | '/settings'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   PlanRoute: typeof PlanRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfessionalRoute: typeof ProfessionalRouteWithChildren
+  RecoverRoute: typeof RecoverRoute
   ResourcesRoute: typeof ResourcesRoute
   SessionRoute: typeof SessionRoute
   SettingsRoute: typeof SettingsRoute
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/resources'
       fullPath: '/resources'
       preLoaderRoute: typeof ResourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recover': {
+      id: '/recover'
+      path: '/recover'
+      fullPath: '/recover'
+      preLoaderRoute: typeof RecoverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/professional': {
@@ -624,6 +644,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlanRoute: PlanRoute,
   PrivacyRoute: PrivacyRoute,
   ProfessionalRoute: ProfessionalRouteWithChildren,
+  RecoverRoute: RecoverRoute,
   ResourcesRoute: ResourcesRoute,
   SessionRoute: SessionRoute,
   SettingsRoute: SettingsRoute,

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { APP_MAP, appMapBlock, isAllowedRoute as serverAllowed } from "../../../supabase/functions/_shared/appMap";
+import {
+  APP_MAP,
+  appMapBlock,
+  isAllowedRoute as serverAllowed,
+} from "../../../supabase/functions/_shared/appMap";
 import { HELPER_ROUTES, isAllowedRoute, pageChips, widgetAllowedOn } from "./appMap";
 
 describe("app map parity (client mirror ⇄ server canonical)", () => {
@@ -21,7 +25,17 @@ describe("app map parity (client mirror ⇄ server canonical)", () => {
   });
 
   it("widget never renders on flow or safety surfaces", () => {
-    for (const banned of ["/session", "/break", "/onboarding", "/begin", "/enter", "/tour", "/dev", "/professional", "/expert"]) {
+    for (const banned of [
+      "/session",
+      "/break",
+      "/onboarding",
+      "/begin",
+      "/enter",
+      "/tour",
+      "/dev",
+      "/professional",
+      "/expert",
+    ]) {
       expect(widgetAllowedOn(banned)).toBe(false);
     }
     expect(widgetAllowedOn("/home")).toBe(true);

@@ -19,7 +19,11 @@ describe("useHelperChat", () => {
 
   it("sends a message through advocate-agent with route and language", async () => {
     functions.invoke.mockResolvedValue({
-      data: { reply: "Your plan is a checklist.", suggestions: [], navigate: { to: "/plan", label: "Your plan" } },
+      data: {
+        reply: "Your plan is a checklist.",
+        suggestions: [],
+        navigate: { to: "/plan", label: "Your plan" },
+      },
       error: null,
     });
     const { result } = renderHook(() => useHelperChat({ route: "/home", language: "en" }));

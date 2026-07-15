@@ -27,7 +27,13 @@ import { isLocked, subscribeLock } from "@/lib/appLock";
 import { pageChips, widgetAllowedOn } from "@/lib/helper/appMap";
 import { useHelperChat, type HelperTurn } from "@/lib/helper/useHelperChat";
 
-function AssistantTurn({ turn, onNavigate }: { turn: HelperTurn; onNavigate: (to: string) => void }) {
+function AssistantTurn({
+  turn,
+  onNavigate,
+}: {
+  turn: HelperTurn;
+  onNavigate: (to: string) => void;
+}) {
   if (turn.role !== "assistant") return null;
   if (turn.kind === "crisis") {
     return (
@@ -131,7 +137,11 @@ export function HelperWidget() {
           </DrawerDescription>
         </DrawerHeader>
 
-        <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto px-4 pb-2" aria-live="polite">
+        <div
+          ref={listRef}
+          className="flex-1 space-y-4 overflow-y-auto px-4 pb-2"
+          aria-live="polite"
+        >
           {chat.turns.length === 0 && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">{copy.helper.starterHeading}</p>

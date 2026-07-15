@@ -46,7 +46,8 @@ export function parseHelperReply(raw: string): HelperReply {
   if (!parsed || typeof parsed !== "object") return fallback;
 
   const obj = parsed as Record<string, unknown>;
-  const reply = typeof obj.reply === "string" && obj.reply.trim() ? obj.reply.trim() : fallback.reply;
+  const reply =
+    typeof obj.reply === "string" && obj.reply.trim() ? obj.reply.trim() : fallback.reply;
 
   const suggestions = Array.isArray(obj.suggestions)
     ? obj.suggestions

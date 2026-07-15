@@ -52,11 +52,7 @@ export function widgetAllowedOn(pathname: string): boolean {
 
 /** Page-aware starter chips — instant, free, no model call. */
 const CHIPS: Record<string, string[]> = {
-  "/": [
-    "What is this app?",
-    "Is anything about me saved?",
-    "How do I leave this page fast?",
-  ],
+  "/": ["What is this app?", "Is anything about me saved?", "How do I leave this page fast?"],
   "/home": [
     "Where do I practice for court?",
     "What does 'Your space' hold?",
@@ -97,11 +93,7 @@ const CHIPS: Record<string, string[]> = {
     "What if my case ends in a deal?",
     "Do I have my own lawyer?",
   ],
-  "/privacy": [
-    "What is saved, exactly?",
-    "Who can see what I write?",
-    "What does 'Leave now' do?",
-  ],
+  "/privacy": ["What is saved, exactly?", "Who can see what I write?", "What does 'Leave now' do?"],
   "/judges": [
     "How do I try the app with sample data?",
     "Where is the interactive tour?",

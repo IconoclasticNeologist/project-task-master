@@ -35,91 +35,94 @@ export function useHelperChat(opts: { route: string; language: "en" | "es" }) {
   const optsRef = useRef(opts);
   optsRef.current = opts;
 
-  const send = useCallback(async (raw: string) => {
-    const text = raw.trim().slice(0, MAX_MESSAGE_CHARS);
-    if (!text) return;
+  const send = useCallback(
+    async (raw: string) => {
+      const text = raw.trim().slice(0, MAX_MESSAGE_CHARS);
+      if (!text) return;
 
-    // Deterministic safety first — crisis language never reaches the network.
-    const sig = tripwire(text);
-    if (sig?.kind === "crisis") {
-      setTurns((t) => [
-        ...t,
-        { role: "user", content: text },
-        { role: "assistant", content: "", suggestions: [], kind: "crisis" },
-      ]);
-      sendAgentTelemetry("helper", "text", "tripwire_stops");
-      return;
-    }
-    if (sig?.kind === "stop") {
-      setTurns((t) => [
-        ...t,
-        { role: "user", content: text },
-        { role: "assistant", content: "", suggestions: [], kind: "stop" },
-      ]);
-      return;
-    }
-
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-      setNotice("offline");
-      return;
-    }
-
-    setNotice(null);
-    setSendState("sending");
-    const history = [...turns, { role: "user" as const, content: text }]
-      .filter((t) => !("kind" in t && t.kind)) // crisis/stop cards are not conversation
-      .slice(-MAX_HISTORY_TURNS)
-      .map((t) => ({ role: t.role, content: t.content }));
-    setTurns((t) => [...t, { role: "user", content: text }]);
-
-    try {
-      const { data, error } = await getSupabase().functions.invoke<{
-        reply?: string;
-        suggestions?: string[];
-        navigate?: { to: string; label: string };
-        error?: string;
-      }>("advocate-agent", {
-        body: {
-          agent: "helper",
-          input: {
-            messages: history,
-            route: optsRef.current.route,
-            language: optsRef.current.language,
-          },
-        },
-      });
-      if (error) {
-        // supabase-js surfaces non-2xx as FunctionsHttpError with a Response.
-        const status = (error as { context?: { status?: number } }).context?.status;
-        if (status === 429) setNotice("resting");
-        else setNotice("error");
-        sendAgentTelemetry("helper", "text", "errors");
+      // Deterministic safety first — crisis language never reaches the network.
+      const sig = tripwire(text);
+      if (sig?.kind === "crisis") {
+        setTurns((t) => [
+          ...t,
+          { role: "user", content: text },
+          { role: "assistant", content: "", suggestions: [], kind: "crisis" },
+        ]);
+        sendAgentTelemetry("helper", "text", "tripwire_stops");
         return;
       }
-      // Server already validated; parse re-validates (defense in depth).
-      const parsed = parseHelperReply(JSON.stringify(data ?? {}));
-      if (!parsed.reply) {
+      if (sig?.kind === "stop") {
+        setTurns((t) => [
+          ...t,
+          { role: "user", content: text },
+          { role: "assistant", content: "", suggestions: [], kind: "stop" },
+        ]);
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        setNotice("offline");
+        return;
+      }
+
+      setNotice(null);
+      setSendState("sending");
+      const history = [...turns, { role: "user" as const, content: text }]
+        .filter((t) => !("kind" in t && t.kind)) // crisis/stop cards are not conversation
+        .slice(-MAX_HISTORY_TURNS)
+        .map((t) => ({ role: t.role, content: t.content }));
+      setTurns((t) => [...t, { role: "user", content: text }]);
+
+      try {
+        const { data, error } = await getSupabase().functions.invoke<{
+          reply?: string;
+          suggestions?: string[];
+          navigate?: { to: string; label: string };
+          error?: string;
+        }>("advocate-agent", {
+          body: {
+            agent: "helper",
+            input: {
+              messages: history,
+              route: optsRef.current.route,
+              language: optsRef.current.language,
+            },
+          },
+        });
+        if (error) {
+          // supabase-js surfaces non-2xx as FunctionsHttpError with a Response.
+          const status = (error as { context?: { status?: number } }).context?.status;
+          if (status === 429) setNotice("resting");
+          else setNotice("error");
+          sendAgentTelemetry("helper", "text", "errors");
+          return;
+        }
+        // Server already validated; parse re-validates (defense in depth).
+        const parsed = parseHelperReply(JSON.stringify(data ?? {}));
+        if (!parsed.reply) {
+          setNotice("error");
+          sendAgentTelemetry("helper", "text", "errors");
+          return;
+        }
+        exchangedRef.current = true;
+        setTurns((t) => [
+          ...t,
+          {
+            role: "assistant",
+            content: parsed.reply,
+            suggestions: parsed.suggestions,
+            navigate: parsed.navigate,
+          },
+        ]);
+      } catch {
         setNotice("error");
         sendAgentTelemetry("helper", "text", "errors");
-        return;
+      } finally {
+        setSendState("idle");
       }
-      exchangedRef.current = true;
-      setTurns((t) => [
-        ...t,
-        {
-          role: "assistant",
-          content: parsed.reply,
-          suggestions: parsed.suggestions,
-          navigate: parsed.navigate,
-        },
-      ]);
-    } catch {
-      setNotice("error");
-      sendAgentTelemetry("helper", "text", "errors");
-    } finally {
-      setSendState("idle");
-    }
-  }, [turns]);
+    },
+    [turns],
+  );
 
   /** First open of a page-load — one aggregate count, no content. */
   const noteOpened = useCallback(() => {

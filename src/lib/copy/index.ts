@@ -810,8 +810,10 @@ export const copy = {
     offline: "You’re offline. The guide needs a connection — the app itself still works.",
     resting: "The guide is resting for today. Everything in the app still works.",
     error: "That didn’t go through. You can try again.",
-    stopAck: "Okay — stopping here. You can close this chat, or ask something else when you’re ready.",
-    crisisIntro: "That sounds heavy. You don’t have to carry it alone — real people answer these, any time:",
+    stopAck:
+      "Okay — stopping here. You can close this chat, or ask something else when you’re ready.",
+    crisisIntro:
+      "That sounds heavy. You don’t have to carry it alone — real people answer these, any time:",
     crisisSupportCta: "Open Support",
   },
 

@@ -87,7 +87,7 @@ const CHAPTERS: Chapter[] = [
     label: "A voice that steadies",
     title: "It explains court. It never tells her what to say.",
     desc: "Talk or type — every word the Coach speaks appears as text, and here you can hear the calm register it holds. Say “stop” and everything halts in code, before the model can answer.",
-    dur: 12500,
+    dur: 22500,
     pointer: [],
   },
   {
@@ -779,7 +779,7 @@ function TourScreen() {
       {/* Hidden audio clips — driven exclusively by the media rig above. */}
       <audio
         ref={coachRef}
-        src={`/tour/coach-${es ? "es" : "en"}.mp3`}
+        src={`/tour/coach-${es ? "es" : "en"}.m4a`}
         preload="auto"
         onError={() => setCoachClipOk(false)}
       />

@@ -64,6 +64,8 @@ export const copy = {
     tourCta: "See how it works",
     tourCtaSub: "A two-minute interactive tour — nothing is created or saved.",
     demoButton: "Demo — see how it works",
+    comingBack: "Coming back?",
+    openOnDevice: "Open my space on this device",
   },
 
   // Shown when a protected page sends someone back to the welcome screen

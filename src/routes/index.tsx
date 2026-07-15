@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Play } from "lucide-react";
 import { Shell } from "@/components/Shell";
@@ -18,6 +19,10 @@ export const Route = createFileRoute("/")({
 });
 
 function WelcomeScreen() {
+  // "Coming back?" folds the two returning paths (same device / recovery
+  // words) behind one quiet door — first-time visitors see one primary
+  // action and two clearly-named choices, nothing that needs explaining.
+  const [returning, setReturning] = useState(false);
   return (
     <Shell hideNav>
       <div className="flex flex-1 flex-col justify-between gap-10 py-6">
@@ -65,33 +70,33 @@ function WelcomeScreen() {
                 {copy.begin.haveCodeLink}
               </Link>
             )}
-            <Link
-              to="/home"
-              className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              I’ve been here before
-            </Link>
-            <Link
-              to="/recover"
-              className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              {copy.recovery.entryLink}
-            </Link>
-            <Link
-              to="/tour"
-              className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              <span className="flex items-center justify-center gap-1.5">
-                <Play className="h-3.5 w-3.5" aria-hidden strokeWidth={2} />
-                {copy.begin.tourCta}
-              </span>
-              <span className="mt-1 block text-xs text-muted-foreground">
-                {copy.begin.tourCtaSub}
-              </span>
-            </Link>
+            {!returning ? (
+              <button
+                type="button"
+                onClick={() => setReturning(true)}
+                className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
+              >
+                {copy.begin.comingBack}
+              </button>
+            ) : (
+              <div className="space-y-3 rounded-md border border-border p-3">
+                <Link
+                  to="/home"
+                  className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {copy.begin.openOnDevice}
+                </Link>
+                <Link
+                  to="/recover"
+                  className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {copy.recovery.entryLink}
+                </Link>
+              </div>
+            )}
             <Link
               to="/resources"
-              className="block w-full px-4 py-2 text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              className="block w-full rounded-md border border-border px-4 py-3 text-center text-sm text-foreground hover:bg-secondary/40"
             >
               {copy.begin.welcomeSupport}
             </Link>

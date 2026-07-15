@@ -69,6 +69,8 @@ export const copyEs: CopyShape = {
     tourCta: "Vea cómo funciona",
     tourCtaSub: "Un recorrido interactivo de dos minutos — nada se crea ni se guarda.",
     demoButton: "Demo — vea cómo funciona",
+    comingBack: "¿Regresa?",
+    openOnDevice: "Abrir mi espacio en este aparato",
   },
 
   guard: {

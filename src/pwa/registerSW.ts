@@ -1,6 +1,13 @@
 // Registers the production service worker (built by scripts/build-sw.mjs).
 // Browser-only and PRODUCTION-only — no SW in dev, to avoid stale-cache confusion.
-// autoUpdate: when a new worker takes control, reload once to pick it up.
+//
+// Updates apply QUIETLY: a new worker takes control without reloading the
+// page. This app must never interrupt someone mid-moment — a forced reload
+// lands mid voice session, mid guided tour, mid anything (and with
+// clientsClaim it even fired on a person's very first visit, resetting the
+// page seconds after it opened). Hashed assets stay fetchable after a deploy,
+// and every navigation is network-first SSR, so the next natural navigation
+// picks up new code on its own.
 export function registerSW(): void {
   if (typeof window === "undefined") return;
   if (!("serviceWorker" in navigator)) return;
@@ -31,12 +38,6 @@ export function registerSW(): void {
     void navigator.serviceWorker
       .register("/sw.js")
       .then((registration) => {
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (refreshing) return;
-          refreshing = true;
-          window.location.reload();
-        });
         void registration.update();
       })
       .catch(() => {

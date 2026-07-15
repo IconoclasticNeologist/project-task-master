@@ -775,17 +775,14 @@ function TourScreen() {
     setPlaying(!reduced);
     if (reduced) setPlaying(false);
   };
+  // Jumping to a chapter keeps playing THROUGH to the end — the walkthrough
+  // is one continuous replay, wherever you enter it. (Reduced motion still
+  // holds each chapter's complete final frame instead of playing.)
   const jumpTo = (i: number) => {
     elapsedRef.current = STARTS[i] + 1;
-    if (reduced) {
-      stopAtRef.current = null;
-      setPlaying(false);
-      force();
-    } else {
-      stopAtRef.current = STARTS[i] + CHAPTERS[i].dur;
-      setPlaying(true);
-      force();
-    }
+    stopAtRef.current = null;
+    setPlaying(!reduced);
+    force();
   };
 
   const runTry = (mode: TryMode) => {

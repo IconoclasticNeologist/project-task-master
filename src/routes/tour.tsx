@@ -156,6 +156,10 @@ const COACH_HALT_AT = 0.8;
 const NARR_AT = 0.56;
 const VIDEO_AT = 0.3;
 const WITNESS_HALT_AT = 0.86;
+// Where the timeline waits for the practice person's clip, and for how long
+// at most (a broken network must never stall the replay forever).
+const HOLD_ELAPSED = STARTS[CH_WITNESS] + CHAPTERS[CH_WITNESS].dur * (VIDEO_AT + 0.05);
+const HOLD_CAP_MS = 12000;
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 
@@ -648,11 +652,25 @@ function TourScreen() {
     drive(
       videoRef.current,
       ok && avatarClipOk && activeIdx === CH_WITNESS && prog >= VIDEO_AT && prog < WITNESS_HALT_AT,
-      (prog - VIDEO_AT) * durOf(CH_WITNESS),
+      // Clock anchored to the hold-release beat, so after a buffering wait
+      // the clip still starts from her first words.
+      (prog - (VIDEO_AT + 0.05)) * durOf(CH_WITNESS),
     );
   };
   const syncRef = useRef(syncMedia);
   syncRef.current = syncMedia;
+
+  // The witness chapter must not march past the practice person while her
+  // clip is still buffering (a slow first fetch otherwise leaves seconds of
+  // silhouette and a rushed reveal). Mirror the readiness flags into refs and
+  // let the rAF loop HOLD at the "Getting the practice room ready…" beat
+  // until frames are decodable — the same wait the live app shows — capped
+  // so a broken network can never stall the replay forever.
+  const videoReadyRef = useRef(false);
+  const avatarClipOkRef = useRef(true);
+  videoReadyRef.current = videoReady;
+  avatarClipOkRef.current = avatarClipOk;
+  const holdStartRef = useRef<number | null>(null);
 
   // The single rAF loop — runs only while playing (never on its own).
   useEffect(() => {
@@ -664,6 +682,17 @@ function TourScreen() {
       const dt = ts - last;
       last = ts;
       let ne = elapsedRef.current + dt;
+      if (
+        avatarClipOkRef.current &&
+        !videoReadyRef.current &&
+        ne >= HOLD_ELAPSED &&
+        elapsedRef.current <= HOLD_ELAPSED
+      ) {
+        if (holdStartRef.current == null) holdStartRef.current = ts;
+        if (ts - holdStartRef.current < HOLD_CAP_MS) ne = HOLD_ELAPSED;
+      } else if (videoReadyRef.current || ne < HOLD_ELAPSED) {
+        holdStartRef.current = null;
+      }
       if (stopAtRef.current != null && ne >= stopAtRef.current) {
         ne = stopAtRef.current;
         stopAtRef.current = null;

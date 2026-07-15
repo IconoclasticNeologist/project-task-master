@@ -79,6 +79,21 @@ const { count, size, warnings } = await generateSW({
         expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
       },
     },
+    {
+      // /tour demo media ONLY (fictional, judge-facing): cache-first with
+      // range support, so the page-load warm fetch genuinely feeds the video
+      // element instead of the media request re-downloading through the SW.
+      // Deliberately NOT the study narration — cached listens would leave a
+      // trace of what a survivor read on a shared device.
+      urlPattern: ({ url }) =>
+        url.pathname.startsWith("/tour/") && /\.(mp4|m4a)$/.test(url.pathname),
+      handler: "CacheFirst",
+      options: {
+        cacheName: "tour-demo-media",
+        rangeRequests: true,
+        expiration: { maxEntries: 6 },
+      },
+    },
   ],
 });
 

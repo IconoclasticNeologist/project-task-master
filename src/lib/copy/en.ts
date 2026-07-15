@@ -762,7 +762,7 @@ export const copy = {
     aftercareSection: "Your care plan",
     languageSection: "Language",
     languageNote:
-      "The Coach speaks this language with you, and your draft starts from it. Menus stay in English for now.",
+      "The app's menus and guides use this language, and the Coach speaks it with you. You can also switch from the globe at the top of any page.",
     languageEn: "English",
     languageEs: "Español",
     sharingSection: "What I share by default",

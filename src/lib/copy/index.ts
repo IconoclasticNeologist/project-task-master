@@ -19,7 +19,24 @@ import { copyEs } from "./es";
 import type { Lang } from "@/lib/lang";
 
 export { PLACEHOLDER } from "./en";
-export type CopyShape = typeof copyEn;
+
+// en.ts is `as const`, so its typeof carries literal string types a
+// translation could never satisfy. Widen leaves the SHAPE mandatory (every
+// key, arrays, functions) while relaxing literals to string/number.
+type Widen<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends (...args: infer A) => infer R
+        ? (...args: A) => Widen<R>
+        : T extends readonly (infer E)[]
+          ? readonly Widen<E>[]
+          : T extends object
+            ? { readonly [K in keyof T]: Widen<T[K]> }
+            : T;
+export type CopyShape = Widen<typeof copyEn>;
 
 const bundles: Record<Lang, CopyShape> = { en: copyEn, es: copyEs };
 

@@ -115,7 +115,7 @@ const CHAPTERS: Chapter[] = [
     label: "The Witness Stand",
     title: "Pressure, at an intensity she chooses.",
     desc: "Consent-gated every time. A practice person — honestly labeled a computer picture — asks only about what she marked shareable. “Stop” ends it in code, and her Coach has the last word.",
-    dur: 22000,
+    dur: 24000,
     pointer: [{ p: 0.24, x: 0.5, y: 0.72, click: true }],
   },
   {

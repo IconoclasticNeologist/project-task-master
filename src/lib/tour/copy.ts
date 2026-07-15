@@ -114,7 +114,8 @@ export function tourCopy(es: boolean) {
         const g = guideBy(guides, slug);
         return { title: g.title, minutes: g.minutes, color: g.color };
       }),
-      minutesLine: (m: number) => (es ? `unos ${m} minutos — sin prisa` : `about ${m} minutes — no rush`),
+      minutesLine: (m: number) =>
+        es ? `unos ${m} minutos — sin prisa` : `about ${m} minutes — no rush`,
       guideTitle: learnGuide.title,
       step: {
         title: learnStep?.title ?? "",
@@ -171,9 +172,11 @@ export function tourCopy(es: boolean) {
       avatarNote: app.session.witness.avatarNote,
       answer: app.session.witness.answer,
       answerHint: app.session.witness.answerHint,
-      question: es
-        ? "Usted dijo que no le permitían guardar sus propios papeles. ¿Quién tenía su pasaporte?"
-        : "You said you weren’t allowed to keep your own papers. Who held your passport?",
+      // Captions caption the AUDIO. The bundled clip is a real recorded
+      // session (English-first practice), so this line stays verbatim-as-heard
+      // in both UI languages — translating it would miscaption the recording.
+      question:
+        "Hello. I’m here to help you practice answering questions, like you might hear in court. This is only practice, nothing here is real, and you can ask to stop at any time. Are you ready to begin?",
       youSay: es ? "Ella dice: “alto”." : "She says: “stop”.",
     },
 
@@ -219,7 +222,9 @@ export function tourCopy(es: boolean) {
       breath: app.breakScreen.breath,
       carePlanTitle: app.breakScreen.carePlanTitle,
       person: es ? "Alguien de confianza: Maya" : "Someone safe: Maya",
-      calming: es ? "Algo que calma: una caminata junto al agua" : "Something calming: a walk by the water",
+      calming: es
+        ? "Algo que calma: una caminata junto al agua"
+        : "Something calming: a walk by the water",
     },
 
     helper: {

@@ -126,7 +126,7 @@ Three tabs: **Your words** (statements), **Your timeline** (fuzzy dates welcome:
 - **Support** — 5 verified national hotlines as tap-to-call cards (National Human Trafficking Hotline, 988, RAINN, 211, National DV Hotline): "They are free, private, and open every day. You never have to give your name."
 
 ### 4.9 Settings & data ownership
-Care plan editing, language, "Gentle movement" (Stillness) toggle, default visibility for new items, PIN lock, **"Download a copy of my data"** (full JSON export), and **"Delete everything"** — cascade-erases every row *and* the anonymous auth identity "so no identity lingers" (GDPR Art. 17-style). A plain-language `/privacy` page explains all of it.
+Care plan editing, language, "Gentle movement" (Stillness) toggle, default visibility for new items, PIN lock, **"Download a copy of my data"** (full JSON export), and **"Delete everything"** — cascade-erases every row *and* the anonymous auth identity "so no identity lingers" (GDPR Art. 17-style). A plain-language `/privacy` page explains all of it. And new on submission night: **"A way back in"** — an optional six-word recovery phrase (drawn from a curated word list) that lets a survivor reopen their anonymous space on a new device; a successful recovery re-points the space, so the old device stops opening it.
 
 ### 4.10 Installable PWA
 Installs as just **"Tend — A calm, private space — at your own pace"** (nothing about court or abuse on a home screen someone else might see). Offline fallback page reassures: "Your information is safe on this device… nothing is lost." The service worker **never caches Supabase or any data API** — survivor data must not persist on device.
@@ -215,6 +215,9 @@ The user-safety story has four layers. **This is the section the user asked to b
 52. Helper conversations are never stored ("This chat isn't saved." is printed in the widget) and its metrics are the same aggregate-counters-only design as every other agent.
 53. Helper navigation is consent-based and allowlisted — at most one offer per reply, server-validated against the app map, acting only on tap — and the widget is hidden on safety-critical surfaces and under the PIN lock.
 
+### 5.7 Space recovery (shipped submission night)
+54. Recovery is opt-in and abuser-aware: six words from a curated 256-word list, hashed client-side and stored only as a bcrypt hash, rate-limited to 5 attempts per hour — and a successful recovery re-points the space to the new device, so a phone left behind with an abuser stops opening it.
+
 ## 6. User-first design choices (each with its documented why)
 
 **Voice & language**
@@ -240,7 +243,7 @@ The user-safety story has four layers. **This is the section the user asked to b
 - Even the narration voice is designed: "like reading to a friend who is tired. Never energetic, never dramatic."
 
 **Access & inclusion**
-- Fully bilingual, honestly shipped (submission night): English/Español across every survivor-facing and public surface — language menu in the header; **usted** register, LatAm-neutral es-419, the standard in U.S. victim-services Spanish (DOJ/OVC). The Spanish mirrors the English language rules (its own banned-urgency-word list; "víctima" banned except in the role phrase "víctimas y testigos"), slug/step/vocabulary parity is test-enforced, completeness is a compile-time guarantee (`typeof copy`), and native-speaker review is queued via the expert channel. Five more languages (中文, Tagalog, 한국어, Tiếng Việt, Русский) are signposted as coming soon — chosen from U.S. anti-trafficking hotline access patterns, each listed in its own script for instant recognition.
+- Fully bilingual, honestly shipped (submission night): English/Español across every survivor-facing surface and the public guides (the judge-facing pages and professional portal deliberately stay English for now) — language menu in the header; **usted** register, LatAm-neutral es-419, the standard in U.S. victim-services Spanish (DOJ/OVC). The Spanish mirrors the English language rules (its own banned-urgency-word list; "víctima" banned except in the role phrase "víctimas y testigos"), slug/step/vocabulary parity is test-enforced, completeness is a compile-time guarantee (`typeof copy`), and native-speaker review is queued via the expert channel. Five more languages (中文, Tagalog, 한국어, Tiếng Việt, Русский) are signposted as coming soon — chosen from U.S. anti-trafficking hotline access patterns, each listed in its own script for instant recognition.
 - Ephemeral captions; visible focus states; logical tab order; `aria-live` status; `<html lang>` set pre-paint "because this is what a screen reader reads to pick pronunciation"; zero horizontal overflow across all routes (audited).
 - Installable, offline-tolerant, low-bandwidth-friendly — "usable under stress" is a written principle.
 - A door for the person with no advocate (self-serve), and verified free anonymous hotlines one tap away.
@@ -299,7 +302,7 @@ Update (submission night): the practice-timer honesty fix, avatar captions, auth
 5. **The journey** — learn → organize → practice → share → court day → after (one calm screenshot each).
 6. **The Witness Stand** (flagship demo) — consent gate → the practice person ("a computer picture. It is not a real person") → a firm-but-safe question from the survivor's own words → "stop" → "Everything is stopped. The practice voice is gone. Your Coach is here."
 7. **What the AI will never do** — the guardrail floor + the live refusal demo ("Was I trafficked?"). The refusal is the feature.
-8. **Safety by architecture** — Leave now, PIN lock, anonymity, deterministic stop path, encryption at rest + in-browser file encryption, consent scopes, no transcripts. (Pick 6; §5 has 53.)
+8. **Safety by architecture** — Leave now, PIN lock, anonymity, deterministic stop path, encryption at rest + in-browser file encryption, consent scopes, no transcripts. (Pick 6; §5 has 54.)
 9. **Grounded, not vibes** — 25 published sources, claim-typed research, language rules enforced by CI, engagement metrics banned, open questions documented.
 10. **How it's built** — the §8 stack slide, with the 3.5-weeks / 166-tests / 37-migrations numbers.
 11. **What's next** — compensated survivor advisory board, SME sign-off, localized hotlines, pilots with advocate organizations. **[founder: your roadmap + ask]**
@@ -309,7 +312,7 @@ Live-demo pointers for the video/Loom: the `/tour` page is a self-running guided
 
 ## 11. Numbers cheat-sheet (all verified)
 
-~3.5 weeks (first commit 2026-06-20) · 211+ commits · ~38,500 lines · 166/166 tests · 38 test files · 37 migrations · 33 tables · 27 routes · 8 edge functions · 79 components · 10 study guides · 66 guide steps, every one narrated (Listen) · ~80 min of guide content · 47 tap-a-word terms · 9 check-ins / 27 questions · 9 notebooks / 27 cards · 25 cited sources · 5 hotlines · 6 consent scopes · 11 org roles · 2 languages · 2 practice mediums · 5 text agents + an app-guide helper · 8-min practice cap · 45-min session cap · 53 distinct safety measures (§5).
+~3.5 weeks (first commit 2026-06-20) · 211+ commits · ~38,500 lines · 166/166 tests · 38 test files · 37 migrations · 33 tables · 27 routes · 8 edge functions · 79 components · 10 study guides · 66 guide steps, every one narrated (Listen) · ~80 min of guide content · 47 tap-a-word terms · 9 check-ins / 27 questions · 9 notebooks / 27 cards · 25 cited sources · 5 hotlines · 6 consent scopes · 11 org roles · 2 languages · 2 practice mediums · 5 text agents + an app-guide helper · 8-min practice cap · 45-min session cap · 54 distinct safety measures (§5).
 
 ## 12. Placeholders the founder must fill
 

@@ -180,10 +180,10 @@ function JudgesScreen() {
             <div className="space-y-1">
               <h2 className="text-base font-normal text-foreground">Reviewer tools</h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                One tap opens the live app with a made-up example story already in place — her
-                words, her timeline, a note to her Coach — so every feature has something real to
-                show. It all happens on this device’s own anonymous space; a real survivor’s account
-                is never touched, and Home offers “Clear the example” the whole time.
+                One tap opens the live app on this device’s own anonymous space. Home then OFFERS a
+                made-up example story — her words, her timeline, a note to her Coach — and loading
+                it is always your explicit choice: one tap to load, one to clear. Every AI announces
+                when it’s working from the example. A real survivor’s account is never touched.
               </p>
             </div>
           </div>

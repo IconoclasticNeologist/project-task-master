@@ -122,7 +122,9 @@ describe("loadExampleData", () => {
     expect(upsertStatement).toHaveBeenCalledTimes(6);
     expect(indexStatement).toHaveBeenCalledTimes(6);
     expect(upsertTimeline).toHaveBeenCalledTimes(7);
-    expect(saveAftercare).toHaveBeenCalledTimes(1);
+    // once blanked during clear, once with the story's anchors
+    expect(saveAftercare).toHaveBeenCalledTimes(2);
+    expect(saveAftercare).toHaveBeenLastCalledWith(exampleStoryFor("en").aftercare);
     // once to blank during clear, once with the story's note
     expect(saveCoachNote).toHaveBeenCalledTimes(2);
     expect(saveCoachNote).toHaveBeenLastCalledWith(exampleStoryFor("en").coachNote);
@@ -166,6 +168,8 @@ describe("clearExampleData", () => {
     expect(deleteTimeline).toHaveBeenCalledWith("t1");
     expect(deleteMyCourtPlanItem).toHaveBeenCalledWith("p1");
     expect(saveCoachNote).toHaveBeenCalledWith("");
+    // the fictional care anchors must not survive clearing
+    expect(saveAftercare).toHaveBeenCalledWith({ supportPerson: "", calmingAnchor: "" });
     expect(setExampleLoaded).toHaveBeenCalledWith(false);
     expect(upsertStatement).not.toHaveBeenCalled();
   });

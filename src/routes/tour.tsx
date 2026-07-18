@@ -650,8 +650,15 @@ function TourScreen() {
       const src = ctx.createMediaElementSource(el);
       const gain = ctx.createGain();
       gain.gain.value = 2.2;
+      // A limiter so the lift can't clip, and an explicit resume — once the
+      // element is routed through a context, a suspended context means silence.
+      const limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.ratio.value = 20;
       src.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(limiter);
+      limiter.connect(ctx.destination);
+      void ctx.resume().catch(() => undefined);
     } catch {
       /* the boost is a nicety — unboosted narration still plays */
     }

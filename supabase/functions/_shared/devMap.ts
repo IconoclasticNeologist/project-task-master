@@ -26,7 +26,7 @@ export function devCopilotSystem(): string {
     "• Status & readiness — configuration flags, aggregate counters. Read via admin status (not one of your tools; describe from memory).",
     "• Access — survivor access codes (minted, hashed, expiring), professional approvals, organizations.",
     "• Agent operations — model chain, per-mode voices, session/practice/idle caps, avatar id + sandbox + interactivity. Tools: get_agent_config, set_agent_config (sections: model, voice, caps, avatar).",
-    "• Prompts — every AI persona's exact words: git default + optional DB override (audited to agent_prompt_revisions; 'Restore default' = reset_prompt). Tools: get_agent_config (carries the full catalog incl. overrides), set_prompt, reset_prompt.",
+    "• Prompts — every AI persona's exact words: git default + optional DB override (audited to agent_prompt_revisions; 'Restore default' = reset_prompt). Tools: get_agent_config (digest), get_prompt (one persona's full text), set_prompt, reset_prompt.",
     "• Guardrails — the floor rules appended under every prompt. Tools: get_guardrails, set_guardrails.",
     "• Knowledge — published reference snippets injected into text agents. Tools: list_knowledge, save_knowledge, delete_knowledge.",
     "• Acknowledgements — the public /sources credits (name, role, bio, sort). Tools: list_acknowledgements, save_acknowledgement, delete_acknowledgement.",
@@ -39,7 +39,7 @@ export function devCopilotSystem(): string {
     "RUNTIME WIRING WORTH KNOWING: voice sessions mint an ephemeral token locking model+voice+system prompt (prompt = resolved registry text + guardrails + court-knowledge core (coach modes) + practice story (defense fictional tier) + the person's coach note (coach modes only) + language line). Text agents resolve the same registry and may get published knowledge. Prompt edits apply on the NEXT session/token — no deploy needed. The avatar's brain is the defense.practice prompt via our own shim; the avatar only speaks lines we hand it.",
     "",
     "OPERATING RULES:",
-    "- READ before you write: fetch current state (get_agent_config, get_guardrails, list_*) before changing it, and base edits on what is actually there.",
+    "- READ before you write: fetch current state (get_agent_config for the overview, get_prompt for a persona's exact words, get_guardrails, list_*) before changing it, and base edits on what is actually there. Never save a prompt you haven't read in full this conversation.",
     "- Make the change the operator asked for, then report exactly what changed ('Saved an override for coach.base — 14 lines changed; git default untouched'). For prompt edits, preserve every HARD RULE line unless the operator explicitly says otherwise, and say so when you kept them.",
     "- DESTRUCTIVE or hard-to-undo actions (delete_knowledge, delete_acknowledgement, revoke-like changes, large prompt replacements): state what you're about to do in one line and do it only when the operator's message already asked for it plainly; if it didn't, ask one short question instead.",
     "- You cannot touch survivor content — the control plane structurally never selects it. Say so if asked.",
@@ -55,8 +55,18 @@ export const DEV_COPILOT_TOOLS = [
   {
     name: "get_agent_config",
     description:
-      "Read the full agent configuration: model chain, voices, caps, avatar settings, and the complete prompt catalog (title, group, note, atlas, git default, current override, effective text).",
+      "Read the agent configuration DIGEST: model chain, voices, caps, avatar settings, and a prompt catalog summary (key, title, group, note, atlas, whether an override exists, text length). Full prompt text is deliberately excluded — use get_prompt for one persona's exact words.",
     input_schema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "get_prompt",
+    description:
+      "Read ONE persona's exact prompt text by catalog key: the git default, the current override (if any), and which is effective. Always read a prompt with this before editing it.",
+    input_schema: {
+      type: "object",
+      properties: { key: { type: "string" } },
+      required: ["key"],
+    },
   },
   {
     name: "set_agent_config",

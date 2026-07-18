@@ -22,19 +22,28 @@ export interface ClientWorkspace {
   scopes: Database["public"]["Enums"]["client_access_scope"][];
 }
 
-export const courtPlanCategoryLabels: Record<CourtPlanCategory, string> = {
-  hearing_details: copy.plan.categories.hearingDetails,
-  travel: copy.plan.categories.travel,
-  accommodation: copy.plan.categories.accommodation,
-  support: copy.plan.categories.support,
-  question: copy.plan.categories.question,
-};
+// Lazy lookups, NOT a module-level map: reading copy.* at import time freezes
+// English forever (the language-aware proxy resolves at ACCESS time — see
+// src/lib/copy/index.ts rule 3). These re-resolve on every render.
+export function courtPlanCategoryLabel(category: CourtPlanCategory): string {
+  const labels: Record<CourtPlanCategory, string> = {
+    hearing_details: copy.plan.categories.hearingDetails,
+    travel: copy.plan.categories.travel,
+    accommodation: copy.plan.categories.accommodation,
+    support: copy.plan.categories.support,
+    question: copy.plan.categories.question,
+  };
+  return labels[category];
+}
 
-export const courtPlanStatusLabels: Record<CourtPlanItemStatus, string> = {
-  not_started: copy.plan.status.notStarted,
-  in_progress: copy.plan.status.inProgress,
-  done: copy.plan.status.done,
-};
+export function courtPlanStatusLabel(status: CourtPlanItemStatus): string {
+  const labels: Record<CourtPlanItemStatus, string> = {
+    not_started: copy.plan.status.notStarted,
+    in_progress: copy.plan.status.inProgress,
+    done: copy.plan.status.done,
+  };
+  return labels[status];
+}
 
 export async function listMyCourtPlanItems(): Promise<CourtPlanItem[]> {
   const { data, error } = await getSupabase().rpc("list_my_court_plan_items");

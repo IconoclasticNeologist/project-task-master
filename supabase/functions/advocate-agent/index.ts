@@ -567,6 +567,7 @@ serve(async (req) => {
         appMapBlock(),
         "",
         `The person is currently on the page: ${route}`,
+        example ? exampleModeBlock("helper") : "",
         languageLineFor(language),
       ].join("\n");
 

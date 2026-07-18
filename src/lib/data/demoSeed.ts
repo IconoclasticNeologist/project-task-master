@@ -28,6 +28,9 @@ async function clearSeededContent(): Promise<void> {
     ...existingTimeline.map((t) => deleteTimeline(t.id)),
     ...existingPlanItems.map((p) => deleteMyCourtPlanItem(p.id)),
     saveCoachNote(""),
+    // The seed writes fictional care anchors too ("My sister, Ana") — clearing
+    // must not leave a made-up care plan behind for the closes to read back.
+    saveAftercare({ supportPerson: "", calmingAnchor: "" }),
   ]);
 }
 

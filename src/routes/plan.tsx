@@ -16,8 +16,8 @@ import { PlanHelper } from "@/components/plan/PlanHelper";
 import { AftercareCard } from "@/components/AftercareCard";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import {
-  courtPlanCategoryLabels,
-  courtPlanStatusLabels,
+  courtPlanCategoryLabel,
+  courtPlanStatusLabel,
   createMyCourtPlanItem,
   listMyCourtPlanItems,
   updateCourtPlanItemStatus,
@@ -134,7 +134,7 @@ function PlanScreen() {
                     >
                       {categories.map((category) => (
                         <option key={category} value={category}>
-                          {courtPlanCategoryLabels[category]}
+                          {courtPlanCategoryLabel(category)}
                         </option>
                       ))}
                     </select>
@@ -197,8 +197,8 @@ function PlanScreen() {
                     <div>
                       <p className="text-base text-foreground">{item.title}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {courtPlanCategoryLabels[item.category]} ·{" "}
-                        {courtPlanStatusLabels[item.status]}
+                        {courtPlanCategoryLabel(item.category)} ·{" "}
+                        {courtPlanStatusLabel(item.status)}
                       </p>
                     </div>
                     {item.details && (

@@ -11,8 +11,8 @@ import { getProfessionalSession } from "@/lib/auth/professional";
 import { isApprovedProfessional } from "@/lib/data/organizations";
 import { pageTitle } from "@/lib/product";
 import {
-  courtPlanCategoryLabels,
-  courtPlanStatusLabels,
+  courtPlanCategoryLabel,
+  courtPlanStatusLabel,
   createCourtPlanItem,
   listCourtPlanItemsForWorkspace,
   listMyClientWorkspaces,
@@ -170,7 +170,7 @@ function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
               >
                 {categories.map((category) => (
                   <option key={category} value={category}>
-                    {courtPlanCategoryLabels[category]}
+                    {courtPlanCategoryLabel(category)}
                   </option>
                 ))}
               </select>
@@ -220,7 +220,7 @@ function ClientPlanCard({ workspace }: { workspace: ClientWorkspace }) {
               <div key={item.id} className="border-t border-border pt-3">
                 <p className="text-sm text-foreground">{item.title}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {courtPlanCategoryLabels[item.category]} · {courtPlanStatusLabels[item.status]}
+                  {courtPlanCategoryLabel(item.category)} · {courtPlanStatusLabel(item.status)}
                 </p>
                 {item.details && (
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

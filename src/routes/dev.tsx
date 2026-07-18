@@ -2206,8 +2206,31 @@ const COPILOT_WRITES = new Set([
 
 async function runCopilotTool(name: string, input: Record<string, unknown>): Promise<unknown> {
   switch (name) {
-    case "get_agent_config":
-      return getAgentConfig();
+    case "get_agent_config": {
+      // Digest, not the raw bundle: the full catalog is ~90KB and would blow
+      // the tool-result cap mid-JSON — the model then reasons from (or worse,
+      // saves back) truncated prompt text. Full text goes via get_prompt.
+      const bundle = await getAgentConfig();
+      return {
+        ops: bundle.ops,
+        allow: bundle.allow,
+        prompts: bundle.prompts.map((p) => ({
+          key: p.key,
+          title: p.title,
+          group: p.group,
+          note: p.note,
+          atlas: p.atlas,
+          hasOverride: p.override !== null,
+          effectiveChars: p.effective.length,
+        })),
+      };
+    }
+    case "get_prompt": {
+      const bundle = await getAgentConfig();
+      const one = bundle.prompts.find((p) => p.key === String(input.key ?? ""));
+      if (!one) throw new Error(`Unknown prompt key: ${String(input.key ?? "")}`);
+      return one;
+    }
     case "set_agent_config":
       return setAgentConfig(
         input.section as Parameters<typeof setAgentConfig>[0],
@@ -2269,10 +2292,16 @@ function DevCopilotPanel() {
           try {
             const out = await runCopilotTool(t.name ?? "", t.input ?? {});
             if (COPILOT_WRITES.has(t.name ?? "")) wrote = true;
+            const payload = JSON.stringify(out ?? { ok: true });
             results.push({
               type: "tool_result",
               tool_use_id: t.id,
-              content: JSON.stringify(out ?? { ok: true }).slice(0, 60000),
+              // Never hand the model truncated JSON — an honest stub beats a
+              // payload cut mid-string.
+              content:
+                payload.length > 60000
+                  ? `[result too large: ${payload.length} chars — ask for a narrower read]`
+                  : payload,
             });
           } catch (e) {
             results.push({

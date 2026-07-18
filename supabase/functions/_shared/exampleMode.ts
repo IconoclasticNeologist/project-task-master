@@ -6,7 +6,7 @@
 // MORE honesty — the AI names the fiction and points to the way out. A client
 // lying about it gets a harmless disclaimer, so it needs no server proof.
 
-export function exampleModeBlock(kind: "coach" | "practice" | "tool"): string {
+export function exampleModeBlock(kind: "coach" | "practice" | "tool" | "helper"): string {
   const shared = [
     "",
     "EXAMPLE MODE IS ON: this person's space currently holds a MADE-UP example story (a demo aid they chose to load) — it is NOT their real life.",
@@ -19,6 +19,10 @@ export function exampleModeBlock(kind: "coach" | "practice" | "tool"): string {
   } else if (kind === "practice") {
     shared.push(
       "In your opening, name the material honestly in one short sentence: the questions come from the example's shared words — a made-up case — and when they're ready, they can clear the example and practice can use their own shared words instead. Then proceed normally; don't repeat it.",
+    );
+  } else if (kind === "helper") {
+    shared.push(
+      "If the person asks about the words, timeline, plan, draft, or sharing in this space, add ONE short plain sentence to that reply noting the space currently holds the made-up example story, and that clearing it on Home makes room for their own words. Say it once per conversation; unrelated questions need no mention.",
     );
   } else {
     shared.push(

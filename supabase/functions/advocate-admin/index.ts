@@ -680,7 +680,15 @@ serve(async (req) => {
     if (action === "copilot_turn") {
       const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? Deno.env.get("CLAUDE_API_KEY");
       if (!anthropicKey) return json(503, { error: "Copilot is not configured" });
-      const messages = Array.isArray(body.messages) ? body.messages.slice(-40) : [];
+      let messages = Array.isArray(body.messages) ? body.messages.slice(-40) : [];
+      // The window must start at a plain human turn: a leading tool_result
+      // whose tool_use was sliced away is an invalid conversation (API 400,
+      // and the chat would stay bricked because the thread only grows).
+      const isPlainUser = (m: unknown) => {
+        const msg = m as { role?: unknown; content?: unknown };
+        return msg?.role === "user" && typeof msg.content === "string";
+      };
+      while (messages.length > 0 && !isPlainUser(messages[0])) messages = messages.slice(1);
       if (messages.length === 0) return json(400, { error: "Empty conversation" });
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -691,7 +699,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5",
-          max_tokens: 2048,
+          max_tokens: 8192, // a full-prompt set_prompt tool call alone can be ~2k+ tokens
           system: devCopilotSystem(),
           tools: DEV_COPILOT_TOOLS,
           messages,

@@ -58,6 +58,7 @@ function HomeScreen() {
   const emptyCheck = useQuery({
     queryKey: ["exampleEmptyCheck"],
     enabled: demoVisible && !exampleOn,
+    staleTime: 60_000, // an emptiness probe doesn't need refetch-on-focus
     queryFn: async () => {
       const [statements, timeline] = await Promise.all([listStatements(), listTimeline()]);
       return statements.length === 0 && timeline.length === 0;
@@ -193,7 +194,7 @@ function HomeScreen() {
             </Card>
           )}
 
-          {demoVisible && !exampleOn && emptyCheck.data === false && (
+          {demoVisible && !exampleOn && (emptyCheck.data === false || emptyCheck.isError) && (
             <div className="space-y-1">
               <button
                 type="button"

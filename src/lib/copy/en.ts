@@ -308,8 +308,6 @@ export const copy = {
     ],
     sourceNote:
       "General information, drawn from public court-preparation guidance for witnesses. Courts vary — your advocate or lawyer knows your situation.",
-    moreGuidesLabel: "Guides you can open",
-    moreGuidesHint: "Short reads, one topic at a time.",
   },
 
   // The mini-guide "notebooks" shelf. Notebook content lives in ./notebooks.ts.
@@ -351,8 +349,6 @@ export const copy = {
     notFound: "That study guide isn’t here. It may have moved.",
     homeTileHint: "Bigger topics, one small step at a time.",
     guideCardHint: "Bigger guides, one step at a time.",
-    notebooksCrossLink:
-      "Looking for something deeper? The study guides take bigger topics one step at a time.",
   },
 
   session: {

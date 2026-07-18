@@ -36,6 +36,7 @@ describe("useHelperChat", () => {
           messages: [{ role: "user", content: "What is my plan?" }],
           route: "/home",
           language: "en",
+          example: false,
         },
       },
     });

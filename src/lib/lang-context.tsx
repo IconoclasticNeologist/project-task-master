@@ -33,9 +33,12 @@ export function LangProvider({ children }: { children: ReactNode }) {
     // who chose Spanish doesn't land back in English.
     let cancelled = false;
     void serverLanguage().then((remote) => {
-      if (cancelled || remote !== "es") return;
-      __setCurrentLang(remote);
+      // Re-check: an explicit pick made while this was in flight always wins.
+      if (cancelled || !remote || hasLangPref()) return;
+      // Persist 'en' too — otherwise this lookup re-runs on every load forever.
       setLangPref(remote);
+      if (remote !== "es") return;
+      __setCurrentLang(remote);
       setLangState(remote);
     });
     return () => {

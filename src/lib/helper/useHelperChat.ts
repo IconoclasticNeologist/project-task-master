@@ -7,6 +7,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
+import { exampleModeActive } from "@/lib/data/demoTools";
 import { tripwire } from "@/lib/agents/safety/distress";
 import { sendAgentTelemetry } from "@/lib/agents/telemetry";
 import { parseHelperReply, type HelperReply } from "./parse";
@@ -88,6 +89,7 @@ export function useHelperChat(opts: { route: string; language: "en" | "es" }) {
               messages: history,
               route: optsRef.current.route,
               language: optsRef.current.language,
+              example: exampleModeActive(),
             },
           },
         });

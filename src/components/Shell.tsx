@@ -85,10 +85,10 @@ export function Shell({
   // where "back" would mean nothing.
   const showBack = pathname !== "/home" && pathname !== "/";
   const goBack = () => {
-    // window.history (not router.history): the router's own stack starts empty
-    // on a fresh document, so its back() no-ops on deep links — the browser's
-    // always works, and the router follows the popstate.
-    if (window.history.length > 1) window.history.back();
+    // canGoBack() counts only IN-APP history — window.history.length also
+    // counts wherever the person came from, and Back must never walk them out
+    // of the app onto an advocate's email or a search page.
+    if (router.history.canGoBack()) router.history.back();
     else void router.navigate({ to: "/home" });
   };
 

@@ -16,7 +16,7 @@ import { copy } from "@/lib/copy";
 import { getLangPref } from "@/lib/lang";
 import { exampleModeActive } from "@/lib/data/demoTools";
 import { tripwire } from "@/lib/agents/safety/distress";
-import { createMyCourtPlanItem, courtPlanCategoryLabels } from "@/lib/data/courtPlan";
+import { createMyCourtPlanItem, courtPlanCategoryLabel } from "@/lib/data/courtPlan";
 import {
   runCarePlanBuilder,
   type CarePlanProposal,
@@ -108,7 +108,7 @@ export function PlanHelper({
                   >
                     <div className="min-w-0">
                       <p className="text-xs italic text-muted-foreground">
-                        {courtPlanCategoryLabels[step.category]}
+                        {courtPlanCategoryLabel(step.category)}
                       </p>
                       <p className="text-sm leading-relaxed text-foreground">{step.title}</p>
                       {step.details && (

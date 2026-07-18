@@ -313,8 +313,6 @@ export const copyEs: CopyShape = {
     ],
     sourceNote:
       "Información general, tomada de guías públicas de preparación para testigos. Cada corte es distinta — su intercesor o su abogado conoce su situación.",
-    moreGuidesLabel: "Guías para abrir",
-    moreGuidesHint: "Lecturas cortas, un tema a la vez.",
   },
 
   notebooks: {
@@ -354,8 +352,6 @@ export const copyEs: CopyShape = {
     notFound: "Esa guía de estudio no está aquí. Puede que se haya movido.",
     homeTileHint: "Temas más grandes, un paso pequeño a la vez.",
     guideCardHint: "Guías más grandes, un paso a la vez.",
-    notebooksCrossLink:
-      "¿Busca algo más profundo? Las guías de estudio toman temas más grandes, un paso a la vez.",
   },
 
   session: {

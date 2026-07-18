@@ -60,9 +60,10 @@ export async function runCarePlanBuilder(
   turns: CarePlanTurn[],
   language: "en" | "es",
   aftercare: { supportPerson: string; calmingAnchor: string },
+  example = false,
 ): Promise<CarePlanProposal> {
   const { data, error } = await getSupabase().functions.invoke("advocate-agent", {
-    body: { agent: "careplan_builder", input: { turns, language, aftercare } },
+    body: { agent: "careplan_builder", input: { turns, language, aftercare, example } },
   });
   if (error) throw new Error(error.message);
   const proposal = parseCarePlanProposal(data);

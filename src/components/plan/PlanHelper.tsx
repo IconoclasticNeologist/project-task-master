@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CrisisCard } from "@/components/CrisisCard";
 import { copy } from "@/lib/copy";
 import { getLangPref } from "@/lib/lang";
+import { exampleModeActive } from "@/lib/data/demoTools";
 import { tripwire } from "@/lib/agents/safety/distress";
 import { createMyCourtPlanItem, courtPlanCategoryLabels } from "@/lib/data/courtPlan";
 import {
@@ -55,6 +56,7 @@ export function PlanHelper({
         nextTurns,
         getLangPref() === "es" ? "es" : "en",
         aftercare,
+        exampleModeActive(),
       );
       setProposal(result);
       setKept(new Set());

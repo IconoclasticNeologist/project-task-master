@@ -18,12 +18,8 @@ import {
 } from "lucide-react";
 import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
-import { isDemoToolsEnabled, isExampleLoaded, setDemoToolsEnabled } from "@/lib/data/demoTools";
+import { isDemoToolsEnabled, setDemoToolsEnabled } from "@/lib/data/demoTools";
 import { createSelfServeSurvivor } from "@/lib/auth/session";
-import { loadExampleData } from "@/lib/data/demoSeed";
-import { listStatements } from "@/lib/data/statements";
-import { listTimeline } from "@/lib/data/timeline";
-import { getLangPref } from "@/lib/lang";
 
 export const Route = createFileRoute("/judges")({
   head: () => ({ meta: [{ title: pageTitle("For judges") }] }),
@@ -107,36 +103,22 @@ function JudgesScreen() {
     setDemoEnabled(true);
   };
 
-  // One tap: enable demo tools on this device, make sure an anonymous space
-  // exists (idempotent), seed the fictional example, land on Home. A space
-  // that already holds NON-example content is never seeded over from here —
-  // Home's own dialog owns that destructive path.
+  // One tap OPENS the app for review — it enables demo tools and makes sure an
+  // anonymous space exists (idempotent), then lands on Home, where the example
+  // OFFER CARD is the consent moment. Nothing is ever seeded from here: loading
+  // the made-up story is always the reviewer's own explicit choice (owner call —
+  // auto-seeding read as the app filling itself in without asking).
   const navigate = useNavigate();
   const [opening, setOpening] = useState(false);
-  const openWithExample = async () => {
+  const openForReview = async () => {
     if (opening) return;
     setOpening(true);
     try {
       setDemoToolsEnabled(true);
       setDemoEnabled(true);
-      const created = await createSelfServeSurvivor();
-      if (!created.ok) throw new Error("no space");
-      const [statements, timeline] = await Promise.all([listStatements(), listTimeline()]);
-      const empty = statements.length === 0 && timeline.length === 0;
-      if (empty || isExampleLoaded()) {
-        // Time-boxed: if a slow backend drags the seed past 45s, open the app
-        // anyway — Home's offer card is the retry path, and a late-finishing
-        // seed simply surfaces its banner on the next visit.
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        await Promise.race([
-          loadExampleData(getLangPref()),
-          new Promise((resolve) => {
-            timer = setTimeout(resolve, 45000);
-          }),
-        ]).finally(() => clearTimeout(timer));
-      }
+      await createSelfServeSurvivor();
     } catch {
-      // Fall through — Home's offer card is the retry path either way.
+      // Fall through — Home explains itself either way.
     } finally {
       setOpening(false);
       void navigate({ to: "/home" });
@@ -200,11 +182,11 @@ function JudgesScreen() {
           <div className="mt-4 flex flex-wrap items-center gap-4" aria-live="polite">
             <button
               type="button"
-              onClick={() => void openWithExample()}
+              onClick={() => void openForReview()}
               disabled={opening}
               className="rounded-md bg-[oklch(0.5_0.09_70)] px-4 py-2.5 text-sm font-medium text-[oklch(0.985_0.01_85)] paper-shadow hover:bg-[oklch(0.45_0.09_70)] disabled:opacity-60"
             >
-              {opening ? "Opening the example…" : "Open the app with the example story"}
+              {opening ? "Opening…" : "Open the app for review — it offers the example"}
             </button>
             <button
               type="button"

@@ -123,6 +123,9 @@ function HomeScreen() {
           {demoVisible && exampleOn && (
             <div className="space-y-3 rounded-lg border border-[oklch(0.82_0.06_75)] bg-[oklch(0.96_0.03_80)] p-4">
               <p className="text-sm text-foreground">{copy.home.example.bannerTitle}</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {copy.home.example.bannerYours}
+              </p>
               <div className="space-y-1.5">
                 <p className="text-xs text-muted-foreground">{copy.home.example.bannerPath}</p>
                 <div className="flex flex-wrap gap-2">
@@ -151,9 +154,9 @@ function HomeScreen() {
                   type="button"
                   disabled={seed.isPending || clearExample.isPending}
                   onClick={() => setConfirmReload(true)}
-                  className="px-1 py-1.5 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
                 >
-                  {seed.isPending ? copy.home.example.loading : copy.home.example.offerLoad}
+                  {seed.isPending ? copy.home.example.loading : copy.home.example.reloadFresh}
                 </button>
               </div>
             </div>

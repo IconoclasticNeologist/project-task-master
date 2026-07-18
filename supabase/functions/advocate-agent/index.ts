@@ -21,6 +21,7 @@ import { callerSubject, capFromEnv, enforceUsage } from "../_shared/usage.ts";
 import { appMapBlock, isAllowedRoute } from "../_shared/appMap.ts";
 import { languageLineFor } from "../_shared/advocatePrompts.ts";
 import { practiceStoryBlock } from "../_shared/practiceStory.ts";
+import { exampleModeBlock } from "../_shared/exampleMode.ts";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 1024;
@@ -225,6 +226,7 @@ serve(async (req) => {
       const input = (body.input ?? {}) as Record<string, unknown>;
       const material = input.material === "own" ? "own" : "fictional";
       const language = input.language === "es" ? "es" : "en";
+      const example = input.example === true;
       const account =
         material === "own" && typeof input.account === "string" ? input.account.slice(0, 4000) : "";
       const rawTurns = Array.isArray(input.turns) ? input.turns : [];
@@ -287,6 +289,7 @@ serve(async (req) => {
         buildGuardrailsBlock(guardrails, "defense.practice"),
         knowledge,
         materialBlock,
+        example ? exampleModeBlock("practice") : "",
         languageLineFor(language),
       ].join("\n");
 
@@ -303,6 +306,7 @@ serve(async (req) => {
     if (body && typeof body === "object" && body.agent === "timeline_builder") {
       const input = (body.input ?? {}) as Record<string, unknown>;
       const language = input.language === "es" ? "es" : "en";
+      const example = input.example === true;
       const rawTurns = Array.isArray(input.turns) ? input.turns.slice(-12) : [];
       const contents = rawTurns
         .map((t) => {
@@ -343,6 +347,7 @@ serve(async (req) => {
       const systemText = [
         tlPrompt,
         buildGuardrailsBlock(tlGuardrails, "timeline.builder"),
+        example ? exampleModeBlock("tool") : "",
         languageLineFor(language),
         "",
         'OUTPUT — STRICT JSON, nothing else (no code fences, no prose around it): {"entries": [{"when": string, "what": string}], "questions": string[], "note": string}.',
@@ -397,6 +402,7 @@ serve(async (req) => {
     if (body && typeof body === "object" && body.agent === "careplan_builder") {
       const input = (body.input ?? {}) as Record<string, unknown>;
       const language = input.language === "es" ? "es" : "en";
+      const example = input.example === true;
       const rawTurns = Array.isArray(input.turns) ? input.turns.slice(-12) : [];
       const contents = rawTurns
         .map((t) => {
@@ -458,6 +464,7 @@ serve(async (req) => {
         cpPrompt,
         buildGuardrailsBlock(cpGuardrails, "careplan.builder"),
         anchorsBlock,
+        example ? exampleModeBlock("tool") : "",
         languageLineFor(language),
         "",
         'OUTPUT — STRICT JSON, nothing else (no code fences, no prose around it): {"steps": [{"category": string, "title": string, "details": string}], "question": string, "note": string}.',

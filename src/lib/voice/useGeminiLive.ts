@@ -37,6 +37,8 @@ interface UseGeminiLiveOptions {
   mode?: CoachMode;
   /** Preferred spoken language — the Coach opens in it and follows switches. */
   language?: "en" | "es";
+  /** The space currently holds the seeded example story (demo devices). */
+  example?: boolean;
   /** Override max session seconds (defense uses a tighter cap). */
   maxDurationSec?: number;
   /** The model's words (live output transcription + any text parts). */
@@ -88,6 +90,7 @@ async function fetchVoiceToken(
   mode: CoachMode,
   language: "en" | "es",
   material?: "fictional" | "own",
+  example?: boolean,
 ): Promise<VoiceTokenPayload> {
   const supabase = getSupabase();
   const { data, error } = await supabase.functions.invoke<VoiceTokenPayload>(
@@ -103,6 +106,9 @@ async function fetchVoiceToken(
         // Practice material tier (defense mode only; the server ignores it
         // elsewhere). The story itself stays server-side.
         material,
+        // The space holds the seeded example story — the AI acknowledges the
+        // fiction honestly and points to the way out (server prompt block).
+        example,
       },
     },
   );
@@ -112,7 +118,7 @@ async function fetchVoiceToken(
 }
 
 export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
-  const { mode = "base", language = "en", maxDurationSec } = opts;
+  const { mode = "base", language = "en", maxDurationSec, example = false } = opts;
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [micState, setMicState] = useState<MicState>("off");
   const [coachSpeaking, setCoachSpeaking] = useState(false);
@@ -257,7 +263,12 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
       mutedRef.current = false;
       transcriptTripRef.current.reset();
       try {
-        const payload = await fetchVoiceToken(sessionMode, language, connectOpts?.material);
+        const payload = await fetchVoiceToken(
+          sessionMode,
+          language,
+          connectOpts?.material,
+          example,
+        );
         const { token, model } = payload;
         const sessionCaps = capsFrom(payload);
         setCaps(sessionCaps);
@@ -423,7 +434,7 @@ export function useGeminiLive(opts: UseGeminiLiveOptions = {}) {
         setStatus("error");
       }
     },
-    [mode, language, maxDurationSec, disconnect, tearDown],
+    [mode, language, maxDurationSec, example, disconnect, tearDown],
   );
 
   useEffect(() => () => tearDown(), [tearDown]);

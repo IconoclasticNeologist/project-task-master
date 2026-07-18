@@ -53,6 +53,8 @@ interface UseLiveAvatarPracticeOptions {
   onDistress?: (sig: DistressSignal) => void;
   /** Preferred language — the practice questioner follows it. */
   language?: "en" | "es";
+  /** The space currently holds the seeded example story (demo devices). */
+  example?: boolean;
 }
 
 async function fetchAvatarToken(language: "en" | "es"): Promise<
@@ -131,6 +133,8 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   const materialRef = useRef<"fictional" | "own">("fictional");
   const languageRef = useRef<"en" | "es">(opts.language ?? "en");
   languageRef.current = opts.language ?? "en";
+  const exampleRef = useRef(opts.example ?? false);
+  exampleRef.current = opts.example ?? false;
   const historyRef = useRef<Array<{ role: "user" | "avatar"; text: string }>>([]);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const streamReadyRef = useRef(false);
@@ -216,6 +220,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
               // the standard; "own" is the consent-heavy tier.
               material: materialRef.current,
               language: languageRef.current,
+              example: exampleRef.current,
             },
           },
         },

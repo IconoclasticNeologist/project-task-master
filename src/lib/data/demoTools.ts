@@ -56,6 +56,13 @@ export function isExampleLoaded(): boolean {
   }
 }
 
+/** True when the AIs and UI should treat this space as holding the made-up
+ *  example: demo tools on AND the example marker set. This flag rides along
+ *  on session mints and agent calls so every AI can say so honestly. */
+export function exampleModeActive(): boolean {
+  return isDemoToolsEnabled() && isExampleLoaded();
+}
+
 export function setExampleLoaded(on: boolean): void {
   if (typeof window === "undefined") return;
   try {

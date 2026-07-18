@@ -49,9 +49,10 @@ export function parseTimelineProposal(data: unknown): TimelineProposal {
 export async function runTimelineBuilder(
   turns: TimelineTurn[],
   language: "en" | "es",
+  example = false,
 ): Promise<TimelineProposal> {
   const { data, error } = await getSupabase().functions.invoke("advocate-agent", {
-    body: { agent: "timeline_builder", input: { turns, language } },
+    body: { agent: "timeline_builder", input: { turns, language, example } },
   });
   if (error) throw new Error(error.message);
   const proposal = parseTimelineProposal(data);

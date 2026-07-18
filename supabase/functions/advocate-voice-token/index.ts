@@ -32,6 +32,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { languageLineFor, promptKeyForMode, type Mode } from "../_shared/advocatePrompts.ts";
 import { practiceStoryBlock } from "../_shared/practiceStory.ts";
 import { courtKnowledgeBlock } from "../_shared/courtKnowledge.ts";
+import { exampleModeBlock } from "../_shared/exampleMode.ts";
 import { loadOps, VOICE_ALLOWLIST } from "../_shared/agentConfig.ts";
 import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
@@ -131,12 +132,14 @@ serve(async (req) => {
     let language: "en" | "es" = "en";
     let requestedVoice: string | null = null;
     let material: "fictional" | "own" = "fictional";
+    let example = false;
     try {
       const body = await req.json().catch(() => null);
       if (body && typeof body === "object") {
         mode = pickMode(body.mode);
         if (body.language === "es") language = "es";
         if (body.material === "own") material = "own";
+        if (body.example === true) example = true;
         if (typeof body.voice === "string" && VOICE_ALLOWLIST.includes(body.voice)) {
           requestedVoice = body.voice;
         }
@@ -218,6 +221,7 @@ serve(async (req) => {
       knowledgeBlock +
       storyBlock +
       noteBlock +
+      (example ? exampleModeBlock(mode === "defense" ? "practice" : "coach") : "") +
       languageLineFor(language);
 
     // Mint with the primary model; retry ONCE with the fallback if configured.

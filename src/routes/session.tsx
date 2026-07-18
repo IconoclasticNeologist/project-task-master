@@ -42,6 +42,7 @@ import type { DistressSignal } from "@/lib/agents/safety/distress";
 import { sendAgentTelemetry, type TelemetryAgent } from "@/lib/agents/telemetry";
 import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import { listStatements } from "@/lib/data/statements";
+import { exampleModeActive } from "@/lib/data/demoTools";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/session")({
@@ -55,9 +56,8 @@ type Stage = "start" | "consent" | "story" | "live" | "handoff" | "paused" | "cl
 type HandoffReason = "stopped" | "crisis" | "timer" | "dropped";
 /** What is carrying the live audio/video right now. */
 type Medium = "gemini" | "avatar";
-/** What the practice questions from: the made-up story (standard, safe
- *  default) or the person's own shared words (the consent-heavy tier —
- *  docs/sme-research-needed.md gates it). */
+/** What the practice questions come from: the made-up story (standard, safe
+ *  default) or the person's own shared words (the consent-heavy tier). */
 type PracticeMaterial = "fictional" | "own";
 
 // The person has to have SAID something substantive before a close is owed —
@@ -111,6 +111,10 @@ function SessionScreen() {
 
   const settings = useSurvivorSettings();
   const { lang } = useLang();
+  // Resolved after mount (localStorage): the AIs are told when the space holds
+  // the made-up example, so they can say so instead of playing along silently.
+  const [exampleMode, setExampleMode] = useState(false);
+  useEffect(() => setExampleMode(exampleModeActive()), []);
   useEffect(() => {
     const data = settings.query.data;
     if (data) {
@@ -167,6 +171,7 @@ function SessionScreen() {
     // top-bar switch, and a Coach who answers Spanish in an English UI (or the
     // reverse) reads as broken. setLang mirrors the row in the background.
     language: lang,
+    example: exampleMode,
     onUserText: markUserContent,
     onCoachText: (t) => {
       setCaption(captionsRef.current.push(t));
@@ -188,6 +193,7 @@ function SessionScreen() {
     },
     onDistress: (sig) => handleDistressRef.current(sig),
     language: lang,
+    example: exampleMode,
   });
 
   // Resolve whether "your own shared words" has anything in it, exactly when
@@ -558,10 +564,14 @@ function SessionScreen() {
                     }
                   >
                     <span className="block text-sm text-foreground">
-                      {copy.session.witness.materialOwn}
+                      {exampleMode
+                        ? copy.session.witness.materialOwnExample
+                        : copy.session.witness.materialOwn}
                     </span>
                     <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                      {copy.session.witness.materialOwnHint}
+                      {exampleMode
+                        ? copy.session.witness.materialOwnExampleHint
+                        : copy.session.witness.materialOwnHint}
                     </span>
                   </button>
                 ) : (

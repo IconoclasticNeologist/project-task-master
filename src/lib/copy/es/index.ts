@@ -174,6 +174,9 @@ export const copyEs: CopyShape = {
       offerLoad: "Cargar el ejemplo",
       offerNotNow: "Ahora no",
       bannerTitle: "Este espacio tiene un ejemplo inventado — no es una persona real.",
+      bannerYours:
+        "Cuando esté lista, bórrelo y traiga sus propias palabras — todo aquí funciona exactamente igual para un caso real, y las IA sabrán la diferencia.",
+      reloadFresh: "Recargar el ejemplo",
       bannerPath: "Un camino que vale la pena:",
       clear: "Borrar el ejemplo",
       chips: {
@@ -403,6 +406,9 @@ export const copyEs: CopyShape = {
         "Usted lee una historia corta e inventada, y después practica que le pregunten sobre ella. Nada sobre su vida real.",
       materialOwn: "Sus propias palabras compartidas",
       materialOwnHint: "Las preguntas solo pueden tocar lo que usted marcó “se puede compartir”.",
+      materialOwnExample: "Las palabras compartidas del ejemplo (un caso inventado)",
+      materialOwnExampleHint:
+        "Las preguntas de práctica saldrán de la historia de ejemplo cargada — no de la vida real de nadie. Cuando esté lista, borre el ejemplo en Inicio y esta opción pasará a ser sus propias palabras compartidas.",
       materialOwnEmpty:
         "Todavía no hay nada marcado “se puede compartir”, así que la práctica usa la historia inventada.",
       storyTitle: "Una historia inventada — solo para practicar.",

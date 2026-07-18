@@ -172,6 +172,9 @@ export const copy = {
       offerLoad: "Load the example",
       offerNotNow: "Not now",
       bannerTitle: "This space holds a made-up example — not a real person.",
+      bannerYours:
+        "When you're ready, clear it and bring your own words — everything here works exactly the same for a real case, and the AIs will know the difference.",
+      reloadFresh: "Reload the example fresh",
       bannerPath: "A path worth walking:",
       clear: "Clear the example",
       chips: {
@@ -409,6 +412,9 @@ export const copy = {
         "You read a short made-up story, then practice being questioned about it. Nothing about your real life.",
       materialOwn: "Your own shared words",
       materialOwnHint: "Questions can touch only what you marked “okay to share.”",
+      materialOwnExample: "The example's shared words (a made-up case)",
+      materialOwnExampleHint:
+        "Practice questions will come from the loaded example story — not from anyone's real life. When you're ready, clear the example on Home and this option becomes your own shared words.",
       materialOwnEmpty:
         "Nothing is marked “okay to share” yet, so practice uses the made-up story.",
       storyTitle: "A made-up story — just for practice.",

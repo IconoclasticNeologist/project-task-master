@@ -22,7 +22,7 @@ import { loadCoachNote, saveCoachNote } from "@/lib/data/settings";
 import { Textarea } from "@/components/ui/textarea";
 import { downloadMySpace, deleteMySpace } from "@/lib/data/accountLifecycle";
 import { getMotionPref, setMotionPref } from "@/lib/motion";
-import { setLangPref } from "@/lib/lang";
+import { useLang } from "@/lib/lang-context";
 import { isLockEnabled, setPin, disableLock, lock } from "@/lib/appLock";
 import { pageTitle } from "@/lib/product";
 
@@ -34,6 +34,7 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsScreen() {
   const { status } = useRequireSurvivor();
+  const { setLang } = useLang();
   const { query, save } = useSurvivorSettings();
   const survivor = useSurvivor();
   const queryClient = useQueryClient();
@@ -151,8 +152,11 @@ function SettingsScreen() {
     save.mutate(form, {
       onSuccess: () => {
         setSaved(true);
-        // Mirror the language locally so <html lang> is right on the next load too.
-        setLangPref(form.language === "es" ? "es" : "en");
+        // Flip the WHOLE UI now — context setLang swaps the copy bundle,
+        // remounts the tree, and mirrors device + server. The old localStorage
+        // mirror alone left the screen in the previous language until a hard
+        // reload, which read as "the setting didn't work."
+        setLang(form.language === "es" ? "es" : "en");
       },
     });
   };

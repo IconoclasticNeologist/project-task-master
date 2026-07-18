@@ -40,14 +40,12 @@ function WelcomeScreen() {
             {copy.begin.demoButton}
           </Link>
           <h1 className="text-3xl font-normal leading-tight tracking-tight">{copy.appName}.</h1>
-          <p className="text-base leading-relaxed text-foreground">
-            A quiet place. You set the pace. You can stop at any time.
-          </p>
+          <p className="text-base leading-relaxed text-foreground">{copy.begin.welcomeTagline}</p>
           <Card className="paper-shadow">
             <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
-              <p>You can talk or type.</p>
-              <p>You choose what to save.</p>
-              <p>Your words belong to you.</p>
+              {copy.begin.welcomePoints.map((point) => (
+                <p key={point}>{point}</p>
+              ))}
             </CardContent>
           </Card>
         </div>
@@ -60,7 +58,7 @@ function WelcomeScreen() {
               to={selfServeEnabled ? "/begin" : accessMode === "gated" ? "/enter" : "/onboarding"}
               className="block w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
-              Begin
+              {copy.begin.beginCta}
             </Link>
             {selfServeEnabled && accessMode === "gated" && (
               <Link

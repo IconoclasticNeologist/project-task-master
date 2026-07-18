@@ -33,12 +33,16 @@ function LanguageMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
+        {/* Icon + current language code: a bare globe read as decoration, and
+            the owner couldn't find the switch. "EN"/"ES" names the state and
+            promises the action in one glance. */}
         <button
           type="button"
           aria-label="Language · Idioma"
-          className="-mx-1.5 -my-3 px-1.5 py-3 text-muted-foreground hover:text-foreground"
+          className="-mx-1.5 -my-3 flex items-center gap-1 px-1.5 py-3 text-sm text-muted-foreground hover:text-foreground"
         >
           <Globe className="h-4 w-4" strokeWidth={2} aria-hidden />
+          <span className="text-xs uppercase tracking-wide">{lang}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-44">

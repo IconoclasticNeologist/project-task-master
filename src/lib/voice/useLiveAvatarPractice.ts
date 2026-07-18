@@ -55,7 +55,7 @@ interface UseLiveAvatarPracticeOptions {
   language?: "en" | "es";
 }
 
-async function fetchAvatarToken(): Promise<
+async function fetchAvatarToken(language: "en" | "es"): Promise<
   | {
       token: string;
       practiceCapSec: number | null;
@@ -64,11 +64,13 @@ async function fetchAvatarToken(): Promise<
   | "unavailable"
 > {
   const supabase = getSupabase();
+  // language reaches the mint so LiveAvatar's ASR hears (and its voice
+  // pronounces) the same language we generate the practice lines in.
   const { data, error } = await supabase.functions.invoke<{
     token: string;
     practiceCapSec?: number;
     interactivity?: string;
-  }>("advocate-avatar-session", { body: {} });
+  }>("advocate-avatar-session", { body: { language } });
   if (error || !data?.token) {
     // 503 = deliberately unconfigured → the caller falls back to voice-only.
     return "unavailable";
@@ -268,7 +270,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
       }
 
       const attempt = async (account: string): Promise<AvatarConnectResult> => {
-        const tokenResult = await fetchAvatarToken();
+        const tokenResult = await fetchAvatarToken(languageRef.current);
         if (tokenResult === "unavailable") return "unavailable";
         setPracticeCapSec(tokenResult.practiceCapSec);
         const ptt = tokenResult.interactivity === "PUSH_TO_TALK";

@@ -21,6 +21,21 @@ export function getLangPref(): Lang {
   }
 }
 
+/**
+ * True only when this device holds an explicit saved choice. getLangPref()
+ * cannot tell "chose English" from "never chose" — this can, so a fresh
+ * device (or a re-entry after recovery) can adopt the server-side language
+ * without overriding anyone's deliberate pick.
+ */
+export function hasLangPref(): boolean {
+  try {
+    const l = localStorage.getItem(KEY);
+    return l === "es" || l === "en";
+  } catch {
+    return false;
+  }
+}
+
 /** Persist the language and apply it to <html lang> immediately. */
 export function setLangPref(lang: Lang): void {
   try {

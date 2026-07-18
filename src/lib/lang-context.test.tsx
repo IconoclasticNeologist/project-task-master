@@ -1,7 +1,17 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
+
+// The provider write-through must never make tests (or the tour) need a live
+// server — mock the sync module and assert the calls instead.
+const syncMock = vi.fn().mockResolvedValue(undefined);
+const serverLanguageMock = vi.fn().mockResolvedValue(null);
+vi.mock("./lang-sync", () => ({
+  syncLanguageToServer: (...args: unknown[]) => syncMock(...args),
+  serverLanguage: (...args: unknown[]) => serverLanguageMock(...args),
+}));
+
 import { LangProvider, useLang, useNotebooks, useStudyGuides } from "./lang-context";
 import { __getCurrentLang, __setCurrentLang, copy } from "@/lib/copy";
 import { copy as copyEn } from "@/lib/copy/en";
@@ -47,6 +57,9 @@ describe("LangProvider + language-aware copy proxy", () => {
     // Data hooks resolve the es bundles (same shape; content parity is the
     // translation suite's job).
     expect(screen.getByTestId("counts")).toHaveTextContent("9/10");
+    // The server row follows the device choice, so the voice/avatar session
+    // (minted from that row) speaks the language on screen.
+    expect(syncMock).toHaveBeenCalledWith("es");
   });
 
   it("outside a provider, defaults to English", () => {

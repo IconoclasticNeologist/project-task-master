@@ -44,6 +44,13 @@ export const copy = {
   // Self-serve entry — for a person who has no code and no advocate. The safety
   // check does, in the app, what an advocate's tech-safety planning would do.
   begin: {
+    welcomeTagline: "A quiet place. You set the pace. You can stop at any time.",
+    welcomePoints: [
+      "You can talk or type.",
+      "You choose what to save.",
+      "Your words belong to you.",
+    ],
+    beginCta: "Begin",
     haveCodeLink: "I have a code from someone helping me",
     welcomeSupport: "Need to talk to a person right now? Open Support",
     safetyTitle: "Before we start.",
@@ -314,7 +321,9 @@ export const copy = {
   session: {
     title: "Session",
     coachIntro: "Hi. I’m here. We can go slowly.",
+    beginCta: "Begin",
     beginSubtitle: "Talk or type with your Coach. Nothing is saved unless you choose.",
+    practiceCta: "Practice (Witness Stand)",
     practiceSubtitle: "Rehearse being asked questions — with a stop word, at your pace.",
     youSaid: "You said",
     pause: "I need a pause",

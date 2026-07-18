@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { copy } from "@/lib/copy";
 import { redeemCode, updateProfile } from "@/lib/auth/session";
-import { setLangPref } from "@/lib/lang";
+import { useLang } from "@/lib/lang-context";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/enter")({
@@ -33,6 +33,7 @@ function CreatingDots() {
 
 function EnterScreen() {
   const navigate = useNavigate();
+  const { setLang } = useLang();
   const [phase, setPhase] = useState<"code" | "profile">("code");
   const [code, setCode] = useState("");
   const [survivorId, setSurvivorId] = useState<string | null>(null);
@@ -74,7 +75,6 @@ function EnterScreen() {
     setBusy(true);
     try {
       if (survivorId) {
-        setLangPref(language);
         try {
           await updateProfile(survivorId, {
             preferred_language: language,
@@ -89,6 +89,10 @@ function EnterScreen() {
     } finally {
       setBusy(false);
     }
+    // Context setLang, not the bare localStorage mirror — the next screen must
+    // already speak the language they just chose. Called right before navigate
+    // so the remount (key={lang}) and the route change land in one render.
+    setLang(language);
     void navigate({ to: "/onboarding" });
   };
 

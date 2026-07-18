@@ -48,6 +48,13 @@ export const copyEs: CopyShape = {
   },
 
   begin: {
+    welcomeTagline: "Un lugar tranquilo. Usted marca el ritmo. Puede parar en cualquier momento.",
+    welcomePoints: [
+      "Puede hablar o escribir.",
+      "Usted elige qué se guarda.",
+      "Sus palabras le pertenecen.",
+    ],
+    beginCta: "Empezar",
     haveCodeLink: "Tengo un código de alguien que me está ayudando",
     welcomeSupport: "¿Necesita hablar con una persona en este momento? Abra Apoyo",
     safetyTitle: "Antes de empezar.",
@@ -319,7 +326,9 @@ export const copyEs: CopyShape = {
   session: {
     title: "Sesión",
     coachIntro: "Hola. Aquí estoy. Podemos ir despacio.",
+    beginCta: "Empezar",
     beginSubtitle: "Hable o escriba con su Coach. Nada se guarda a menos que usted lo elija.",
+    practiceCta: "Práctica (el estrado)",
     practiceSubtitle: "Practique que le hagan preguntas — con una palabra para parar, a su ritmo.",
     youSaid: "Usted dijo",
     pause: "Necesito una pausa",

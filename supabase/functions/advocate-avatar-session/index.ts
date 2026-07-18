@@ -98,6 +98,17 @@ serve(async (req) => {
           })
         : null;
 
+    // Parse the request — allowlisted values only; unknown degrades to English.
+    // The persona language drives LiveAvatar's ASR and voice, so a Spanish
+    // practice hears Spanish answers and pronounces the lines we hand it.
+    let language: "en" | "es" = "en";
+    try {
+      const body = await req.json().catch(() => null);
+      if (body && typeof body === "object" && body.language === "es") language = "es";
+    } catch {
+      /* ignore */
+    }
+
     // Dashboard-configured avatar + sandbox win; env vars remain the fallback
     // for a fresh database. Practice cap comes from the same config the
     // client's visible timer uses, plus grace so the timer always fires first.
@@ -149,8 +160,8 @@ serve(async (req) => {
           // Persona keeps the brain on our RAG-locked llm_configuration; an
           // optional dashboard voice_id overrides the avatar's default voice.
           avatar_persona: ops.avatar.voiceId
-            ? { language: "en", voice_id: ops.avatar.voiceId }
-            : { language: "en" },
+            ? { language, voice_id: ops.avatar.voiceId }
+            : { language },
         }),
       });
 

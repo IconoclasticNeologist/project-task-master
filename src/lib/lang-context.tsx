@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { getLangPref, setLangPref, type Lang } from "@/lib/lang";
+import { getLangPref, hasLangPref, setLangPref, type Lang } from "@/lib/lang";
+import { serverLanguage, syncLanguageToServer } from "@/lib/lang-sync";
 import { __setCurrentLang } from "@/lib/copy";
 import { notebooks, type Notebook } from "@/lib/copy/notebooks";
 import { notebooksEs } from "@/lib/copy/es/notebooks";
@@ -19,11 +20,27 @@ export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
-    const saved = getLangPref();
-    if (saved !== "en") {
-      __setCurrentLang(saved);
-      setLangState(saved);
+    if (hasLangPref()) {
+      const saved = getLangPref();
+      if (saved !== "en") {
+        __setCurrentLang(saved);
+        setLangState(saved);
+      }
+      return;
     }
+    // No explicit choice on this device yet (fresh device, or re-entry after
+    // recovery): adopt the language saved on the person's own row, so someone
+    // who chose Spanish doesn't land back in English.
+    let cancelled = false;
+    void serverLanguage().then((remote) => {
+      if (cancelled || remote !== "es") return;
+      __setCurrentLang(remote);
+      setLangPref(remote);
+      setLangState(remote);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const setLang = (l: Lang) => {
@@ -32,6 +49,10 @@ export function LangProvider({ children }: { children: ReactNode }) {
     __setCurrentLang(l);
     setLangPref(l);
     setLangState(l);
+    // The server copy follows the device choice (fire-and-forget: switching
+    // must work signed out and offline; the session mints read this row, so
+    // the Coach and the practice person speak the language on screen).
+    void syncLanguageToServer(l);
   };
 
   return (

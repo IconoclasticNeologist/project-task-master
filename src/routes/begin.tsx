@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { copy } from "@/lib/copy";
 import { createSelfServeSurvivor, updateProfile } from "@/lib/auth/session";
-import { setLangPref } from "@/lib/lang";
+import { useLang } from "@/lib/lang-context";
 import { pageTitle } from "@/lib/product";
 
 // Self-serve entry for a person with no code and no advocate. A calm safety
@@ -36,6 +36,7 @@ function CreatingDots() {
 
 function BeginScreen() {
   const navigate = useNavigate();
+  const { setLang } = useLang();
   const [phase, setPhase] = useState<"safety" | "profile">("safety");
   const [survivorId, setSurvivorId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -79,7 +80,6 @@ function BeginScreen() {
     setBusy(true);
     try {
       if (survivorId) {
-        setLangPref(language);
         try {
           await updateProfile(survivorId, {
             preferred_language: language,
@@ -93,6 +93,10 @@ function BeginScreen() {
     } finally {
       setBusy(false);
     }
+    // Context setLang, not the bare localStorage mirror — the next screen must
+    // already speak the language they just chose. Called right before navigate
+    // so the remount (key={lang}) and the route change land in one render.
+    setLang(language);
     void navigate({ to: "/onboarding" });
   };
 

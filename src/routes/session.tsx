@@ -28,6 +28,7 @@ import { PracticeTimer } from "@/components/session/PracticeTimer";
 import { AftercareCard } from "@/components/AftercareCard";
 import { HotlineLinks } from "@/components/CrisisCard";
 import { copy } from "@/lib/copy";
+import { useLang } from "@/lib/lang-context";
 import { useGeminiLive } from "@/lib/voice/useGeminiLive";
 import { useLiveAvatarPractice } from "@/lib/voice/useLiveAvatarPractice";
 import { makeCaptionStream } from "@/lib/voice/captions";
@@ -109,6 +110,7 @@ function SessionScreen() {
   }, [screenMode]);
 
   const settings = useSurvivorSettings();
+  const { lang } = useLang();
   useEffect(() => {
     const data = settings.query.data;
     if (data) {
@@ -161,7 +163,10 @@ function SessionScreen() {
     sendText,
   } = useGeminiLive({
     mode: "base",
-    language: settings.query.data?.language ?? "en",
+    // The language ON SCREEN, not the server row — the row can lag behind a
+    // top-bar switch, and a Coach who answers Spanish in an English UI (or the
+    // reverse) reads as broken. setLang mirrors the row in the background.
+    language: lang,
     onUserText: markUserContent,
     onCoachText: (t) => {
       setCaption(captionsRef.current.push(t));
@@ -182,7 +187,7 @@ function SessionScreen() {
       setCaption(t);
     },
     onDistress: (sig) => handleDistressRef.current(sig),
-    language: settings.query.data?.language ?? "en",
+    language: lang,
   });
 
   // Resolve whether "your own shared words" has anything in it, exactly when
@@ -484,7 +489,7 @@ function SessionScreen() {
                   onClick={beginBase}
                   className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
                 >
-                  Begin
+                  {copy.session.beginCta}
                   <span className="mt-0.5 block text-xs font-normal text-primary-foreground/85">
                     {copy.session.beginSubtitle}
                   </span>
@@ -494,7 +499,7 @@ function SessionScreen() {
                   onClick={() => setStage("consent")}
                   className="w-full rounded-md border border-border px-4 py-3 text-xs text-muted-foreground"
                 >
-                  Practice (Witness Stand)
+                  {copy.session.practiceCta}
                   <span className="mt-0.5 block text-xs text-muted-foreground/90">
                     {copy.session.practiceSubtitle}
                   </span>

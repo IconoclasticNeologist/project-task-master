@@ -85,7 +85,10 @@ export function Shell({
   // where "back" would mean nothing.
   const showBack = pathname !== "/home" && pathname !== "/";
   const goBack = () => {
-    if (window.history.length > 1) router.history.back();
+    // window.history (not router.history): the router's own stack starts empty
+    // on a fresh document, so its back() no-ops on deep links — the browser's
+    // always works, and the router follows the popstate.
+    if (window.history.length > 1) window.history.back();
     else void router.navigate({ to: "/home" });
   };
 

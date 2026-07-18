@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { NoSpacePanel } from "@/components/NoSpacePanel";
@@ -100,6 +101,22 @@ function HomeScreen() {
             </h1>
             <p className="text-sm leading-relaxed text-muted-foreground">{copy.home.subtitle}</p>
           </header>
+
+          {/* The guided tour as a REAL button at the top (owner call) — same
+              warm-amber identity as the landing's demo button, so "see how it
+              works" looks the same wherever it appears. It creates nothing. */}
+          <Link
+            to="/tour"
+            className="flex w-full flex-col items-center justify-center gap-0.5 rounded-md bg-[oklch(0.5_0.09_70)] px-4 py-3 text-center text-sm font-medium text-[oklch(0.985_0.01_85)] paper-shadow hover:bg-[oklch(0.45_0.09_70)]"
+          >
+            <span className="flex items-center gap-2">
+              <Play className="h-4 w-4" aria-hidden strokeWidth={2} fill="currentColor" />
+              {copy.begin.tourCta}
+            </span>
+            <span className="text-xs font-normal text-[oklch(0.985_0.01_85)]/85">
+              {copy.begin.tourCtaSub}
+            </span>
+          </Link>
 
           {survivor.isSuccess && survivor.data?.onboarded_at == null && (
             <Card className="paper-shadow">
@@ -268,16 +285,6 @@ function HomeScreen() {
               <Tile to="/plan" label={copy.nav.plan} hint={copy.plan.homeTileHint} />
             </div>
           </section>
-
-          {/* The guided tour, findable from INSIDE the app too (owner call) — a
-              quiet row, not nav chrome: it's help, and it creates nothing. */}
-          <Link
-            to="/tour"
-            className="block rounded-md border border-border px-4 py-3 text-sm text-muted-foreground hover:text-foreground"
-          >
-            {copy.begin.tourCta}
-            <span className="mt-0.5 block text-xs">{copy.begin.tourCtaSub}</span>
-          </Link>
 
           {query.isError ? (
             <Card className="paper-shadow">

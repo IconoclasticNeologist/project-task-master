@@ -835,6 +835,20 @@ export const copy = {
     title: "Support",
     intro:
       "If you need to talk to a person right now, these can help. They are free, private, and open every day. You never have to give your name.",
+    protections: {
+      label: "Your state's court protections",
+      intro:
+        "Courts offer real protections — a support person, screens, interpreters, money help. Which ones, and how, differs by state. Pick yours to see what's been verified so far.",
+      pickerLabel: "Choose your state",
+      pickerPlaceholder: "Choose your state…",
+      somewhereElse: "Somewhere else",
+      otherNote:
+        "Your state isn't listed yet — more are being verified. The numbers below serve every state, and your advocate or the victim-witness office knows your local rules.",
+      verifiedNote: "{n} protection(s) verified against the cited sources so far",
+      lastVerified: "last checked {date}",
+      advocateNote:
+        "General information, not legal advice — your advocate or lawyer can confirm what applies to your case and help you ask for any of these.",
+    },
     crisisLabel: "If you need help right now",
     legalLabel: "Help knowing your rights",
     localLabel: "Help near you",

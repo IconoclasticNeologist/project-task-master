@@ -672,6 +672,20 @@ export const copyEs: CopyShape = {
     title: "Apoyo",
     intro:
       "Si necesita hablar con una persona en este momento, esto puede ayudar. Es gratuito, privado y está abierto todos los días. Nunca tiene que dar su nombre.",
+    protections: {
+      label: "Protecciones de la corte en su estado",
+      intro:
+        "Las cortes ofrecen protecciones reales — una persona de apoyo, pantallas, intérpretes, ayuda económica. Cuáles, y cómo, cambia según el estado. Elija el suyo para ver lo verificado hasta ahora (el contenido está en inglés por ahora).",
+      pickerLabel: "Elija su estado",
+      pickerPlaceholder: "Elija su estado…",
+      somewhereElse: "Otro lugar",
+      otherNote:
+        "Su estado todavía no está en la lista — se están verificando más. Los números de abajo sirven en todos los estados, y su intercesora o la oficina de víctimas y testigos conoce las reglas locales.",
+      verifiedNote: "{n} protección(es) verificadas contra las fuentes citadas hasta ahora",
+      lastVerified: "última revisión {date}",
+      advocateNote:
+        "Información general, no asesoría legal — su intercesora o abogado puede confirmar qué aplica a su caso y ayudarle a pedir cualquiera de estas.",
+    },
     crisisLabel: "Si necesita ayuda en este momento",
     legalLabel: "Ayuda para conocer sus derechos",
     localLabel: "Ayuda cerca de usted",

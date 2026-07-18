@@ -3,6 +3,7 @@ import { Shell } from "@/components/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { copy } from "@/lib/copy";
+import { StateProtectionsSection } from "@/components/StateProtections";
 import { pageTitle } from "@/lib/product";
 
 export const Route = createFileRoute("/resources")({
@@ -58,6 +59,7 @@ function ResourcesScreen() {
           <p className="text-sm leading-relaxed text-muted-foreground">{copy.resources.intro}</p>
         </header>
 
+        <StateProtectionsSection />
         {sections.map((section) => (
           <section key={section.label} className="space-y-3">
             <h2 className="text-xs uppercase tracking-wide text-muted-foreground">

@@ -246,6 +246,49 @@ function JudgesScreen() {
         </div>
 
         <section className="mt-10 space-y-3">
+          <h2 className="text-lg font-normal">Where this sits in the track</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Assist &amp; Amplify names four shapes. Tend is three of them, built as one product,
+            from the survivor&apos;s side:
+          </p>
+          <ul className="space-y-2">
+            <li className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
+              <span aria-hidden className="select-none text-foreground/40">
+                •
+              </span>
+              <span>
+                <b className="font-medium text-foreground">Resource navigation</b> — verified
+                bilingual hotlines on every device, plus state-by-state court protections with
+                per-field primary-source citations (and honest &quot;not verified yet&quot; gaps
+                rather than guesses).
+              </span>
+            </li>
+            <li className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
+              <span aria-hidden className="select-none text-foreground/40">
+                •
+              </span>
+              <span>
+                <b className="font-medium text-foreground">Casework, inverted</b> — the timeline
+                builder, care-plan helper, and lawyer-ready draft do a caseworker copilot&apos;s
+                jobs, but the survivor owns every row, and professionals see only what was
+                explicitly shared — revocable, per category.
+              </span>
+            </li>
+            <li className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
+              <span aria-hidden className="select-none text-foreground/40">
+                •
+              </span>
+              <span>
+                <b className="font-medium text-foreground">Communication guardrails, live</b> — not
+                an evaluator on the side but the running system: a hard-rule floor under every
+                persona, a deterministic stop word, crisis routing to real people, refusal to label,
+                and every word inspectable in one audited place.
+              </span>
+            </li>
+          </ul>
+        </section>
+
+        <section className="mt-10 space-y-3">
           <h2 className="text-lg font-normal">See the receipts</h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
             The sources behind every claim, and the experts who reviewed the work, are public.

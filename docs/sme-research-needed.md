@@ -1,3 +1,10 @@
+> **SUPERSEDED (2026-07-18, owner decision).** The SME review stage is closed.
+> Prompt wording is now grounded in the research dossier under `docs/research/`
+> (Perplexity intake + gap-fill, citation-pinned) and is owned by the founder,
+> who can see and edit every persona's exact words at `/dev` → Prompts
+> (audited overrides; git defaults restorable). This file remains as history
+> of the questions that research answered.
+
 # SME Research Needed — N3 Agents (The Advocate)
 
 The three N3 agents (`reframer`, `recognition`, `interviewer`) currently run on principled **PLACEHOLDER** prompts. These prompts are safe-by-construction — they are designed to avoid harm — but the exact wording has not been reviewed or signed off by any subject-matter expert.
@@ -132,4 +139,4 @@ Trauma therapist **and** attorney.
 
 ---
 
-*These placeholders are marked in code with `// PLACEHOLDER — demo only` comments that point to this document.*
+_These placeholders are marked in code with `// PLACEHOLDER — demo only` comments that point to this document._

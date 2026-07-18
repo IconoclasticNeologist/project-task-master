@@ -10,8 +10,8 @@
  *   - AUDIO response modality + the per-mode voice (allowlisted; dashboard-
  *     configurable per agent, Defense defaults to Charon)
  *   - the mode-specific system instruction — canonical text lives in
- *     _shared/advocatePrompts.ts (git + SME gate), never overridable by the
- *     client or the dashboard
+ *     _shared/advocatePrompts.ts (git defaults; owner-audited /dev overrides),
+ *     never overridable by the client
  *   - input/output audio transcription, feeding the client-side deterministic
  *     distress tripwire and containment tracking (never retained)
  *
@@ -31,6 +31,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { languageLineFor, promptKeyForMode, type Mode } from "../_shared/advocatePrompts.ts";
 import { practiceStoryBlock } from "../_shared/practiceStory.ts";
+import { courtKnowledgeBlock } from "../_shared/courtKnowledge.ts";
 import { loadOps, VOICE_ALLOWLIST } from "../_shared/agentConfig.ts";
 import { resolvePrompt, type PromptKey } from "../_shared/promptRegistry.ts";
 import { buildGuardrailsBlock, loadGuardrails } from "../_shared/guardrails.ts";
@@ -206,9 +207,15 @@ serve(async (req) => {
       }
     }
 
+    // Court knowledge, COACH MODES ONLY: the Coach teaches from a compact,
+    // research-grounded core (docs/research). The practice questioner stays on
+    // its material — knowledge there would dilute the format.
+    const knowledgeBlock = mode === "defense" ? "" : courtKnowledgeBlock();
+
     const systemText =
       basePrompt +
       buildGuardrailsBlock(guardrails, modeKey) +
+      knowledgeBlock +
       storyBlock +
       noteBlock +
       languageLineFor(language);

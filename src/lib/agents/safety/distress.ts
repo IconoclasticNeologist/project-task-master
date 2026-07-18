@@ -15,8 +15,8 @@
 // Deterministic detection is intentionally broad and errs toward firing — a false
 // "are you okay?" is harmless; a miss is not. Substring stop-words are chosen to avoid
 // collisions with common words (no bare "para"/"basta"). English + Spanish, because the
-// Coach speaks both. NOTE: the DETECTION is engineering; the crisis-RESPONSE wording
-// (copy.session.crisis*) still needs trauma-therapist sign-off before launch.
+// Coach speaks both. The crisis-RESPONSE wording (copy.session.crisis*) follows the
+// research dossier's guidance and is owner-owned like all survivor-facing copy.
 const STOP_WORDS = [
   // English
   "stop",

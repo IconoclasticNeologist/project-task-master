@@ -92,6 +92,8 @@ export const copyEs: CopyShape = {
   shell: {
     leaveNow: "Salir ya",
     iNeedABreak: "Necesito una pausa",
+    updateReady: "Hay una versión más nueva de esta aplicación.",
+    updateRefresh: "Actualizar",
   },
 
   breakScreen: {
@@ -161,8 +163,9 @@ export const copyEs: CopyShape = {
     finishSetupCta: "Continuar la preparación",
     startSession: "Empezar una sesión",
     courtGuide: "Prepararse para la corte",
-    continueWhereLeft: "Continuar su espacio",
-    seeTimeline: "Ver su línea de tiempo",
+    seeTimeline: "Su línea de tiempo",
+    seeTimelineHint:
+      "Ponga lo que pasó en su propio orden — y guarde sus palabras y papeles en un solo lugar.",
     findSupport: "Encontrar apoyo",
     example: {
       offerTitle: "¿Quiere ver un ejemplo primero?",
@@ -467,7 +470,12 @@ export const copyEs: CopyShape = {
       documents: "Sus papeles",
     },
     timelineLede:
-      "Un lugar para poner en orden lo que pasó — en sus palabras. Fechas aproximadas como “después de la mudanza” son bienvenidas.",
+      "Su línea de tiempo es donde lo que pasó se vuelve claro — en sus palabras, en su orden. Un orden claro le ayuda a USTED a ver su propia historia, y ayuda a seguirla a quien usted decida mostrársela después.",
+    timelineHow: [
+      "Diga o escriba lo que pasó, en cualquier orden — desordenado está bien.",
+      "La ayuda de abajo organiza solo sus palabras en un borrador. Usted conserva una fila, la cambia, o la ignora.",
+      "Anclas aproximadas como “después de la mudanza” cuentan. Nada se comparte a menos que usted lo marque “se puede compartir”.",
+    ],
     timelineHelper: {
       title: "Ponerlo en orden",
       intro:
@@ -594,6 +602,23 @@ export const copyEs: CopyShape = {
     title: "Su plan",
     intro:
       "Pasos prácticos y pequeños para la corte, en el orden que a usted le sirva. Puede agregar los suyos, cambiarlos, o dejarlos para después.",
+    helper: {
+      title: "Armar mi plan con ayuda",
+      intro:
+        "Cuéntele a la ayuda qué se acerca — una fecha de audiencia, una preocupación, qué le suele ayudar — y le propone pasos prácticos y pequeños. Planea el día, nunca sus palabras. Nada se agrega a menos que usted lo conserve.",
+      placeholder:
+        "Mi audiencia es el mes que viene. No sé cómo voy a llegar ni cómo mantener la calma…",
+      run: "Proponer pasos",
+      running: "Preparando…",
+      draftLabel: "Pasos sugeridos — conserve los que le sirvan",
+      keep: "Conservar",
+      kept: "Conservado ✓",
+      skip: "Saltar esta pregunta",
+      replyPlaceholder: "Puede responder, agregar más, o decir qué no le sirve.",
+      send: "Enviar",
+      notSaved: "Esta conversación de ayuda no se guarda. Desaparece cuando usted sale.",
+      error: "Eso no se envió. Puede intentar de nuevo.",
+    },
     add: "Agregar un paso",
     titleLabel: "¿Qué le ayudaría?",
     detailsLabel: "Una nota corta (opcional)",

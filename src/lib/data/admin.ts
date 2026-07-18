@@ -146,7 +146,20 @@ export interface AgentPromptInfo {
   default: string;
   override: string | null;
   effective: string;
+  /** At-a-glance: what this agent is FOR, how a turn flows, where it goes. */
+  atlas: {
+    accomplishes: string;
+    workflow: string[];
+    arc: string;
+    receives: string[];
+  };
 }
+
+/** One LLM turn for the /dev copilot. `messages` are Anthropic-format blocks
+ *  (including tool_use/tool_result); the CLIENT executes requested tools via
+ *  the gated helpers in this file and calls again with the results. */
+export const copilotTurn = (messages: unknown[]) =>
+  adminCall<{ content: unknown[]; stop_reason: string }>("copilot_turn", { messages });
 
 export interface AgentConfigBundle {
   ops: AgentOps;

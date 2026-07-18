@@ -23,9 +23,8 @@
  * The shim lifts that message out of the conversation and into the system
  * prompt, so the model sees it as source material, never as a user turn.
  *
- * PLACEHOLDER — demo only. SME review before real users:
- *   attorney: FRE 412 / state shield laws + the permitted question bank;
- *   trauma therapist: pressure level and pacing.
+ * Wording is research-grounded (docs/research: FRE 412, shield-law discipline,
+ * graduated-exposure pacing) and owner-editable via /dev (audited overrides).
  * See docs/sme-research-needed.md. Mirrors the COACH_DEFENSE invariants in
  * advocate-voice-token (the voice-only practice path).
  *
@@ -130,7 +129,7 @@ function rateLimited(): boolean {
 const ACCOUNT_SENTINEL = "[[PRACTICE_ACCOUNT]]";
 
 // DEFENSE_PRACTICE_PROMPT is imported from _shared/advocatePrompts.ts —
-// the single SME-gated home for every runtime prompt.
+// the single canonical home for every runtime prompt (owner-editable via /dev).
 
 interface OpenAIMessage {
   role: string;

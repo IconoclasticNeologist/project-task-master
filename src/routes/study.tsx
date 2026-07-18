@@ -3,13 +3,14 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { Shell } from "@/components/Shell";
 import { copy } from "@/lib/copy";
 import { type GuideColor } from "@/lib/copy/studyGuides";
-import { useStudyGuides } from "@/lib/lang-context";
+import { useNotebooks, useStudyGuides } from "@/lib/lang-context";
 import { pageTitle } from "@/lib/product";
 
-// Study-guide shelf. Bigger, paged guides that open — by navigating to
-// /study/$slug — into a one-step-at-a-time player. This route is also the
-// layout for its children, so on a child route it just renders <Outlet/>
-// (mirrors the notebooks.tsx self-index pattern).
+// THE study-guide shelf — one shelf, one name (owner call): the ten bigger
+// paged guides first, then the nine short notebook guides on the same shelf.
+// /notebooks redirects here; /notebooks/$slug interiors still open normally.
+// This route is also the layout for its children, so on a child route it just
+// renders <Outlet/>.
 export const Route = createFileRoute("/study")({
   head: () => ({ meta: [{ title: pageTitle(copy.study.title) }] }),
   component: StudyShelf,
@@ -31,6 +32,7 @@ const COVER: Record<GuideColor, { cover: string; spine: string }> = {
 
 export function StudyShelf() {
   const studyGuides = useStudyGuides();
+  const notebooks = useNotebooks();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // On a child route (an open guide), render the child instead of the shelf.
   if (pathname !== "/study") return <Outlet />;
@@ -74,6 +76,37 @@ export function StudyShelf() {
                     <p className="text-[0.7rem] leading-relaxed text-foreground/55">
                       {copy.study.minutesTemplate.replace("{n}", String(g.minutes))}
                     </p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+          {notebooks.map((n) => {
+            const c = COVER[n.color];
+            return (
+              <Link
+                key={n.slug}
+                to="/notebooks/$slug"
+                params={{ slug: n.slug }}
+                className="block rounded-[0.35rem_0.7rem_0.7rem_0.35rem]"
+              >
+                <div
+                  className="notebook-cover paper-shadow flex min-h-44 flex-col py-4 pl-6 pr-4"
+                  style={{ "--nb-cover": c.cover, "--nb-spine": c.spine } as CSSProperties}
+                >
+                  <span
+                    aria-hidden
+                    className="absolute right-5 top-0 h-9 w-2.5 rounded-b-sm"
+                    style={{ background: c.spine }}
+                  />
+                  <span className="text-[0.7rem] font-medium tracking-wide text-foreground/45 tabular-nums">
+                    {n.index}
+                  </span>
+                  <div className="mt-auto space-y-1">
+                    <h2 className="text-base font-normal leading-snug text-foreground">
+                      {n.title}
+                    </h2>
+                    <p className="text-xs leading-relaxed text-foreground/70">{n.cover}</p>
                   </div>
                 </div>
               </Link>

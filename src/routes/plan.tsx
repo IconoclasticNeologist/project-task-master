@@ -12,6 +12,9 @@ import { requireSurvivor } from "@/lib/auth/guard";
 import { useRequireSurvivor } from "@/lib/auth/useRequireSurvivor";
 import { copy } from "@/lib/copy";
 import { pageTitle } from "@/lib/product";
+import { PlanHelper } from "@/components/plan/PlanHelper";
+import { AftercareCard } from "@/components/AftercareCard";
+import { useSurvivorSettings } from "@/lib/data/useSurvivorSettings";
 import {
   courtPlanCategoryLabels,
   courtPlanStatusLabels,
@@ -36,6 +39,7 @@ const categories: CourtPlanCategory[] = [
 ];
 
 function PlanScreen() {
+  const settings = useSurvivorSettings();
   const { status } = useRequireSurvivor();
   const queryClient = useQueryClient();
   const plan = useQuery({ queryKey: ["court-plan"], queryFn: listMyCourtPlanItems });
@@ -74,6 +78,25 @@ function PlanScreen() {
             <h1 className="text-2xl font-normal tracking-tight">{copy.plan.title}</h1>
             <p className="text-sm leading-relaxed text-muted-foreground">{copy.plan.intro}</p>
           </header>
+          {/* The AI helper first — it drafts steps FROM what they said (their
+              care anchors ride along as context), keep-per-step. */}
+          <PlanHelper
+            aftercare={{
+              supportPerson: settings.query.data?.supportPerson ?? "",
+              calmingAnchor: settings.query.data?.calmingAnchor ?? "",
+            }}
+          />
+          <AftercareCard
+            plan={
+              settings.query.data
+                ? {
+                    supportPerson: settings.query.data.supportPerson,
+                    calmingThing: settings.query.data.calmingAnchor,
+                  }
+                : null
+            }
+            title="Your care plan"
+          />
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}

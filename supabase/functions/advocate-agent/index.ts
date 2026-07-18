@@ -3,7 +3,7 @@
  * The raw GEMINI_API_KEY never leaves this function. Supabase JWT-gated.
  *
  * N1 ships ONLY the Translator (narrative ↔ legal-register / EN↔ES draft).
- * Other agents are SME-gated and intentionally not enabled here.
+ * Other agents ship through the prompt registry (git defaults + owner-audited /dev overrides).
  *
  * Cost: per-call bound via maxOutputTokens. DAILY AGGREGATE CAP = TODO
  * (pricing unknown — add before real traffic, mirroring increment_voice_session_count).
@@ -387,6 +387,123 @@ serve(async (req) => {
       }
       if (!result) return json(502, { error: "Timeline helper reply failed" });
       return json(200, result);
+    }
+
+    // Care-plan helper — turns what the person says is coming up (and what
+    // steadies them) into DRAFT court-day steps they keep one by one.
+    // Stateless; the thread lives in the client's memory only.
+    //   input:  { turns: [{role:"user"|"helper", content}], aftercare?: {supportPerson, calmingAnchor}, language }
+    //   output: { steps: [{category, title, details}], question, note }
+    if (body && typeof body === "object" && body.agent === "careplan_builder") {
+      const input = (body.input ?? {}) as Record<string, unknown>;
+      const language = input.language === "es" ? "es" : "en";
+      const rawTurns = Array.isArray(input.turns) ? input.turns.slice(-12) : [];
+      const contents = rawTurns
+        .map((t) => {
+          const turn = t as { role?: unknown; content?: unknown };
+          const text = typeof turn.content === "string" ? turn.content.trim().slice(0, 4000) : "";
+          if (!text) return null;
+          return {
+            role: turn.role === "helper" ? "model" : "user",
+            parts: [{ text }],
+          };
+        })
+        .filter(Boolean) as Array<{ role: "user" | "model"; parts: [{ text: string }] }>;
+      if (contents.length === 0) return json(400, { error: "Empty input" });
+      if (contents[0].role === "model") {
+        contents.unshift({ role: "user", parts: [{ text: "(The person opened the helper.)" }] });
+      }
+      const mergedCp: typeof contents = [];
+      for (const turn of contents) {
+        const last = mergedCp[mergedCp.length - 1];
+        if (last && last.role === turn.role) last.parts[0].text += `\n${turn.parts[0].text}`;
+        else mergedCp.push(turn);
+      }
+
+      const admin = adminClient();
+      const usage = await enforceUsage(
+        admin,
+        "agent",
+        callerSubject(req),
+        AGENT_CAP_PER_USER,
+        AGENT_CAP_GLOBAL,
+      );
+      if (!usage.ok && usage.limited) return json(429, { error: LIMIT_MESSAGE });
+
+      // Their existing care anchors, so suggestions build on what they already
+      // said instead of asking again. Client-sent, short, optional.
+      const aftercare = (input.aftercare ?? {}) as Record<string, unknown>;
+      const supportPerson =
+        typeof aftercare.supportPerson === "string" ? aftercare.supportPerson.slice(0, 120) : "";
+      const calmingAnchor =
+        typeof aftercare.calmingAnchor === "string" ? aftercare.calmingAnchor.slice(0, 120) : "";
+      const anchorsBlock =
+        supportPerson || calmingAnchor
+          ? [
+              "",
+              "WHAT THEY ALREADY TOLD THE APP (build on this, don't re-ask):",
+              supportPerson ? `- The person who helps them feel safe: ${supportPerson}` : "",
+              calmingAnchor ? `- The thing that helps them feel calm: ${calmingAnchor}` : "",
+            ]
+              .filter(Boolean)
+              .join("\n")
+          : "";
+
+      const [cpPrompt, cpGuardrails] = await Promise.all([
+        resolvePrompt(admin, "careplan.builder"),
+        loadGuardrails(admin),
+      ]);
+      const cpCategories = ["hearing_details", "travel", "accommodation", "support", "question"];
+      const systemText = [
+        cpPrompt,
+        buildGuardrailsBlock(cpGuardrails, "careplan.builder"),
+        anchorsBlock,
+        languageLineFor(language),
+        "",
+        'OUTPUT — STRICT JSON, nothing else (no code fences, no prose around it): {"steps": [{"category": string, "title": string, "details": string}], "question": string, "note": string}.',
+        `"category" is one of ${cpCategories.join(" | ")}. "title" is the step in plain words (their language). "details" is one short helpful line ("" is fine). "question" is your ONE skippable question or "". "note" is one warm plain sentence.`,
+      ].join("\n");
+
+      const parseCp = (raw: string) => {
+        const cleaned = raw
+          .trim()
+          .replace(/^```(?:json)?/i, "")
+          .replace(/```$/, "")
+          .trim();
+        const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+        const steps = (Array.isArray(parsed.steps) ? parsed.steps : [])
+          .map((e) => {
+            if (!e || typeof e !== "object") return null;
+            const row = e as { category?: unknown; title?: unknown; details?: unknown };
+            const title = typeof row.title === "string" ? row.title.trim().slice(0, 200) : "";
+            const details = typeof row.details === "string" ? row.details.trim().slice(0, 300) : "";
+            const category =
+              typeof row.category === "string" && cpCategories.includes(row.category)
+                ? row.category
+                : "support";
+            return title ? { category, title, details } : null;
+          })
+          .filter(Boolean)
+          .slice(0, 4);
+        const question =
+          typeof parsed.question === "string" ? parsed.question.trim().slice(0, 200) : "";
+        const note = typeof parsed.note === "string" ? parsed.note.trim().slice(0, 200) : "";
+        if (steps.length === 0 && !question && !note) throw new Error("empty");
+        return { steps, question, note };
+      };
+
+      let cpResult: { steps: unknown[]; question: string; note: string } | null = null;
+      for (let attempt = 0; attempt < 2 && !cpResult; attempt++) {
+        const raw = await generateReply(apiKey, systemText, mergedCp, 1024);
+        if (!raw) continue;
+        try {
+          cpResult = parseCp(raw);
+        } catch {
+          cpResult = null;
+        }
+      }
+      if (!cpResult) return json(502, { error: "Care-plan helper reply failed" });
+      return json(200, cpResult);
     }
 
     // The in-app guide chat ("Questions?" widget). Multi-turn, app-scoped,

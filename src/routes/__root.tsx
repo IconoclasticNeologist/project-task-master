@@ -21,6 +21,7 @@ import { MOTION_HEAD_SCRIPT } from "@/lib/motion";
 import { LANG_HEAD_SCRIPT } from "@/lib/lang";
 import { copy } from "@/lib/copy";
 import { LangProvider } from "@/lib/lang-context";
+import { UpdateReadyChip } from "@/components/UpdateReadyChip";
 import { leaveQuickly } from "@/lib/leaveNow";
 
 // A mistyped or stale URL is the one page load that can land ANYONE — including
@@ -166,6 +167,7 @@ function RootComponent() {
       <LangProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <UpdateReadyChip />
         <InstallPrompt />
         <HelperWidget />
         <LockGate />

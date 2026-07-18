@@ -63,9 +63,9 @@ export const APP_MAP: AppPlace[] = [
   },
   {
     route: "/notebooks",
-    name: "Guides you can open",
-    what: "Nine short notebook guides — pleas and deals, your own lawyer, hard questions, memory, phones and posts, protections for non-citizens, gentler-court options, delays, calming tools.",
-    how: "Open any cover to read it. Short on purpose.",
+    name: "Short guides (now on the Study guides shelf)",
+    what: "The nine short notebook guides — pleas and deals, your own lawyer, hard questions, memory, phones and posts, protections for non-citizens, gentler-court options, delays, calming tools — now live on the one Study guides shelf.",
+    how: "This address opens the Study guides shelf; the short guides sit below the ten bigger ones. Prefer pointing people to /study.",
   },
   {
     route: "/resources",

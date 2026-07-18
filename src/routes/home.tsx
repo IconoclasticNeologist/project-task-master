@@ -223,22 +223,18 @@ function HomeScreen() {
             </AlertDialogContent>
           </AlertDialog>
 
+          {/* Order is deliberate (owner-set): the session first, the timeline
+              second (the second most important feature), support always last. */}
           <div className="grid grid-cols-1 gap-4">
             <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
-            <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
-            <Tile
-              to="/notebooks"
-              label={copy.guide.moreGuidesLabel}
-              hint={copy.guide.moreGuidesHint}
-            />
-            <Tile to="/study" label={copy.study.title} hint={copy.study.homeTileHint} />
-            <Tile to="/account" label={copy.home.continueWhereLeft} hint="Your words and pieces." />
             <Tile
               to="/account"
               hash="timeline"
               label={copy.home.seeTimeline}
-              hint="What happened, in your order."
+              hint={copy.home.seeTimelineHint}
             />
+            <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
+            <Tile to="/study" label={copy.study.title} hint={copy.study.homeTileHint} />
             <Tile
               to="/resources"
               label={copy.home.findSupport}

@@ -25,14 +25,16 @@ For making this genuinely useful to prepare someone for a court hearing:
 - The **behavioral guardrails stay no matter what**: the recognition agent never tells a person a label applies to them; the reframer only reflects their own words and never surfaces sexual history (FRE 412); the Coach never gives legal advice.
 - I log where each piece of content came from (below), so a trauma therapist / attorney can review it later even though we're shipping for the hackathon first.
 
-> **Honest caveat:** content added from public sources or your documents for the hackathon has **not** been signed off by a trauma therapist or attorney. The guardrails make it safe-by-construction, but expert review is still the right call before a real survivor in a real case relies on it.
+> **Provenance note (updated 2026-07-18):** survivor-facing wording is grounded in the citation-pinned research dossier under `docs/research/` and is owner-reviewed: every persona's exact words are visible and editable at `/dev` → Prompts (audited overrides). The behavioral guardrails above remain structural and survive any rewording.
 
 ---
 
 ## Content provenance log
 
 ### Crisis / support resources (Support screen) — added 2026-06-23
+
 United States national hotlines, verified public numbers:
+
 - **National Human Trafficking Hotline** — 1-888-373-7888, text 233733 (Polaris Project; 24/7, 200+ languages).
 - **988 Suicide & Crisis Lifeline** — call/text 988 (24/7).
 - **RAINN National Sexual Assault Hotline** — 1-800-656-4673 (24/7).
@@ -42,19 +44,23 @@ United States national hotlines, verified public numbers:
 Assumes a **US** audience. If the demo is elsewhere, drop a local resource list here and I'll swap them.
 
 ### Court guide ("Preparing for court" screen) — added 2026-06-23
+
 General, plain-language court-preparation content for survivor-witnesses (US, general — not jurisdiction-specific, not legal advice, not testimony scripting). Drawn from public victim-witness guidance:
+
 - Office for Victims of Crime (OVC), U.S. DOJ — victims' rights and victim-witness services (ovc.ojp.gov).
 - U.S. Attorneys' Offices Victim-Witness Assistance Programs — "what to expect in court" / testifying guidance (justice.gov).
 - RAINN — what to expect from the criminal justice process; tips for survivors (rainn.org).
 - Crime Victims' Rights Act, 18 U.S.C. § 3771 — rights to be present, to confer, and to fair treatment.
 - Federal Rule of Evidence 412 (rape shield) + state equivalents — limits on questions about a witness's other sexual behavior.
 
-The screen states plainly that it is general, not legal advice, and that the survivor should confirm specifics with their advocate/lawyer. An attorney + a trauma specialist should still review this wording before a real survivor relies on it; for the hackathon demo it is principled, sourced content rather than a placeholder.
+The screen states plainly that it is general, not legal advice, and that the survivor should confirm specifics with their advocate/lawyer. The wording is sourced from the research dossier and owner-reviewed.
 
 ### Reflect agents + Witness Stand practice — surfaced for the demo 2026-06-23
+
 Per an explicit hackathon decision, the Reflect agents (reframer / recognition / interviewer) and the voice "Witness Stand" practice are now presented as finished features — the placeholder tags and the "reviewed wording is coming" framing are removed. The safety guardrails are unchanged and remain the whole point:
+
 - **Recognition** never tells a person a label applies to them, and refuses direct or indirect "was I trafficked?" asks.
 - **Reframer** surfaces only the person's own words as neutral observations; never their sexual history (FRE 412).
 - **Witness Stand** drills composure and process (it's okay to say "I don't know," take your time, ask for a break) and never supplies answers or coaches the content of testimony.
 
-These prompts have NOT had trauma-therapist / attorney sign-off. For the demo that risk is accepted and documented here; an attorney + trauma specialist should review the exact wording before any real survivor uses them. Canonical prompts live in `supabase/functions/advocate-agent/index.ts` (text) and `advocate-voice-token/index.ts` (voice).
+Prompt wording is research-grounded (docs/research/) and owner-owned: visible and editable at `/dev` → Prompts, with audited overrides and restorable git defaults. Canonical defaults live in `supabase/functions/_shared/advocatePrompts.ts`, resolved through `_shared/promptRegistry.ts`.

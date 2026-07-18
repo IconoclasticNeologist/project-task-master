@@ -53,6 +53,7 @@ import {
   invalidateGuardrailsCache,
   sanitizeGuardrails,
 } from "../_shared/guardrails.ts";
+import { DEV_COPILOT_TOOLS, devCopilotSystem } from "../_shared/devMap.ts";
 
 type Json = Record<string, unknown>;
 
@@ -670,6 +671,38 @@ serve(async (req) => {
         .order("day", { ascending: false });
       if (error) return json(500, { error: `Could not read stats: ${error.message}` });
       return json(200, { stats: data ?? [] });
+    }
+
+    // The /dev copilot's LLM turn. The server ONLY runs the model with the
+    // dashboard map + tool definitions; every tool the model requests is
+    // executed by the CLIENT through the same gated admin actions the
+    // dashboard buttons use (and their existing audit trails). Stateless.
+    if (action === "copilot_turn") {
+      const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") ?? Deno.env.get("CLAUDE_API_KEY");
+      if (!anthropicKey) return json(503, { error: "Copilot is not configured" });
+      const messages = Array.isArray(body.messages) ? body.messages.slice(-40) : [];
+      if (messages.length === 0) return json(400, { error: "Empty conversation" });
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5",
+          max_tokens: 2048,
+          system: devCopilotSystem(),
+          tools: DEV_COPILOT_TOOLS,
+          messages,
+        }),
+      });
+      if (!res.ok) return json(502, { error: "Copilot reply failed" });
+      const out = await res.json();
+      return json(200, {
+        content: out?.content ?? [],
+        stop_reason: out?.stop_reason ?? "end_turn",
+      });
     }
 
     return json(400, { error: "Unknown action" });

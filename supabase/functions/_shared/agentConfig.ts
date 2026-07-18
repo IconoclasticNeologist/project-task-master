@@ -4,7 +4,7 @@
  * never push an un-allowlisted voice/model or an unsafe cap into a session.
  *
  * Prompts and guardrail content are NOT here — they live in git
- * (_shared/advocatePrompts.ts), SME-gated. Config affects session SETUP
+ * (_shared/advocatePrompts.ts; owner-editable via /dev, audited). Config affects session SETUP
  * only; the deterministic stop path never depends on it.
  */
 

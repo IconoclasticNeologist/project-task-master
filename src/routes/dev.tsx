@@ -21,6 +21,7 @@ import { pageTitle, PRODUCT_NAME } from "@/lib/product";
 import {
   approveProfessional,
   avatarKeyCheck,
+  copilotTurn,
   deleteAcknowledgement,
   deleteKnowledge,
   ensureSelfAccess,
@@ -216,6 +217,7 @@ function DevScreen() {
 
 type DevSection =
   | "overview"
+  | "copilot"
   | "agents"
   | "prompts"
   | "guardrails"
@@ -228,6 +230,7 @@ type DevSection =
 
 const DEV_SECTIONS: Array<{ id: DevSection; label: string }> = [
   { id: "overview", label: "Overview" },
+  { id: "copilot", label: "✦ Copilot" },
   { id: "agents", label: "Agents" },
   { id: "prompts", label: "Prompts" },
   { id: "guardrails", label: "Guardrails" },
@@ -272,6 +275,7 @@ function Dashboard({ setupWarning }: { setupWarning: string | null }) {
           </p>
         )}
         {section === "overview" && <ReadinessPanel />}
+        {section === "copilot" && <DevCopilotPanel />}
         {section === "agents" && <AgentsPanel />}
         {section === "prompts" && <PromptsPanel />}
         {section === "guardrails" && <GuardrailsPanel />}
@@ -668,8 +672,8 @@ function OrganizationsPanel() {
 }
 
 // ── Agent operations (MindCrafter /nexus/voice-agents inspired, adapted) ────
-// Operational knobs only. Prompts render READ-ONLY: their content is SME-gated
-// and ships through git review — that is the safety design, not a gap.
+// Operational knobs, plus the prompt editor below: every persona's exact
+// words, editable live (audited overrides; git defaults one click away).
 
 const AGENT_LABELS: Record<keyof AgentOps["voice"], string> = {
   base: "Coach",
@@ -741,8 +745,8 @@ function AgentsPanel() {
       <CardContent className="space-y-5">
         <p className="text-xs leading-relaxed text-muted-foreground">
           Voices, time caps, and the practice person are configurable here and apply to new sessions
-          within a minute. Prompt wording is read-only by design: it ships through git and the SME
-          review gate.
+          within a minute. Prompt wording is editable below — every persona's exact words, saved as
+          audited overrides; “Restore default” returns to the git version.
         </p>
 
         <div>
@@ -1407,9 +1411,12 @@ function PromptEditor({ prompt }: { prompt: AgentPromptInfo }) {
           onClick={() => setOpen((o) => !o)}
           className="flex w-full items-center justify-between text-left"
         >
-          <span className="text-sm text-foreground">
+          <span className="min-w-0 text-sm text-foreground">
             {prompt.title}
             {edited && <span className="ml-2 text-xs text-muted-foreground">· edited</span>}
+            <span className="mt-0.5 block text-xs font-normal leading-relaxed text-muted-foreground">
+              {prompt.atlas.accomplishes}
+            </span>
           </span>
           <span aria-hidden className="text-muted-foreground">
             {open ? "–" : "+"}
@@ -1417,6 +1424,35 @@ function PromptEditor({ prompt }: { prompt: AgentPromptInfo }) {
         </button>
         {open && (
           <div className="space-y-3">
+            {/* At a glance — what this agent does, how its conversation flows. */}
+            <div className="space-y-2 rounded-md bg-secondary/40 p-3">
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                  How it works
+                </p>
+                <ol className="mt-1 space-y-1">
+                  {prompt.atlas.workflow.map((step, i) => (
+                    <li
+                      key={step}
+                      className="flex gap-2 text-xs leading-relaxed text-foreground/80"
+                    >
+                      <span aria-hidden className="tabular-nums text-muted-foreground">
+                        {i + 1}.
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <p className="text-xs leading-relaxed text-foreground/80">
+                <span className="text-muted-foreground">Where it goes: </span>
+                {prompt.atlas.arc}
+              </p>
+              <p className="text-xs leading-relaxed text-foreground/80">
+                <span className="text-muted-foreground">Gets at runtime: </span>
+                {prompt.atlas.receives.join(" · ")}
+              </p>
+            </div>
             <p className="text-xs leading-relaxed text-muted-foreground">{prompt.note}</p>
             <Textarea
               value={draft}
@@ -2134,6 +2170,210 @@ function AcknowledgementsPanel() {
         The public page is at <span className="text-foreground">/sources</span> — share that link
         with judges.
       </p>
+    </div>
+  );
+}
+
+// ── Dev copilot ─────────────────────────────────────────────────────────────
+// A colleague inside the dashboard: knows every panel and persona (the server
+// injects the dashboard map + agent atlas), and acts through the SAME gated
+// admin helpers the buttons above use — so every change carries the existing
+// audit trails. The tool loop runs HERE on the client: the server only runs
+// the model; requested tools execute locally and their results go back.
+
+type CopilotBlock = {
+  type?: string;
+  text?: string;
+  id?: string;
+  name?: string;
+  input?: Record<string, unknown>;
+  tool_use_id?: string;
+  content?: unknown;
+  is_error?: boolean;
+};
+type CopilotMessage = { role: "user" | "assistant"; content: string | CopilotBlock[] };
+
+const COPILOT_WRITES = new Set([
+  "set_agent_config",
+  "set_prompt",
+  "reset_prompt",
+  "set_guardrails",
+  "save_knowledge",
+  "delete_knowledge",
+  "save_acknowledgement",
+  "delete_acknowledgement",
+]);
+
+async function runCopilotTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+  switch (name) {
+    case "get_agent_config":
+      return getAgentConfig();
+    case "set_agent_config":
+      return setAgentConfig(
+        input.section as Parameters<typeof setAgentConfig>[0],
+        input.value as Parameters<typeof setAgentConfig>[1],
+      );
+    case "set_prompt":
+      return setPrompt(String(input.key ?? ""), String(input.content ?? ""), "ai");
+    case "reset_prompt":
+      return resetPrompt(String(input.key ?? ""));
+    case "get_guardrails":
+      return getGuardrails();
+    case "set_guardrails":
+      return setGuardrails(input.value as Parameters<typeof setGuardrails>[0]);
+    case "list_knowledge":
+      return listKnowledge();
+    case "save_knowledge":
+      return saveKnowledge(input.item as Parameters<typeof saveKnowledge>[0]);
+    case "delete_knowledge":
+      return deleteKnowledge(String(input.id ?? ""));
+    case "list_acknowledgements":
+      return listAcknowledgements();
+    case "save_acknowledgement":
+      return saveAcknowledgement(input.item as Parameters<typeof saveAcknowledgement>[0]);
+    case "delete_acknowledgement":
+      return deleteAcknowledgement(String(input.id ?? ""));
+    case "list_agent_stats":
+      return listAgentStats();
+    default:
+      throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
+function DevCopilotPanel() {
+  const queryClient = useQueryClient();
+  const [messages, setMessages] = useState<CopilotMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const send = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || busy) return;
+    setBusy(true);
+    setError(null);
+    setDraft("");
+    let thread: CopilotMessage[] = [...messages, { role: "user", content: trimmed }];
+    setMessages(thread);
+    let wrote = false;
+    try {
+      for (let round = 0; round < 8; round++) {
+        const res = await copilotTurn(thread as unknown[]);
+        const blocks = (res.content as CopilotBlock[]) ?? [];
+        thread = [...thread, { role: "assistant", content: blocks }];
+        setMessages(thread);
+        const toolUses = blocks.filter((b) => b.type === "tool_use");
+        if (res.stop_reason !== "tool_use" || toolUses.length === 0) break;
+        const results: CopilotBlock[] = [];
+        for (const t of toolUses) {
+          try {
+            const out = await runCopilotTool(t.name ?? "", t.input ?? {});
+            if (COPILOT_WRITES.has(t.name ?? "")) wrote = true;
+            results.push({
+              type: "tool_result",
+              tool_use_id: t.id,
+              content: JSON.stringify(out ?? { ok: true }).slice(0, 60000),
+            });
+          } catch (e) {
+            results.push({
+              type: "tool_result",
+              tool_use_id: t.id,
+              content: e instanceof Error ? e.message : "tool failed",
+              is_error: true,
+            });
+          }
+        }
+        thread = [...thread, { role: "user", content: results }];
+        setMessages(thread);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "The copilot didn't answer.");
+    } finally {
+      if (wrote) void queryClient.invalidateQueries();
+      setBusy(false);
+    }
+  };
+
+  const visible = messages
+    .map((m, i) => ({ m, i }))
+    .filter(({ m }) => typeof m.content === "string" || m.role === "assistant");
+
+  return (
+    <div className="space-y-4">
+      <header>
+        <h2 className="text-xl font-normal tracking-tight">✦ Copilot</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          Knows every panel and every AI persona, and can change what you ask it to — prompts,
+          guardrails, config, knowledge, acknowledgements — through the same audited actions the
+          buttons use. Try: &quot;what does the practice person do?&quot;, &quot;make the
+          Coach&apos;s opener shorter&quot;, &quot;add Dr. Rivera to the acknowledgements as our
+          trauma reviewer&quot;.
+        </p>
+      </header>
+
+      <div className="space-y-3">
+        {visible.map(({ m, i }) => {
+          if (typeof m.content === "string") {
+            return (
+              <div key={i} className="rounded-md bg-secondary/40 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">You</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                  {m.content}
+                </p>
+              </div>
+            );
+          }
+          return (
+            <div key={i} className="space-y-2">
+              {m.content.map((b, j) => {
+                if (b.type === "text" && b.text?.trim()) {
+                  return (
+                    <div key={j} className="rounded-md border border-border p-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Copilot
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                        {b.text}
+                      </p>
+                    </div>
+                  );
+                }
+                if (b.type === "tool_use") {
+                  return (
+                    <p key={j} className="text-xs text-muted-foreground">
+                      ✦ {COPILOT_WRITES.has(b.name ?? "") ? "changing" : "reading"}: {b.name}
+                      {typeof b.input?.key === "string" ? ` (${String(b.input.key)})` : ""}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          );
+        })}
+        {busy && <p className="text-xs text-muted-foreground">Working…</p>}
+        {error && <p className="text-xs text-destructive">{error}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Ask about anything on this dashboard, or tell me what to change…"
+          className="min-h-20"
+        />
+        <button
+          type="button"
+          disabled={busy || !draft.trim()}
+          onClick={() => void send(draft)}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"
+        >
+          {busy ? "Working…" : "Send"}
+        </button>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          This chat isn&apos;t saved. Changes it makes are audited exactly like your own edits.
+        </p>
+      </div>
     </div>
   );
 }

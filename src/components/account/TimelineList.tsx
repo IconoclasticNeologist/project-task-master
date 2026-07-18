@@ -62,6 +62,18 @@ export function TimelineList({
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-muted-foreground">{copy.account.timelineLede}</p>
+      {/* Purpose + how, up front — the owner's call: this is the app's second
+          most important feature and it has to explain itself. */}
+      <ol className="space-y-1.5">
+        {copy.account.timelineHow.map((step, i) => (
+          <li key={step} className="flex gap-2 text-sm leading-relaxed text-muted-foreground">
+            <span aria-hidden className="select-none tabular-nums text-foreground/50">
+              {i + 1}.
+            </span>
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
       <TimelineHelper defaultVisibility={defaultVisibility} />
       {!drafting && (
         <button

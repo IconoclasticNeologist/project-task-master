@@ -88,6 +88,8 @@ export const copy = {
   shell: {
     leaveNow: "Leave now",
     iNeedABreak: "I need a break",
+    updateReady: "A newer version of this app is ready.",
+    updateRefresh: "Refresh",
   },
 
   breakScreen: {
@@ -157,8 +159,9 @@ export const copy = {
     finishSetupCta: "Continue setup",
     startSession: "Start a session",
     courtGuide: "Preparing for court",
-    continueWhereLeft: "Continue your space",
-    seeTimeline: "See your timeline",
+    seeTimeline: "Your timeline",
+    seeTimelineHint:
+      "Put what happened in your own order — and keep your words and papers in one place.",
     findSupport: "Find support",
     // Presenter-only strings (demo-gated devices; a survivor's device never
     // renders any of these — see demoTools).
@@ -475,7 +478,12 @@ export const copy = {
       documents: "Your papers",
     },
     timelineLede:
-      "A place to put what happened in order — in your words. Rough dates like “after the move” are welcome.",
+      "Your timeline is where what happened becomes clear — in your words, in your order. A clear order helps YOU see your own story, and helps anyone you later choose to share it with follow it.",
+    timelineHow: [
+      "Say or type what happened, in any order — messy is fine.",
+      "The helper below arranges only your words into a draft. You keep a row, change it, or ignore it.",
+      "Rough anchors like “after the move” count. Nothing is shared unless you mark it “okay to share.”",
+    ],
     // The timeline helper: the founding idea — messy words in, an organized
     // draft out, with at most two gentle, skippable ordering questions.
     timelineHelper: {
@@ -606,6 +614,22 @@ export const copy = {
     title: "Your plan",
     intro:
       "Small practical steps for court, in the order that feels useful to you. You can add your own, change them, or leave them for later.",
+    helper: {
+      title: "Build my plan with help",
+      intro:
+        "Tell the helper what's coming up — a hearing date, a worry, what usually helps you — and it drafts small practical steps. It plans the day, never your words. Nothing is added unless you keep it.",
+      placeholder: "My hearing is next month. I don't know how I'll get there or keep calm…",
+      run: "Draft some steps",
+      running: "Drafting…",
+      draftLabel: "Suggested steps — keep the ones that fit",
+      keep: "Keep",
+      kept: "Kept ✓",
+      skip: "Skip this question",
+      replyPlaceholder: "You can answer, add more, or say what doesn't fit.",
+      send: "Send",
+      notSaved: "This helper chat isn't saved. It disappears when you leave.",
+      error: "That didn't go through. You can try again.",
+    },
     add: "Add a step",
     titleLabel: "What would help?",
     detailsLabel: "A short note (optional)",

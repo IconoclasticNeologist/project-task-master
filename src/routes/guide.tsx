@@ -95,7 +95,7 @@ function GuideScreen() {
           </CardContent>
         </Card>
 
-        <Link to="/notebooks">
+        <Link to="/study">
           <Card className="paper-shadow">
             <CardContent className="flex items-center justify-between py-5">
               <div>

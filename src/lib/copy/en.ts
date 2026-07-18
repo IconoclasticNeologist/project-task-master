@@ -164,7 +164,7 @@ export const copy = {
     groupSupport: "Support",
     seeTimeline: "Your timeline",
     seeTimelineHint:
-      "Put what happened in your own order — and keep your words and papers in one place.",
+      "Say it in any order — an AI helper drafts your timeline, and you keep only what's right.",
     findSupport: "Find support",
     // Presenter-only strings (demo-gated devices; a survivor's device never
     // renders any of these — see demoTools).
@@ -490,7 +490,7 @@ export const copy = {
       "Your timeline is where what happened becomes clear — in your words, in your order. A clear order helps YOU see your own story, and helps anyone you later choose to share it with follow it.",
     timelineHow: [
       "Say or type what happened, in any order — messy is fine.",
-      "The helper below arranges only your words into a draft. You keep a row, change it, or ignore it.",
+      "An AI helper arranges only your words into a draft — it never adds anything. You keep a row, change it, or ignore it.",
       "Rough anchors like “after the move” count. Nothing is shared unless you mark it “okay to share.”",
     ],
     // The timeline helper: the founding idea — messy words in, an organized
@@ -498,7 +498,7 @@ export const copy = {
     timelineHelper: {
       title: "Put it in order",
       intro:
-        "Write what happened in any order — messy is fine. The helper arranges only your words into a draft timeline. Nothing is saved unless you keep it.",
+        "Write what happened in any order — messy is fine. An AI helper arranges only your words into a draft timeline, and may ask one or two skippable questions about order. Nothing is saved unless you keep it.",
       placeholder: "It’s all jumbled — the move, the new job, when my papers were taken…",
       run: "Arrange my words",
       running: "Arranging…",

@@ -168,7 +168,7 @@ export const copyEs: CopyShape = {
     groupSupport: "Apoyo",
     seeTimeline: "Su línea de tiempo",
     seeTimelineHint:
-      "Ponga lo que pasó en su propio orden — y guarde sus palabras y papeles en un solo lugar.",
+      "Dígalo en cualquier orden — una ayuda de IA propone su línea de tiempo, y usted conserva solo lo correcto.",
     findSupport: "Encontrar apoyo",
     example: {
       offerTitle: "¿Quiere ver un ejemplo primero?",
@@ -482,13 +482,13 @@ export const copyEs: CopyShape = {
       "Su línea de tiempo es donde lo que pasó se vuelve claro — en sus palabras, en su orden. Un orden claro le ayuda a USTED a ver su propia historia, y ayuda a seguirla a quien usted decida mostrársela después.",
     timelineHow: [
       "Diga o escriba lo que pasó, en cualquier orden — desordenado está bien.",
-      "La ayuda de abajo organiza solo sus palabras en un borrador. Usted conserva una fila, la cambia, o la ignora.",
+      "Una ayuda de IA organiza solo sus palabras en un borrador — nunca agrega nada. Usted conserva una fila, la cambia, o la ignora.",
       "Anclas aproximadas como “después de la mudanza” cuentan. Nada se comparte a menos que usted lo marque “se puede compartir”.",
     ],
     timelineHelper: {
       title: "Ponerlo en orden",
       intro:
-        "Escriba lo que pasó en cualquier orden — desordenado está bien. La ayuda organiza solo sus palabras en un borrador de línea de tiempo. Nada se guarda a menos que usted lo conserve.",
+        "Escriba lo que pasó en cualquier orden — desordenado está bien. Una ayuda de IA organiza solo sus palabras en un borrador de línea de tiempo, y puede hacer una o dos preguntas de orden que se pueden saltar. Nada se guarda a menos que usted lo conserve.",
       placeholder:
         "Está todo revuelto — la mudanza, el trabajo nuevo, cuando me quitaron los papeles…",
       run: "Ordenar mis palabras",

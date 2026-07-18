@@ -144,6 +144,9 @@ export function tourCopy(es: boolean) {
       // The timeline helper beat: messy words in (the app's real placeholder
       // example), an ordered draft out, one gentle skippable question.
       helperLabel: app.account.timelineHelper.title,
+      helperAI: es
+        ? "Una IA — no una app de notas: ella escribe desordenado, la ayuda propone el orden, y ella conserva cada fila o la salta."
+        : "An AI, not a notes app: she writes it messy, the helper drafts the order, and she keeps or skips every row.",
       messy: app.account.timelineHelper.placeholder,
       draftWhen1: es ? "después de la mudanza" : "after the move",
       draftWhat1: es ? "Empezó el trabajo nuevo." : "The new job started.",

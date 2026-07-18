@@ -433,6 +433,9 @@ function Stage({
           <p className="tour-mut lbl" style={{ margin: "2px 0 4px" }}>
             {t.ch5.helperLabel}
           </p>
+          <p className="tour-mut" style={{ margin: "0 0 4px" }}>
+            {t.ch5.helperAI}
+          </p>
           <p className="tour-mut" style={{ fontStyle: "italic" }}>
             “{t.ch5.messy}”
           </p>
@@ -634,10 +637,31 @@ function TourScreen() {
   // as user-approved for the rest of the visit. Without engagement history
   // (fresh or private windows) this is the difference between a spoken tour
   // and a silent one. A failure re-arms, so the next tap retries.
+  // Ch04's narration was mastered quieter than the Coach clips; a WebAudio
+  // gain stage lifts it (an element's volume can't exceed 1.0). Wired once,
+  // inside the Play gesture — exactly when an AudioContext is allowed.
+  const narrBoostedRef = useRef(false);
+  const boostNarration = () => {
+    const el = narrRef.current;
+    if (!el || narrBoostedRef.current) return;
+    narrBoostedRef.current = true;
+    try {
+      const ctx = new AudioContext();
+      const src = ctx.createMediaElementSource(el);
+      const gain = ctx.createGain();
+      gain.gain.value = 2.2;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+    } catch {
+      /* the boost is a nicety — unboosted narration still plays */
+    }
+  };
+
   const primedRef = useRef(false);
   const primeMedia = () => {
     if (primedRef.current) return;
     primedRef.current = true;
+    boostNarration();
     for (const el of [coachRef.current, narrRef.current, videoRef.current]) {
       if (!el) continue;
       void el
@@ -953,6 +977,26 @@ function TourScreen() {
 
         <section className="tour-grid" aria-label="Product walkthrough">
           <div className="tour-narr">
+            {/* Play first — the owner's call: the button is the invitation,
+                so it sits above everything else in the column. */}
+            <div className="tour-controls">
+              {playing ? (
+                <button type="button" className="primary" onClick={pause}>
+                  <Pause className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} /> Pause
+                </button>
+              ) : (
+                <button type="button" className="primary" onClick={play}>
+                  <Play className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} />
+                  {elapsed >= TOTAL ? "Replay" : elapsed > 0 ? "Resume" : "Play the walkthrough"}
+                </button>
+              )}
+              <span className="tour-controls-meta">
+                <button type="button" onClick={restart} aria-label="Restart">
+                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} /> Restart
+                </button>
+                <span className="pct">{pct}%</span>
+              </span>
+            </div>
             <p className="tour-now-label">Now happening</p>
             <h2 className="tour-now-title" aria-live="polite">
               {ch.title}
@@ -980,24 +1024,6 @@ function TourScreen() {
               })}
             </ol>
 
-            <div className="tour-controls">
-              {playing ? (
-                <button type="button" className="primary" onClick={pause}>
-                  <Pause className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} /> Pause
-                </button>
-              ) : (
-                <button type="button" className="primary" onClick={play}>
-                  <Play className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} />
-                  {elapsed >= TOTAL ? "Replay" : elapsed > 0 ? "Resume" : "Play the walkthrough"}
-                </button>
-              )}
-              <span className="tour-controls-meta">
-                <button type="button" onClick={restart} aria-label="Restart">
-                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} /> Restart
-                </button>
-                <span className="pct">{pct}%</span>
-              </span>
-            </div>
             {reduced ? (
               <p className="tour-rm">
                 Motion is off, honoring your setting. Step through with the chapters above — each

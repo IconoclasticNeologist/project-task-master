@@ -89,6 +89,7 @@ export const copy = {
   shell: {
     leaveNow: "Leave now",
     iNeedABreak: "I need a break",
+    back: "Back",
     updateReady: "A newer version of this app is ready.",
     updateRefresh: "Refresh",
   },
@@ -357,10 +358,16 @@ export const copy = {
   session: {
     title: "Session",
     coachIntro: "Hi. I’m here. We can go slowly.",
-    beginCta: "Begin",
-    beginSubtitle: "Talk or type with your Coach. Nothing is saved unless you choose.",
-    practiceCta: "Practice (Witness Stand)",
-    practiceSubtitle: "Rehearse being asked questions — with a stop word, at your pace.",
+    coachCard: {
+      title: "Talk with your Coach",
+      body: "A calm voice that knows the court process. Talk or type — ask anything, learn what your day will look like, or practice a steadying tool. Nothing is saved unless you choose.",
+      tags: ["A voice — talk or type", "Your pace"],
+    },
+    witnessCard: {
+      title: "The Witness Stand",
+      body: "Rehearse being asked questions the way a lawyer might ask them — firm but safe, with a practice person on your screen or a practice voice. Saying “stop” ends it instantly, and your Coach stays nearby.",
+      tags: ["A practice person on screen — not real", "Short on purpose"],
+    },
     youSaid: "You said",
     pause: "I need a pause",
     end: "End the session",

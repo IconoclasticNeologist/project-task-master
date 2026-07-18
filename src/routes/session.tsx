@@ -490,24 +490,52 @@ function SessionScreen() {
                     {copy.session.connectError}
                   </p>
                 )}
+                {/* Two DIFFERENT experiences, presented as equals that explain
+                    themselves: a voice you talk with, and a practice person who
+                    questions you (owner call — the old primary/secondary pair
+                    read as one feature with a variant). */}
                 <button
                   type="button"
                   onClick={beginBase}
-                  className="w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground"
+                  className="w-full rounded-md bg-primary px-4 py-4 text-left"
                 >
-                  {copy.session.beginCta}
-                  <span className="mt-0.5 block text-xs font-normal text-primary-foreground/85">
-                    {copy.session.beginSubtitle}
+                  <span className="block text-base font-medium text-primary-foreground">
+                    {copy.session.coachCard.title}
+                  </span>
+                  <span className="mt-1 block text-xs font-normal leading-relaxed text-primary-foreground/85">
+                    {copy.session.coachCard.body}
+                  </span>
+                  <span className="mt-2 flex flex-wrap gap-1.5">
+                    {copy.session.coachCard.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-primary-foreground/15 px-2 py-0.5 text-[0.65rem] text-primary-foreground/90"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setStage("consent")}
-                  className="w-full rounded-md border border-border px-4 py-3 text-xs text-muted-foreground"
+                  className="w-full rounded-md border-2 border-border px-4 py-4 text-left hover:border-primary/50"
                 >
-                  {copy.session.practiceCta}
-                  <span className="mt-0.5 block text-xs text-muted-foreground/90">
-                    {copy.session.practiceSubtitle}
+                  <span className="block text-base font-medium text-foreground">
+                    {copy.session.witnessCard.title}
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                    {copy.session.witnessCard.body}
+                  </span>
+                  <span className="mt-2 flex flex-wrap gap-1.5">
+                    {copy.session.witnessCard.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-border px-2 py-0.5 text-[0.65rem] text-muted-foreground"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </span>
                 </button>
               </CardContent>

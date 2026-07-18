@@ -93,6 +93,7 @@ export const copyEs: CopyShape = {
   shell: {
     leaveNow: "Salir ya",
     iNeedABreak: "Necesito una pausa",
+    back: "Atrás",
     updateReady: "Hay una versión más nueva de esta aplicación.",
     updateRefresh: "Actualizar",
   },
@@ -360,10 +361,16 @@ export const copyEs: CopyShape = {
   session: {
     title: "Sesión",
     coachIntro: "Hola. Aquí estoy. Podemos ir despacio.",
-    beginCta: "Empezar",
-    beginSubtitle: "Hable o escriba con su Coach. Nada se guarda a menos que usted lo elija.",
-    practiceCta: "Práctica (el estrado)",
-    practiceSubtitle: "Practique que le hagan preguntas — con una palabra para parar, a su ritmo.",
+    coachCard: {
+      title: "Hablar con su Coach",
+      body: "Una voz tranquila que conoce el proceso de la corte. Hable o escriba — pregunte lo que quiera, aprenda cómo será su día, o practique una herramienta para calmarse. Nada se guarda a menos que usted lo elija.",
+      tags: ["Una voz — hablar o escribir", "A su ritmo"],
+    },
+    witnessCard: {
+      title: "El estrado",
+      body: "Practique que le hagan preguntas como podría hacerlo un abogado — firme pero seguro, con una persona de práctica en su pantalla o una voz de práctica. Decir «alto» lo termina de inmediato, y su Coach se queda cerca.",
+      tags: ["Una persona de práctica en pantalla — no es real", "Corto a propósito"],
+    },
     youSaid: "Usted dijo",
     pause: "Necesito una pausa",
     end: "Terminar la sesión",

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Check, Globe, Settings as SettingsIcon } from "lucide-react";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { ArrowLeft, Check, Globe, Settings as SettingsIcon } from "lucide-react";
 import { copy } from "@/lib/copy";
 import {
   DropdownMenu,
@@ -79,6 +79,15 @@ export function Shell({
   judgesLink?: boolean;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const router = useRouter();
+  // In an installed PWA there is no browser chrome — deep pages need their own
+  // way back (owner call). Real history when it exists; Home otherwise. Hidden
+  // where "back" would mean nothing.
+  const showBack = pathname !== "/home" && pathname !== "/";
+  const goBack = () => {
+    if (window.history.length > 1) router.history.back();
+    else void router.navigate({ to: "/home" });
+  };
 
   // Built per render (NOT module level) so the labels re-resolve against the
   // language-aware copy proxy after a language switch.
@@ -97,7 +106,19 @@ export function Shell({
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border">
-          <HomeButton to="/home" />
+          <div className="flex items-center gap-3">
+            {showBack && (
+              <button
+                type="button"
+                onClick={goBack}
+                aria-label={copy.shell.back}
+                className="-mx-1.5 -my-3 px-1.5 py-3 text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
+              </button>
+            )}
+            <HomeButton to="/home" />
+          </div>
           <div className="flex items-center gap-4">
             {judgesLink && (
               <Link

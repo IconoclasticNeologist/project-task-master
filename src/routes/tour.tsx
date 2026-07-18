@@ -107,10 +107,11 @@ const CHAPTERS: Chapter[] = [
     label: "Her words, her locks",
     title: "Encrypted — then put in order, her way.",
     desc: "Everything she writes is encrypted before it is stored. Then a helper arranges her scattered words into a draft timeline — asking at most one gentle, skippable question — and nothing is kept unless she says so.",
-    dur: 15000,
+    dur: 26000,
     pointer: [
-      { p: 0.14, x: 0.42, y: 0.35, click: true },
-      { p: 0.5, x: 0.5, y: 0.185, click: true },
+      { p: 0.1, x: 0.42, y: 0.35, click: true },
+      { p: 0.32, x: 0.5, y: 0.185, click: true },
+      { p: 0.5, x: 0.52, y: 0.62, click: true },
     ],
   },
   {
@@ -179,7 +180,7 @@ const PILLARS = [
   },
   {
     Icon: Heart,
-    t: "AI that never coaches",
+    t: "AI that never coaches testimony",
     d: "A deterministic stop word halts sessions in code, practice can never end in the defense voice, and the model refuses to label whether she was trafficked.",
   },
   {
@@ -384,7 +385,7 @@ function Stage({
       );
     }
     case 4: {
-      const onTimelineTab = p >= 0.5;
+      const onTimelineTab = p >= 0.32;
       if (!onTimelineTab) {
         return (
           <>
@@ -420,8 +421,12 @@ function Stage({
           </>
         );
       }
-      // The timeline helper: her scattered words assemble into a draft — and
-      // the helper asks one gentle, skippable ordering question.
+      // THE TIMELINE ACT — the founding feature, staged: her words arrive
+      // messy, the AI asks ONE gentle question, a fragment visibly unscrambles
+      // into a clear sentence, and the finished timeline draws itself and pans
+      // across the phone. Progress-coupled (pause-safe); under Stillness the
+      // chapter holds its final frame like everything else in the tour.
+      const pan = Math.min(1, Math.max(0, (p - 0.75) / 0.16));
       return (
         <>
           <h2 className="tour-h2">{t.ch5.title}</h2>
@@ -430,31 +435,72 @@ function Stage({
             <span className="on">{t.ch5.tabs.timeline}</span>
             <span>{t.ch5.tabs.documents}</span>
           </div>
-          <p className="tour-mut lbl" style={{ margin: "2px 0 4px" }}>
+          <p className="tour-mut lbl" style={{ margin: "2px 0 2px" }}>
             {t.ch5.helperLabel}
           </p>
-          <p className="tour-mut" style={{ margin: "0 0 4px" }}>
+          <p className={"tour-mut " + revealed(p, 0.33)} style={{ margin: "0 0 4px" }}>
             {t.ch5.helperAI}
           </p>
-          <p className="tour-mut" style={{ fontStyle: "italic" }}>
-            “{t.ch5.messy}”
-          </p>
-          <div className={"tour-row " + revealed(p, 0.6)}>
-            <span className="tour-row-when">{t.ch5.draftWhen1}</span>
-            <span className="tour-row-what">{t.ch5.draftWhat1}</span>
-          </div>
-          <div className={"tour-row " + revealed(p, 0.68)}>
-            <span className="tour-row-when">{t.ch5.timelineWhen}</span>
-            <span className="tour-row-what">{t.ch5.timelineWhat}</span>
-            <span className="tour-row-note">{t.ch5.timelineNote}</span>
-          </div>
-          <div className={"tour-pop " + revealed(p, 0.76)}>
-            <span>{t.ch5.helperQuestion}</span>
-          </div>
-          <div className={"tour-draft " + revealed(p, 0.88)}>
-            <span className="tour-draft-h">{t.ch5.draftHeading}</span>
-            <span className="tour-mut">{t.ch5.draftSub}</span>
-          </div>
+
+          {p < 0.58 ? (
+            <>
+              {/* Act I — chaos: her fragments scatter in, tilted and unordered. */}
+              <p className={"tour-mut lbl " + revealed(p, 0.35)}>{t.ch5.fragsLabel}</p>
+              <div className="tl-frags">
+                {t.ch5.frags.map((frag, i) => (
+                  <span
+                    key={frag}
+                    className={"tl-frag " + revealed(p, 0.36 + i * 0.03)}
+                    style={{ "--rot": `${[-2.5, 1.8, -1.2, 2.2][i]}deg` } as CSSProperties}
+                  >
+                    “{frag}”
+                  </span>
+                ))}
+              </div>
+              {/* Act II — the AI asks ONE question; she answers in three words. */}
+              <div className={"tour-pop " + revealed(p, 0.48)}>
+                <span>{t.ch5.q2}</span>
+              </div>
+              <div className={"tl-reply " + revealed(p, 0.54)}>“{t.ch5.q2Reply}”</div>
+            </>
+          ) : p < 0.74 ? (
+            <>
+              {/* Act III — the unscramble: the words settle into a sentence. */}
+              <p className={"tour-mut lbl " + revealed(p, 0.58)}>{t.ch5.unscrambleLabel}</p>
+              <div className={"tl-unscramble " + revealed(p, 0.62)}>
+                {t.ch5.unscrambleWords.map((word, i) => (
+                  <span key={word} style={{ "--i": i } as CSSProperties}>
+                    {word}
+                  </span>
+                ))}
+              </div>
+              <p className={"tour-mut " + revealed(p, 0.7)} style={{ fontStyle: "italic" }}>
+                {t.ch5.timelineNote}
+              </p>
+            </>
+          ) : (
+            <>
+              {/* Act IV — the payoff: the line draws and pans across her story. */}
+              <p className={"tour-mut lbl " + revealed(p, 0.74)}>{t.ch5.tlLabel}</p>
+              <div className="tl-marquee">
+                <div className="tl-track" style={{ transform: `translateX(${-pan * 44}%)` }}>
+                  <i className="tl-line" aria-hidden />
+                  {t.ch5.tl.map((row, i) => (
+                    <div key={row.when} className={"tl-node " + revealed(p, 0.75 + i * 0.03)}>
+                      <i className="tl-dot" aria-hidden />
+                      <span className="tl-when">{row.when}</span>
+                      <span className="tl-what">{row.what}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={"tl-kept " + revealed(p, 0.9)}>{t.ch5.keptRow}</div>
+              <div className={"tour-draft " + revealed(p, 0.93)}>
+                <span className="tour-draft-h">{t.ch5.draftHeading}</span>
+                <span className="tour-mut">{t.ch5.draftSub}</span>
+              </div>
+            </>
+          )}
         </>
       );
     }
@@ -977,8 +1023,9 @@ function TourScreen() {
           <h1 className="tour-hero-h">Safety is the first feature, not the last.</h1>
           <p className="tour-hero-p">
             {PRODUCT_NAME} helps an adult survivor of trafficking prepare for court — emotionally
-            and practically — without ever being coached, recorded, or asked to disclose. Press
-            play, or step through it yourself. The phone is fully bilingual — try the globe.
+            and practically — without her testimony ever being coached, without recording, without
+            being asked to disclose. Press play, or step through it yourself. The phone is fully
+            bilingual — try the globe.
           </p>
         </section>
 
@@ -1435,6 +1482,32 @@ const TOUR_CSS = `
 .tour-row-note { font-size: 10.5px; color: var(--muted-foreground); }
 .tour-draft { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; border-left: 3px solid var(--primary); padding: 2px 0 2px 10px; }
 .tour-draft-h { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px; letter-spacing: 0.06em; color: var(--foreground); }
+
+/* ── The timeline act (ch05) ─────────────────────────────────────────────── */
+/* Act I: her fragments arrive messy — tilted, unordered, unmistakably raw. */
+.tl-frags { display: flex; flex-direction: column; gap: 6px; margin: 2px 0 4px; }
+.tl-frag { align-self: flex-start; max-width: 92%; background: var(--card); border: 1px dashed oklch(0.75 0.03 80); border-radius: 10px; padding: 6px 10px; font-size: 11.5px; font-style: italic; color: var(--muted-foreground); box-shadow: 0 1px 3px rgba(60,45,30,0.06); }
+.tl-frag.tour-in { transform: rotate(var(--rot)); }
+.tl-frag:nth-child(even) { align-self: flex-end; }
+/* Her three-word reply to the helper's one question. */
+.tl-reply { align-self: flex-end; margin: 8px 0 0 auto; width: fit-content; background: var(--primary); color: var(--primary-foreground); border-radius: 12px 12px 3px 12px; padding: 6px 11px; font-size: 12px; }
+/* Act III: the unscramble — words fly from scattered poses into one sentence. */
+.tl-unscramble { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 6px; background: var(--card); border-radius: 12px; padding: 12px; box-shadow: 0 1px 3px rgba(60,45,30,0.08); }
+.tl-unscramble span { display: inline-block; font-size: 14px; color: var(--foreground); transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease; transition-delay: calc(var(--i) * 180ms); }
+.tl-unscramble:not(.tour-in) span { opacity: 0; }
+.tl-unscramble:not(.tour-in) span:nth-child(1) { transform: translate(34px, 18px) rotate(7deg); }
+.tl-unscramble:not(.tour-in) span:nth-child(2) { transform: translate(-20px, -12px) rotate(-6deg); }
+.tl-unscramble:not(.tour-in) span:nth-child(3) { transform: translate(12px, -20px) rotate(4deg); }
+.tl-unscramble.tour-in span { opacity: 1; transform: none; }
+/* Act IV: the line itself — a horizontal track that pans across the phone. */
+.tl-marquee { overflow: hidden; margin: 4px -14px 0; padding: 6px 14px 2px; }
+.tl-track { display: flex; gap: 14px; width: max-content; position: relative; padding: 10px 8px 2px; }
+.tl-line { position: absolute; left: 0; right: 0; top: 14px; height: 2px; background: var(--primary); opacity: 0.45; border-radius: 2px; }
+.tl-node { position: relative; width: 118px; flex: none; display: flex; flex-direction: column; gap: 2px; padding-top: 12px; }
+.tl-dot { position: absolute; top: 10px; left: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px oklch(0.93 0.04 150); }
+.tl-when { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted-foreground); }
+.tl-what { font-size: 12px; line-height: 1.35; color: var(--foreground); }
+.tl-kept { margin-top: 8px; width: fit-content; background: oklch(0.93 0.04 150); color: oklch(0.3 0.05 150); border-radius: 999px; padding: 4px 10px; font-size: 11px; }
 
 .tour-shelf { display: flex; flex-direction: column; gap: 9px; }
 .tour-nb { border-radius: 12px; padding: 12px 14px 12px 20px; position: relative; box-shadow: 0 1px 3px rgba(60,45,30,0.08), 0 8px 18px -14px rgba(60,45,30,0.5); }

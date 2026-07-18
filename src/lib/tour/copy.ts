@@ -147,6 +147,46 @@ export function tourCopy(es: boolean) {
       helperAI: es
         ? "Una IA — no una app de notas: ella escribe desordenado, la ayuda propone el orden, y ella conserva cada fila o la salta."
         : "An AI, not a notes app: she writes it messy, the helper drafts the order, and she keeps or skips every row.",
+      // The timeline act — chaos, one gentle question, the unscramble, the line.
+      fragsLabel: es ? "Sus palabras, como llegan" : "Her words, as they come",
+      frags: es
+        ? [
+            "me quitó el pasaporte… ¿cuándo? ¿después de la mudanza?",
+            "turnos de noche — ¿el segundo invierno? dejé de contar",
+            "intenté irme — en primavera, creo",
+            "la mujer de la clínica me dio una tarjeta",
+          ]
+        : [
+            "he took my passport… when? after the move?",
+            "night shifts — the second winter? I stopped counting",
+            "I tried to leave — spring, I think",
+            "the clinic woman gave me a card",
+          ],
+      q2: es
+        ? "¿Qué vino primero — los turnos de noche más largos, o la primera vez que intentó irse? Está bien saltar esta pregunta."
+        : "Which came first — the longer night shifts, or the first time you tried to leave? It's okay to skip this.",
+      q2Reply: es ? "primero los turnos" : "the shifts came first",
+      unscrambleLabel: es ? "Sus palabras, aclarándose" : "Her words, settling into place",
+      unscrambleWords: es
+        ? ["Después de la mudanza —", "él tomó", "mi pasaporte."]
+        : ["After the move —", "he took", "my passport."],
+      tlLabel: es ? "Su línea de tiempo — en su orden" : "Her timeline — in her order",
+      tl: es
+        ? [
+            { when: "marzo 2023", what: "Llegué." },
+            { when: "unas semanas después", what: "Él tomó mi pasaporte." },
+            { when: "el segundo invierno", what: "Los turnos de noche se alargaron." },
+            { when: "la primavera pasada", what: "La primera vez que intenté irme." },
+            { when: "nov 2025", what: "La tarjeta de la clínica. Llamé." },
+          ]
+        : [
+            { when: "March 2023", what: "I arrived." },
+            { when: "a few weeks later", what: "He took my passport." },
+            { when: "the second winter", what: "The night shifts got longer." },
+            { when: "last spring", what: "The first time I tried to leave." },
+            { when: "Nov 2025", what: "The clinic card. I called." },
+          ],
+      keptRow: es ? "Conservada ✓ — fila por fila, su decisión" : "Kept ✓ — row by row, her call",
       messy: app.account.timelineHelper.placeholder,
       draftWhen1: es ? "después de la mudanza" : "after the move",
       draftWhat1: es ? "Empezó el trabajo nuevo." : "The new job started.",

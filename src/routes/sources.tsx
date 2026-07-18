@@ -194,8 +194,9 @@ function SourcesScreen() {
           </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
             {PRODUCT_NAME} is built on verified law, official guidance, and peer-reviewed
-            trauma-informed research. It is not legal advice, and it never coaches, scripts, or
-            shapes testimony. Every claim in the app traces back to a primary or reputable source.
+            trauma-informed research. It is not legal advice, and it never coaches testimony — never
+            scripts or shapes what anyone says. Every claim in the app traces back to a primary or
+            reputable source.
           </p>
         </header>
 

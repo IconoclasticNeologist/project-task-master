@@ -61,7 +61,7 @@ const PILLARS: Pillar[] = [
     heading: "It never coaches testimony",
     lead: "Only the person, in their own words, tells what happened.",
     points: [
-      "The AI Coach and the cross-examination practice explain the process and help someone steady themselves — they never tell a survivor what to say, and never script or rehearse answers.",
+      "Yes, she has a Coach — and the name is deliberate. It coaches HER: her steadiness, her breathing, what the day will look like, the rights she can use. The bright line is that it never coaches her TESTIMONY — never tells her what to say, never scripts or rehearses answers. Coach the person, never the story: that distinction is the product.",
       "Plain language (about a 6th-grade reading level), calm, and unhurried — no urgency words anywhere.",
       "A care plan (one safe person, one calming thing) and a stop word are always present; practice hands control back to the Coach the instant someone says stop.",
       "Hard rules sit under every AI and cannot be stripped by any prompt: never legal or clinical advice, always defer to the person’s own advocate or lawyer, and stop and surface real help at any sign of danger.",

@@ -129,9 +129,17 @@ function JudgesScreen() {
     <div className="min-h-screen bg-background text-foreground [&_p]:max-w-[60ch]">
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6 py-10">
         <header className="space-y-4">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-            <DoorOpen className="h-4 w-4" strokeWidth={2} aria-hidden />
-            For the judges
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+              <DoorOpen className="h-4 w-4" strokeWidth={2} aria-hidden />
+              For the judges
+            </div>
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Home
+            </Link>
           </div>
           <h1 className="text-2xl font-normal tracking-tight">Project {PRODUCT_NAME}</h1>
           <p className="text-base leading-relaxed text-foreground">

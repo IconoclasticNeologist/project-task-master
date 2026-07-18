@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Check, Globe } from "lucide-react";
+import { Check, Globe, Settings as SettingsIcon } from "lucide-react";
 import { copy } from "@/lib/copy";
 import {
   DropdownMenu,
@@ -68,11 +68,22 @@ function LanguageMenu() {
   );
 }
 
-export function Shell({ children, hideNav = false }: { children: ReactNode; hideNav?: boolean }) {
+export function Shell({
+  children,
+  hideNav = false,
+  judgesLink = false,
+}: {
+  children: ReactNode;
+  hideNav?: boolean;
+  /** Landing only: a quiet reviewer door in the top bar. */
+  judgesLink?: boolean;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   // Built per render (NOT module level) so the labels re-resolve against the
   // language-aware copy proxy after a language switch.
+  // Settings moved to the top bar (gear) — owner call; the bottom row stays
+  // for the places a person goes on purpose, not configuration.
   const navItems = [
     { to: "/home", label: copy.nav.home },
     { to: "/session", label: copy.nav.session },
@@ -80,7 +91,6 @@ export function Shell({ children, hideNav = false }: { children: ReactNode; hide
     { to: "/account", label: copy.nav.account },
     { to: "/team", label: copy.nav.team },
     { to: "/plan", label: copy.nav.plan },
-    { to: "/settings", label: copy.nav.settings },
   ];
 
   return (
@@ -89,7 +99,22 @@ export function Shell({ children, hideNav = false }: { children: ReactNode; hide
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border">
           <HomeButton to="/home" />
           <div className="flex items-center gap-4">
+            {judgesLink && (
+              <Link
+                to="/judges"
+                className="-mx-1.5 -my-3 px-1.5 py-3 text-sm text-muted-foreground hover:text-foreground"
+              >
+                For the judges
+              </Link>
+            )}
             <LanguageMenu />
+            <Link
+              to="/settings"
+              aria-label={copy.nav.settings}
+              className="-mx-1.5 -my-3 px-1.5 py-3 text-muted-foreground hover:text-foreground"
+            >
+              <SettingsIcon className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </Link>
             <button
               type="button"
               onClick={() => leaveQuickly()}

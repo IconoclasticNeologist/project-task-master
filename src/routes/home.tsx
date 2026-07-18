@@ -226,24 +226,47 @@ function HomeScreen() {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Order is deliberate (owner-set): the session first, the timeline
-              second (the second most important feature), support always last. */}
-          <div className="grid grid-cols-1 gap-4">
-            <Tile to="/session" label={copy.home.startSession} hint="Talk or type. At your pace." />
-            <Tile
-              to="/account"
-              hash="timeline"
-              label={copy.home.seeTimeline}
-              hint={copy.home.seeTimelineHint}
-            />
-            <Tile to="/guide" label={copy.home.courtGuide} hint="What to expect, in plain words." />
-            <Tile to="/study" label={copy.study.title} hint={copy.study.homeTileHint} />
-            <Tile
-              to="/resources"
-              label={copy.home.findSupport}
-              hint="People you can talk to now."
-            />
-          </div>
+          {/* Two groups (owner-set): everything that IS court preparation under
+              one honest header, and the humans+care under Support. Session
+              first, timeline second, support always last. */}
+          <section className="space-y-3">
+            <h2 className="text-xs uppercase tracking-wide text-muted-foreground">
+              {copy.home.groupPrepare}
+            </h2>
+            <div className="grid grid-cols-1 gap-4">
+              <Tile
+                to="/session"
+                label={copy.home.startSession}
+                hint="Talk or type. At your pace."
+              />
+              <Tile
+                to="/account"
+                hash="timeline"
+                label={copy.home.seeTimeline}
+                hint={copy.home.seeTimelineHint}
+              />
+              <Tile
+                to="/guide"
+                label={copy.home.courtGuide}
+                hint="What to expect, in plain words."
+              />
+              <Tile to="/study" label={copy.study.title} hint={copy.study.homeTileHint} />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xs uppercase tracking-wide text-muted-foreground">
+              {copy.home.groupSupport}
+            </h2>
+            <div className="grid grid-cols-1 gap-4">
+              <Tile
+                to="/resources"
+                label={copy.home.findSupport}
+                hint="People you can talk to now."
+              />
+              <Tile to="/plan" label={copy.nav.plan} hint={copy.plan.homeTileHint} />
+            </div>
+          </section>
 
           {query.isError ? (
             <Card className="paper-shadow">

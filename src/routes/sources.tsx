@@ -2,7 +2,7 @@
 // verified research the content is built on, and thanks the subject-matter
 // experts (dev-curated, with photos). Deliberately calm and credible.
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/lib/supabase/client";
 import { ReviewerFooter } from "@/components/ReviewerFooter";
@@ -183,7 +183,15 @@ function SourcesScreen() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6 py-10">
         <header className="space-y-2">
-          <h1 className="text-2xl font-normal tracking-tight">Sources & acknowledgements</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-normal tracking-tight">Sources & acknowledgements</h1>
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Home
+            </Link>
+          </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
             {PRODUCT_NAME} is built on verified law, official guidance, and peer-reviewed
             trauma-informed research. It is not legal advice, and it never coaches, scripts, or

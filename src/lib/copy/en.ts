@@ -51,6 +51,7 @@ export const copy = {
       "Your words belong to you.",
     ],
     beginCta: "Begin",
+    judgesButton: "For the judges",
     haveCodeLink: "I have a code from someone helping me",
     welcomeSupport: "Need to talk to a person right now? Open Support",
     safetyTitle: "Before we start.",
@@ -158,7 +159,9 @@ export const copy = {
     finishSetupBody: "A couple of gentle steps — about two minutes. You can skip anything.",
     finishSetupCta: "Continue setup",
     startSession: "Start a session",
-    courtGuide: "Preparing for court",
+    courtGuide: "What court is like",
+    groupPrepare: "Preparing for court",
+    groupSupport: "Support",
     seeTimeline: "Your timeline",
     seeTimelineHint:
       "Put what happened in your own order — and keep your words and papers in one place.",
@@ -196,7 +199,7 @@ export const copy = {
   },
 
   guide: {
-    title: "Preparing for court",
+    title: "What court is like",
     intro:
       "This is general information about what court can be like. It is not legal advice, and every court is a little different — your advocate or lawyer can tell you what is true for yours. Read what helps and skip the rest. There is no rush.",
     sections: [
@@ -618,6 +621,7 @@ export const copy = {
 
   plan: {
     title: "Your plan",
+    homeTileHint: "Small steps for a court day — build them with help.",
     intro:
       "Small practical steps for court, in the order that feels useful to you. You can add your own, change them, or leave them for later.",
     helper: {

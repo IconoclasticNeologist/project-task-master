@@ -55,6 +55,7 @@ export const copyEs: CopyShape = {
       "Sus palabras le pertenecen.",
     ],
     beginCta: "Empezar",
+    judgesButton: "Para el jurado",
     haveCodeLink: "Tengo un código de alguien que me está ayudando",
     welcomeSupport: "¿Necesita hablar con una persona en este momento? Abra Apoyo",
     safetyTitle: "Antes de empezar.",
@@ -162,7 +163,9 @@ export const copyEs: CopyShape = {
     finishSetupBody: "Un par de pasos suaves — unos dos minutos. Puede saltar lo que quiera.",
     finishSetupCta: "Continuar la preparación",
     startSession: "Empezar una sesión",
-    courtGuide: "Prepararse para la corte",
+    courtGuide: "Cómo es la corte",
+    groupPrepare: "Prepararse para la corte",
+    groupSupport: "Apoyo",
     seeTimeline: "Su línea de tiempo",
     seeTimelineHint:
       "Ponga lo que pasó en su propio orden — y guarde sus palabras y papeles en un solo lugar.",
@@ -198,7 +201,7 @@ export const copyEs: CopyShape = {
   },
 
   guide: {
-    title: "Prepararse para la corte",
+    title: "Cómo es la corte",
     intro:
       "Esta es información general sobre cómo puede ser la corte. No es asesoría legal, y cada corte es un poco distinta — su intercesor o su abogado puede decirle qué aplica en la suya. Lea lo que le ayude y salte el resto. No hay ninguna prisa.",
     sections: [
@@ -606,6 +609,7 @@ export const copyEs: CopyShape = {
 
   plan: {
     title: "Su plan",
+    homeTileHint: "Pasos pequeños para un día de corte — ármelos con ayuda.",
     intro:
       "Pasos prácticos y pequeños para la corte, en el orden que a usted le sirva. Puede agregar los suyos, cambiarlos, o dejarlos para después.",
     helper: {

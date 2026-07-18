@@ -51,7 +51,7 @@ export const APP_MAP: AppPlace[] = [
   },
   {
     route: "/guide",
-    name: "Preparing for court",
+    name: "What court is like",
     what: "A plain-language walkthrough of what court is like and what usually happens.",
     how: "Read in any order; nothing is required.",
   },

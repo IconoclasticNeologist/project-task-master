@@ -18,7 +18,7 @@ import { pageTitle } from "@/lib/product";
 // no case-specific or legal advice — see docs/source-material/README.md for the
 // public sources behind this content.
 export const Route = createFileRoute("/guide")({
-  head: () => ({ meta: [{ title: pageTitle("Preparing for court") }] }),
+  head: () => ({ meta: [{ title: pageTitle("What court is like") }] }),
   component: GuideScreen,
 });
 
@@ -94,20 +94,6 @@ function GuideScreen() {
             </dl>
           </CardContent>
         </Card>
-
-        <Link to="/study">
-          <Card className="paper-shadow">
-            <CardContent className="flex items-center justify-between py-5">
-              <div>
-                <div className="text-base font-normal text-foreground">
-                  {copy.guide.moreGuidesLabel}
-                </div>
-                <div className="text-xs text-muted-foreground">{copy.guide.moreGuidesHint}</div>
-              </div>
-              <span className="text-muted-foreground">→</span>
-            </CardContent>
-          </Card>
-        </Link>
 
         <Link to="/study">
           <Card className="paper-shadow">

@@ -24,7 +24,7 @@ function WelcomeScreen() {
   // action and two clearly-named choices, nothing that needs explaining.
   const [returning, setReturning] = useState(false);
   return (
-    <Shell hideNav>
+    <Shell hideNav judgesLink>
       <div className="flex flex-1 flex-col justify-between gap-10 py-6">
         <div className="space-y-8 pt-6 welcome-tight">
           {/* Demo button at the very top — owner-requested, judge-facing. A real
@@ -38,6 +38,14 @@ function WelcomeScreen() {
           >
             <Play className="h-4 w-4" aria-hidden strokeWidth={2} fill="currentColor" />
             {copy.begin.demoButton}
+          </Link>
+          {/* The written pitch + reviewer tools — visible from the front door
+              (owner call: nobody finds /judges by guessing). */}
+          <Link
+            to="/judges"
+            className="-mt-4 block w-full rounded-md border border-border px-4 py-2.5 text-center text-sm text-muted-foreground hover:text-foreground"
+          >
+            {copy.begin.judgesButton}
           </Link>
           <h1 className="text-3xl font-normal leading-tight tracking-tight">{copy.appName}.</h1>
           <p className="text-base leading-relaxed text-foreground">{copy.begin.welcomeTagline}</p>

@@ -160,6 +160,33 @@ export const copy = {
     continueWhereLeft: "Continue your space",
     seeTimeline: "See your timeline",
     findSupport: "Find support",
+    // Presenter-only strings (demo-gated devices; a survivor's device never
+    // renders any of these — see demoTools).
+    example: {
+      offerTitle: "Want to see an example first?",
+      offerBody:
+        "A made-up story can fill this space so you can see how everything works — her words, her timeline, the practice. Nothing here is real. One tap clears it again.",
+      offerLoad: "Load the example",
+      offerNotNow: "Not now",
+      bannerTitle: "This space holds a made-up example — not a real person.",
+      bannerPath: "A path worth walking:",
+      clear: "Clear the example",
+      chips: {
+        words: "Her words",
+        order: "In her order",
+        coach: "Meet the Coach",
+        practice: "The Witness Stand",
+        draft: "A draft for a lawyer",
+        shared: "What she shared",
+      },
+      reloadTitle: "Replace what's here with the example?",
+      reloadBody:
+        "This clears everything currently in this space and loads the made-up story fresh.",
+      reloadConfirm: "Replace with the example",
+      reloadCancel: "Keep what's here",
+      loading: "Loading the example…",
+      failed: "Couldn't load the example just now.",
+    },
   },
 
   guide: {
@@ -341,6 +368,9 @@ export const copy = {
     // practice voice speaks. Wording is PLACEHOLDER pending trauma-therapist
     // review (docs/sme-research-needed.md); the structure is not.
     witness: {
+      // Always on screen during practice — the format's rights, scannable
+      // where the pressure is.
+      rightsChips: ["“I don’t know” is allowed", "You can ask for a repeat", "“Stop” ends it"],
       consentTitle: "Practice being asked questions.",
       consentBody:
         "This is a practice space. A practice person on your screen — or a practice voice — will ask you questions, a little like a lawyer might. None of it is real. Nothing here counts.",

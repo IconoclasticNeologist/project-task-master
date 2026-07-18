@@ -718,6 +718,21 @@ function SessionScreen() {
                   {copy.session.witness.voiceFallback}
                 </p>
               )}
+              {/* The format's rights, visible where the pressure is — the
+                  prompts name each right as it's used; this keeps the promise
+                  scannable the whole time. */}
+              {witnessStand && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {copy.session.witness.rightsChips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              )}
               {witnessStand && (
                 <PracticeTimer
                   capSec={practiceCapKnownSec}

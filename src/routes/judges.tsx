@@ -3,7 +3,7 @@
 // trauma-informed method, and the research + SME grounding — in the app's own
 // calm voice. Deliberately credible, not flashy.
 
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   DoorOpen,
@@ -18,7 +18,12 @@ import {
 } from "lucide-react";
 import { ReviewerFooter } from "@/components/ReviewerFooter";
 import { pageTitle, PRODUCT_NAME } from "@/lib/product";
-import { isDemoToolsEnabled, setDemoToolsEnabled } from "@/lib/data/demoTools";
+import { isDemoToolsEnabled, isExampleLoaded, setDemoToolsEnabled } from "@/lib/data/demoTools";
+import { createSelfServeSurvivor } from "@/lib/auth/session";
+import { loadExampleData } from "@/lib/data/demoSeed";
+import { listStatements } from "@/lib/data/statements";
+import { listTimeline } from "@/lib/data/timeline";
+import { getLangPref } from "@/lib/lang";
 
 export const Route = createFileRoute("/judges")({
   head: () => ({ meta: [{ title: pageTitle("For judges") }] }),
@@ -102,6 +107,42 @@ function JudgesScreen() {
     setDemoEnabled(true);
   };
 
+  // One tap: enable demo tools on this device, make sure an anonymous space
+  // exists (idempotent), seed the fictional example, land on Home. A space
+  // that already holds NON-example content is never seeded over from here —
+  // Home's own dialog owns that destructive path.
+  const navigate = useNavigate();
+  const [opening, setOpening] = useState(false);
+  const openWithExample = async () => {
+    if (opening) return;
+    setOpening(true);
+    try {
+      setDemoToolsEnabled(true);
+      setDemoEnabled(true);
+      const created = await createSelfServeSurvivor();
+      if (!created.ok) throw new Error("no space");
+      const [statements, timeline] = await Promise.all([listStatements(), listTimeline()]);
+      const empty = statements.length === 0 && timeline.length === 0;
+      if (empty || isExampleLoaded()) {
+        // Time-boxed: if a slow backend drags the seed past 45s, open the app
+        // anyway — Home's offer card is the retry path, and a late-finishing
+        // seed simply surfaces its banner on the next visit.
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        await Promise.race([
+          loadExampleData(getLangPref()),
+          new Promise((resolve) => {
+            timer = setTimeout(resolve, 45000);
+          }),
+        ]).finally(() => clearTimeout(timer));
+      }
+    } catch {
+      // Fall through — Home's offer card is the retry path either way.
+    } finally {
+      setOpening(false);
+      void navigate({ to: "/home" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground [&_p]:max-w-[60ch]">
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6 py-10">
@@ -149,22 +190,29 @@ function JudgesScreen() {
             <div className="space-y-1">
               <h2 className="text-base font-normal text-foreground">Reviewer tools</h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Sample data can be loaded on this device only — turning it on here never touches a
-                real survivor’s account. Once it’s on, Home offers “Load an example (demo)” to fill
-                the space with a fictional case.
+                One tap opens the live app with a made-up example story already in place — her
+                words, her timeline, a note to her Coach — so every feature has something real to
+                show. It all happens on this device’s own anonymous space; a real survivor’s account
+                is never touched, and Home offers “Clear the example” the whole time.
               </p>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-4" aria-live="polite">
             <button
               type="button"
+              onClick={() => void openWithExample()}
+              disabled={opening}
+              className="rounded-md bg-[oklch(0.5_0.09_70)] px-4 py-2.5 text-sm font-medium text-[oklch(0.985_0.01_85)] paper-shadow hover:bg-[oklch(0.45_0.09_70)] disabled:opacity-60"
+            >
+              {opening ? "Opening the example…" : "Open the app with the example story"}
+            </button>
+            <button
+              type="button"
               onClick={enableDemoTools}
               disabled={demoEnabled}
               className="rounded-md border border-border px-4 py-2.5 text-sm text-foreground hover:bg-background disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
             >
-              {demoEnabled
-                ? "Enabled — open the app, Home → “Load an example (demo)”"
-                : "Enable sample data on this device"}
+              {demoEnabled ? "Sample data enabled on this device" : "Enable sample data only"}
             </button>
             <Link
               to="/"

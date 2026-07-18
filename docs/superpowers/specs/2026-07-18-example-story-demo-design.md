@@ -7,7 +7,7 @@
 ## 1. Why
 
 Reviewers meet the app empty. Every screen works, but an empty space cannot show
-what the app is *for* — and the Witness Stand practice, the flagship, reads as a
+what the app is _for_ — and the Witness Stand practice, the flagship, reads as a
 tech demo unless the whole app already holds one believable story for it to sit
 inside.
 
@@ -55,7 +55,7 @@ touch content thinness, friction, or the practice presentation.
 (chosen).** A single action provisions, seeds, and lands the reviewer inside a
 guided example; the seed becomes one story deep enough to demonstrate every
 feature; the practice person's delivery is tuned so the live exercise feels like
-a person. Most work is copy, which is also the point — the copy *is* the demo.
+a person. Most work is copy, which is also the point — the copy _is_ the demo.
 
 **C. A scripted overlay walkthrough of the live app.** Rejected: duplicates
 `/tour` (which already does guided replay well), heavy to build, and fragile
@@ -83,21 +83,21 @@ professional structurally cannot see it.
 
 EN (ES mirrors in the implementation):
 
-1. *"He paid for my flight and the papers. He said I could pay it back from my
+1. _"He paid for my flight and the papers. He said I could pay it back from my
    wages. The number he said I owed went up every month, and he never let me
-   see how it was counted."* — shareable
-2. *"I wasn't allowed to keep my own papers. He kept my passport in a drawer in
+   see how it was counted."_ — shareable
+2. _"I wasn't allowed to keep my own papers. He kept my passport in a drawer in
    the office and said I'd be in trouble with the police if they found me
-   without it."* — shareable
-3. *"We started before the sun came up and finished after dark. He counted the
-   hours his way. If I asked about the pay, he said the debt came first."* —
+   without it."_ — shareable
+3. _"We started before the sun came up and finished after dark. He counted the
+   hours his way. If I asked about the pay, he said the debt came first."_ —
    shareable
-4. *"I slept in the back room over the kitchen with three others. He held the
-   only key. When the door was locked from outside, we waited."* — shareable
-5. *"When I said I wanted to leave, he reminded me that he knew the town where
-   my mother lives. He said it slowly, like a favor."* — shareable
-6. *"Some nights I still hear the freezer door. I haven't told anyone about the
-   winter. I'm not ready."* — **private**
+4. _"I slept in the back room over the kitchen with three others. He held the
+   only key. When the door was locked from outside, we waited."_ — shareable
+5. _"When I said I wanted to leave, he reminded me that he knew the town where
+   my mother lives. He said it slowly, like a favor."_ — shareable
+6. _"Some nights I still hear the freezer door. I haven't told anyone about the
+   winter. I'm not ready."_ — **private**
 
 Why these six: each carries a recognizable coercion pattern (debt bondage,
 document confiscation, wage control, restricted movement, threat to family),
@@ -110,17 +110,17 @@ never specified anywhere — withheld, not implied in detail.
 
 1. **2023-03-10** — "I arrived. He met me at the airport and took my bag. He
    was kind that day."
-2. *a few weeks after I arrived* — "He took my passport. He said he would keep
+2. _a few weeks after I arrived_ — "He took my passport. He said he would keep
    it safe with the work papers."
-3. *that first summer* — "The debt started going up instead of down. He added
+3. _that first summer_ — "The debt started going up instead of down. He added
    rent for the back room and money for the flights."
-4. *around the second winter* — "The night shifts got longer. I stopped
+4. _around the second winter_ — "The night shifts got longer. I stopped
    counting the hours."
-5. *last spring* — "The first time I tried to leave. I came back on my own
+5. _last spring_ — "The first time I tried to leave. I came back on my own
    before morning."
 6. **2025-11-02** — "A woman from the clinic asked me if I was okay. I said
    yes. She gave me a card anyway."
-7. *two months later* — "I called the number on the card."
+7. _two months later_ — "I called the number on the card."
 
 Rows 4/5 are genuinely order-ambiguous against 3, so the timeline helper's
 "Put it in order" flow has a real, skippable question to ask. Row 7 ends the
@@ -131,10 +131,10 @@ arc with her own action — she calls; nobody rescues her. All shareable.
 - **Aftercare** (kept from v1): support person "My sister, Ana"; calming thing
   "A song my mother used to sing." These resurface in session closings.
 - **A note to your Coach** (new):
-  *"I get quiet when I am nervous. It is not that I want to stop — I just need
+  _"I get quiet when I am nervous. It is not that I want to stop — I just need
   a minute. It helps when you say there is no hurry. Please don't ask me about
   the freezer. My hearing is on the 12th and I'm scared of the questions
-  part."*
+  part."_
   This is the Coach-humanity beat: the session opens personal, unhurried, and
   the boundary ("the freezer") is respected out loud by never being raised —
   while the practice person, which never receives the note, demonstrates the
@@ -154,10 +154,20 @@ arc with her own action — she calls; nobody rescues her. All shareable.
 - `loadExampleData(lang)` keeps the clear-then-seed contract and the
   `isDemoToolsEnabled()` throw. New: coach note (`app_set_coach_note`), plan
   items, `markOnboarded`, language-selected bundle, and a per-device marker
-  (`advocate-example-loaded`) set on success.
+  (`advocate-example-loaded`) set on success. The clear step now also removes
+  plan items (RLS permits the survivor's own delete — direct call, the
+  `deleteStatement` pattern; `court_plan_items` was RPC-only, so migrations
+  `20260718000001`/`...02` grant the client role table-level DELETE + SELECT —
+  PostgREST needs SELECT to evaluate the id filter, and the existing
+  client-scoped RLS policies gate both) and blanks the coach note.
 - New `clearExampleData()` — the deletes without the reseed; clears the marker.
-- Statement indexing keeps the language of the seeded text so search works in
-  the seeded language.
+- Search indexing after seeding is best-effort, parallel, and time-boxed (15s
+  per row), and the `/judges` one-tap time-boxes the whole seed at 45s — a cold
+  embeddings function must never hang the judge's entry; a missed index only
+  softens the search demo, and Home's offer card is always the retry path.
+- `app_save_statement` stamps each row's language from
+  `survivors.preferred_language`, so the seed calls `syncLanguageToServer(lang)`
+  before writing — seeded Spanish is stored and indexed as Spanish.
 
 ## 5. The offer (entry flow)
 
@@ -258,15 +268,15 @@ right as it is used; the chips make the same promise scannable.
 
 ## 7. A suggested three-minute path (for the founder's demo, not shipped copy)
 
-1. `/judges` → one tap → Home banner: *nothing real, and a real survivor's
-   device can never reach this.*
+1. `/judges` → one tap → Home banner: _nothing real, and a real survivor's
+   device can never reach this._
 2. **Her words** — read two statements; search finds them.
 3. **In her order** — timeline; run "Put it in order"; it asks one skippable
    question about the spring/winter order; keep a row.
 4. **The Coach** — start a session; the opener is personal (the note), no
    hurry, and "the freezer" is never raised.
 5. **The Witness Stand** — consent screen (stop word, timer, "not now" is a
-   real button) → choose *her shared words* → the practice person asks only
+   real button) → choose _her shared words_ → the practice person asks only
    from the five shareable statements — never the sixth. Answer once, say "I
    don't know" once, watch it accepted and retired. Stop → the Coach handoff.
 6. **The draft, the team** — export the lawyer-formatted draft; on the team
@@ -296,21 +306,21 @@ right as it is used; the chips make the same promise scannable.
 - Interactivity config as rehearsed (answer-button flow).
 - Warm prod after any push; verify by rendered DOM; no pushes during
   reviewer-likely hours.
-- Seed the demo device *before* presenting (mint reads the coach note at
+- Seed the demo device _before_ presenting (mint reads the coach note at
   session start; seeding requires the self-serve space to exist — the one-tap
   handles both).
 - Rehearse the practice beat once on the day; credits are per-minute.
 
 ## 10. Implementation map
 
-| Area | Files |
-| --- | --- |
-| Seed v2 (EN/ES content, note, plan, marker, clear) | `src/lib/data/demoSeed.ts`, `demoTools.ts`, tests |
-| One-tap open-with-example | `src/routes/judges.tsx` |
-| Offer card, banner, chips, dialog | `src/routes/home.tsx`, copy bundles EN/ES |
-| Practice delivery lines | `supabase/functions/_shared/advocatePrompts.ts` (+ function redeploys) |
-| Opener pre-generation | `src/lib/voice/useLiveAvatarPractice.ts` |
-| Rights chips | session witness-stage component, copy bundles |
+| Area                                               | Files                                                                  |
+| -------------------------------------------------- | ---------------------------------------------------------------------- |
+| Seed v2 (EN/ES content, note, plan, marker, clear) | `src/lib/data/demoSeed.ts`, `demoTools.ts`, tests                      |
+| One-tap open-with-example                          | `src/routes/judges.tsx`                                                |
+| Offer card, banner, chips, dialog                  | `src/routes/home.tsx`, copy bundles EN/ES                              |
+| Practice delivery lines                            | `supabase/functions/_shared/advocatePrompts.ts` (+ function redeploys) |
+| Opener pre-generation                              | `src/lib/voice/useLiveAvatarPractice.ts`                               |
+| Rights chips                                       | session witness-stage component, copy bundles                          |
 
 ## 11. Testing
 

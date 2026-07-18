@@ -196,51 +196,66 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
   }, []);
 
   /**
-   * The owned conversation loop: WE generate the line (JWT-gated
-   * advocate-agent defense_turn — RAG-locked to the person's shareable-only
-   * account), and the avatar speaks it VERBATIM via speak_text. Never routed
-   * through their auto-voice loop, which generates but never voices a
-   * user-triggered reply.
+   * Generation only — no session interaction, so the opener can be produced
+   * IN PARALLEL with WebRTC setup and spoken the moment the room connects.
+   * JWT-gated advocate-agent defense_turn, RAG-locked to the person's
+   * shareable-only account. Returns null on any failure.
+   */
+  const generateLine = useCallback(async (opening: boolean): Promise<string | null> => {
+    try {
+      const { data, error } = await getSupabase().functions.invoke<{ text?: string }>(
+        "advocate-agent",
+        {
+          body: {
+            agent: "defense_turn",
+            input: {
+              account: accountRef.current,
+              turns: historyRef.current,
+              opening,
+              // The material tier: the made-up story (server-side text) is
+              // the standard; "own" is the consent-heavy tier.
+              material: materialRef.current,
+              language: languageRef.current,
+            },
+          },
+        },
+      );
+      const text = data?.text?.trim();
+      return error || !text ? null : text;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  /**
+   * The owned conversation loop: WE generate the line and the avatar speaks it
+   * VERBATIM via speak_text. Never routed through their auto-voice loop, which
+   * generates but never voices a user-triggered reply. `pregenerated` carries
+   * the opener started at mint time; if it failed, generate fresh here.
    */
   const generateAndSpeak = useCallback(
-    async (opening: boolean) => {
+    async (opening: boolean, pregenerated?: Promise<string | null>) => {
       const session = sessionRef.current;
       if (!session) return;
       logEvent(opening ? "generating opener…" : "generating reply…");
+      let text = pregenerated ? await pregenerated : null;
+      if (!text) text = await generateLine(opening);
+      if (!text) {
+        logEvent("generate FAILED");
+        setLastError("The practice questioner couldn’t think of a line just now.");
+        return;
+      }
+      if (sessionRef.current !== session) return; // stopped while generating
+      historyRef.current.push({ role: "avatar", text });
+      onAvatarTextRef.current?.(text); // caption first — deaf/HoH read as it speaks
       try {
-        const { data, error } = await getSupabase().functions.invoke<{ text?: string }>(
-          "advocate-agent",
-          {
-            body: {
-              agent: "defense_turn",
-              input: {
-                account: accountRef.current,
-                turns: historyRef.current,
-                opening,
-                // The material tier: the made-up story (server-side text) is
-                // the standard; "own" is the consent-heavy tier.
-                material: materialRef.current,
-                language: languageRef.current,
-              },
-            },
-          },
-        );
-        const text = data?.text?.trim();
-        if (error || !text) {
-          logEvent("generate FAILED");
-          setLastError("The practice questioner couldn’t think of a line just now.");
-          return;
-        }
-        if (sessionRef.current !== session) return; // stopped while generating
-        historyRef.current.push({ role: "avatar", text });
-        onAvatarTextRef.current?.(text); // caption first — deaf/HoH read as it speaks
         session.repeat(text); // avatar.speak_text — VERBATIM, proven reliable
         logEvent(`speaking (${text.length} chars)`);
       } catch (e) {
-        logEvent(`generate error: ${e instanceof Error ? e.message.slice(0, 40) : "err"}`);
+        logEvent(`speak error: ${e instanceof Error ? e.message.slice(0, 40) : "err"}`);
       }
     },
-    [logEvent],
+    [logEvent, generateLine],
   );
   const generateAndSpeakRef = useRef(generateAndSpeak);
   useEffect(() => {
@@ -279,6 +294,11 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         accountRef.current = account;
         historyRef.current = [];
         answerBufRef.current = "";
+
+        // Start writing the opener NOW, in parallel with WebRTC setup — the
+        // person shouldn't watch a silent face while the first line generates.
+        logEvent("pre-generating opener…");
+        const openerPromise = generateLine(true);
 
         // CONVERSATIONAL + muted-by-default: the working turn pipeline, with
         // the mic gated by the answer button (unmute → speak → mute). PTT mode
@@ -324,7 +344,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         session.on(SessionEvent.SESSION_STATE_CHANGED, (state) => {
           if (state !== SessionState.CONNECTED || openerDriven) return;
           openerDriven = true;
-          void generateAndSpeakRef.current(true);
+          void generateAndSpeakRef.current(true, openerPromise);
         });
         session.on(SessionEvent.SESSION_DISCONNECTED, () => {
           if (sessionRef.current !== session) return; // our own teardown
@@ -378,7 +398,7 @@ export function useLiveAvatarPractice(opts: UseLiveAvatarPracticeOptions = {}) {
         return "error";
       }
     },
-    [pushTranscript, tearDown, logEvent],
+    [pushTranscript, tearDown, logEvent, generateLine],
   );
 
   /** Typed practice answers — text-or-voice everywhere. */

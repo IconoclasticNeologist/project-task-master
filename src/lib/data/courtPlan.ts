@@ -107,6 +107,13 @@ export async function listCourtPlanItemsForWorkspace(
   }));
 }
 
+/** Delete never touches ciphertext, so it stays a direct RLS-scoped call
+ *  (court_plan_items_client_delete permits the survivor's own workspace). */
+export async function deleteMyCourtPlanItem(id: string): Promise<void> {
+  const { error } = await getSupabase().from("court_plan_items").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function updateCourtPlanItemStatus(
   id: string,
   status: CourtPlanItemStatus,

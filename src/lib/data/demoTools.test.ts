@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { isDeviceDemoFlagOn, setDemoToolsEnabled, isDemoToolsEnabled } from "./demoTools";
+import {
+  isDeviceDemoFlagOn,
+  setDemoToolsEnabled,
+  isDemoToolsEnabled,
+  isExampleLoaded,
+  setExampleLoaded,
+} from "./demoTools";
 
 // The demo seed is a presenter aid. Its gate is PER-DEVICE (localStorage), so
 // turning it on from /dev lights up the button on this browser only — a real
@@ -42,5 +48,20 @@ describe("device demo flag", () => {
   it("enabling the device flag enables demo tools", () => {
     setDemoToolsEnabled(true);
     expect(isDemoToolsEnabled()).toBe(true);
+  });
+});
+
+describe("example-loaded marker", () => {
+  it("is off by default, flips on and off", () => {
+    expect(isExampleLoaded()).toBe(false);
+    setExampleLoaded(true);
+    expect(isExampleLoaded()).toBe(true);
+    setExampleLoaded(false);
+    expect(isExampleLoaded()).toBe(false);
+  });
+
+  it("is independent of the demo-tools gate", () => {
+    setExampleLoaded(true);
+    expect(isDeviceDemoFlagOn()).toBe(false);
   });
 });

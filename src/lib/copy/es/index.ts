@@ -164,6 +164,31 @@ export const copyEs: CopyShape = {
     continueWhereLeft: "Continuar su espacio",
     seeTimeline: "Ver su línea de tiempo",
     findSupport: "Encontrar apoyo",
+    example: {
+      offerTitle: "¿Quiere ver un ejemplo primero?",
+      offerBody:
+        "Una historia inventada puede llenar este espacio para que vea cómo funciona todo — sus palabras, su línea de tiempo, la práctica. Nada de esto es real. Un toque lo borra otra vez.",
+      offerLoad: "Cargar el ejemplo",
+      offerNotNow: "Ahora no",
+      bannerTitle: "Este espacio tiene un ejemplo inventado — no es una persona real.",
+      bannerPath: "Un camino que vale la pena:",
+      clear: "Borrar el ejemplo",
+      chips: {
+        words: "Sus palabras",
+        order: "En su orden",
+        coach: "Conocer al Coach",
+        practice: "El estrado",
+        draft: "Un borrador para su abogado",
+        shared: "Lo que ella compartió",
+      },
+      reloadTitle: "¿Reemplazar lo que hay aquí con el ejemplo?",
+      reloadBody:
+        "Esto borra todo lo que hay en este espacio y carga la historia inventada de nuevo.",
+      reloadConfirm: "Reemplazar con el ejemplo",
+      reloadCancel: "Conservar lo que hay",
+      loading: "Cargando el ejemplo…",
+      failed: "No pudimos cargar el ejemplo en este momento.",
+    },
   },
 
   guide: {
@@ -342,6 +367,7 @@ export const copyEs: CopyShape = {
       practice: "Esta es la voz de práctica. Su Coach está cerca.",
     },
     witness: {
+      rightsChips: ["Decir «no sé» está permitido", "Puede pedir que repitan", "«Alto» lo detiene"],
       consentTitle: "Practicar que le hagan preguntas.",
       consentBody:
         "Este es un espacio de práctica. Una persona de práctica en su pantalla — o una voz de práctica — le hará preguntas, un poco como podría hacerlo un abogado. Nada de esto es real. Nada de esto cuenta.",

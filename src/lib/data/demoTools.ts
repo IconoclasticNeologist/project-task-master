@@ -40,3 +40,28 @@ export function setDemoToolsEnabled(on: boolean): void {
 export function isDemoToolsEnabled(): boolean {
   return BUILD_ENABLED || isDeviceDemoFlagOn();
 }
+
+// Whether THIS device last seeded the example story (set by loadExampleData,
+// cleared by clearExampleData). Drives the Home banner and the offer card —
+// per-device like the gate above, because "this space holds fiction" is a fact
+// about what the presenter did on this browser, not server state.
+const EXAMPLE_KEY = "advocate-example-loaded";
+
+export function isExampleLoaded(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(EXAMPLE_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+export function setExampleLoaded(on: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (on) window.localStorage.setItem(EXAMPLE_KEY, "on");
+    else window.localStorage.removeItem(EXAMPLE_KEY);
+  } catch {
+    // Best-effort, same contract as the gate flag.
+  }
+}

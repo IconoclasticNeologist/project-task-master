@@ -269,6 +269,16 @@ function HomeScreen() {
             </div>
           </section>
 
+          {/* The guided tour, findable from INSIDE the app too (owner call) — a
+              quiet row, not nav chrome: it's help, and it creates nothing. */}
+          <Link
+            to="/tour"
+            className="block rounded-md border border-border px-4 py-3 text-sm text-muted-foreground hover:text-foreground"
+          >
+            {copy.begin.tourCta}
+            <span className="mt-0.5 block text-xs">{copy.begin.tourCtaSub}</span>
+          </Link>
+
           {query.isError ? (
             <Card className="paper-shadow">
               <CardContent className="space-y-3 py-5 text-sm leading-relaxed text-muted-foreground">
